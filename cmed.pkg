@@ -1,0 +1,28 @@
+v 3
+d cmed: Stata module to perform causal mediation analysis
+d
+d
+d {cmd:cmed} Causal mediation analysis
+d
+d KW: causal inference
+d KW: mediation analysis
+d KW: indirect effects
+d KW: direct effects
+d KW: confounding
+d
+d Requires: Stata version 16.1
+d
+d Distribution-Date: 20251014
+d
+d Author: Geoff Wodtke, University of Chicago
+d Support: email wodtke@@uchicago.edu
+d Author: Daniel Klein
+d Support: email klein.daniel.81@@gmail.com
+d
+f cmed.ado
+f cmed.sthlp
+f cmed_impute.sthlp
+f cmed_ipw.sthlp
+f cmed_linear.sthlp
+f cmed_mr.sthlp
+f cmed_simulate.sthlp
