@@ -1,4 +1,4 @@
-*! version 0.4.1  11nov2025
+*! version 0.4.2  11nov2025
 program cmed
     
     version 16.1
@@ -463,6 +463,8 @@ program Build_cmdline_cmed_linear
             
             Confirm_model "m" ("")
             
+            local options `options' mvar(${Cmed__mvars})
+            
             local cmd "lincde"
             
         }
@@ -470,14 +472,14 @@ program Build_cmdline_cmed_linear
             
             Confirm_model "m" ("","regress") , default("regress")
             
+            local mvars : copy global Cmed__mvars
+            
             if ("`pathspecific'" == "pathspecific") ///
                 local cmd "linpath"
             else                                    ///
                 local cmd "linmed"
             
         }
-        
-        local options `options' mvar(${Cmed__mvars})
         
     }
     
