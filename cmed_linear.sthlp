@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.3.0  12oct2025}{...}
+{* *! version 0.4.0  11nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -31,12 +31,10 @@ Single mediator, linear models for mediator and outcome
 {depvar}
 {help varname:{it:mvar}}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
@@ -48,31 +46,10 @@ Multiple mediators, linear models for mediators and outcome
 {depvar}
 {cmd:(}{help varlist:{it:mvars}}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
-
-
-{pstd}
-Controlled direct effect
-
-{p 8 16 2}
-{cmd:cmed}
-{cmdab:lin:ear}
-{depvar}
-{help varname:{it:mvar}}
-{help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
-{ifin} 
-{weight}
-{cmd:,} 
-{opt m:value(#)} 
-[ {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
@@ -85,14 +62,28 @@ Interventional effects, post-treatment covariates, linear models
 {help varname:{it:mvar}}
 {cmd:(}{help varname:{it:lvars}}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
+{ifin} 
+{weight}
+[{cmd:,} {it:options}]
+
+
+{pstd}
+Controlled direct effect
+
+{p 8 16 2}
+{cmd:cmed}
+{cmdab:lin:ear}
+{depvar}
+{help varname:{it:mvar}}
+[{cmd:(}{help varlist:{it:lvars}}{cmd:)}]
+{help varname:{it:dvar}}
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
 {cmd:,} 
 {opt m:value(#)} 
-[ {it:options} ]
+[{it:options}]
 
 
 {...}
@@ -105,13 +96,13 @@ is the continuous outcome of interest.
 {it:mvar} 
 is a continuous mediator of interest.
 Only one mediator is allowed for estimating
-controlled direct effects. 
+interventional effects
+and controlled direct effects. 
 {p_end}
 {...}
 {phang}
-{it:lvar}
-is a continuous post-treatment covariate (exposure-induced confounder).  
-Multiple post-treatment covariates are allowed.
+{it:lvars}
+are continuous post-treatment covariates (exposure-induced confounders).  
 {p_end}
 {...}
 {phang}

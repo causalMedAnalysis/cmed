@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.4.0  11nov2025}{...}
+{* *! version 0.1.0  11nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -7,15 +7,15 @@
 {vieweralsosee "[SEM] sem" "help sem command"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[COMMUNITY-CONTRIBUTED] cmed" "help cmed"}{...}
-{viewerjumpto "Syntax" "cmed_mr##syntax"}{...}
-{viewerjumpto "Description" "cmed_mr##description"}{...}
-{viewerjumpto "Options" "cmed_mr##options"}{...}
-{viewerjumpto "Examples" "cmed_mr##examples"}{...}
-{viewerjumpto "Stored results" "cmed_mr##results"}{...}
-{viewerjumpto "References" "cmed_mr##references"}{...}
-{viewerjumpto "Support" "cmed_mr##support"}{...}
-{bf:[COMMUNITY-CONTRIBUTED] cmed mr} {hline 2} {...}
-Causal mediation analysis using multiply robust estimators
+{viewerjumpto "Syntax" "cmed_dml##syntax"}{...}
+{viewerjumpto "Description" "cmed_dml##description"}{...}
+{viewerjumpto "Options" "cmed_dml##options"}{...}
+{viewerjumpto "Examples" "cmed_dml##examples"}{...}
+{viewerjumpto "Stored results" "cmed_dml##results"}{...}
+{viewerjumpto "References" "cmed_dml##references"}{...}
+{viewerjumpto "Support" "cmed_dml##support"}{...}
+{bf:[COMMUNITY-CONTRIBUTED] cmed dml} {hline 2} {...}
+Causal mediation analysis using de-biased machine learning 
 
 
 {...}
@@ -23,45 +23,49 @@ Causal mediation analysis using multiply robust estimators
 {title:Syntax}
 
 {pstd}
-Single mediator, logit model for treatment, linear models for outcome
+Single mediator
 
 {p 8 16 2}
 {cmd:cmed}
-{cmd:mr}
+{cmd:dml}
 {depvar}
 {help varlist:{it:mvar}}
 {help varname:{it:dvar}}
 [{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
-[{cmd:,} {it:options}]
+{cmd:,} {cmd:method(}{it:{help cmed_dml##method:method}}{cmd:)}
+[{it:options}]
 
 
 {pstd}
-Multiple mediators,  logit model for treatment, linear models for outcome
+Multiple mediators
 
 {p 8 16 2}
 {cmd:cmed}
-{cmd:mr}
+{cmd:dml}
 {depvar}
 {cmd:(}{help varlist:{it:mvars}}{cmd:)}
 {help varname:{it:dvar}}
 [{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
-[{cmd:,} {it:options}]
+{cmd:,} {cmd:method(}{it:{help cmed_dml##method:method}}{cmd:)}
+[{it:options}]
 
 
 {pstd}
-Single binary mediator, logit model for treatment and mediator, linear models for outcome
+Single binary mediator, ratio-of-mediator-probability weighting
 
 {p 8 16 2}
 {cmd:cmed}
-{cmd:mr}
+{cmd:dml}
 {depvar}
 {help varlist:{it:mvar}}
 {help varname:{it:dvar}}
 [{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
-{cmd:,} {opt rmpw} [{it:options}]
+{cmd:,} {cmd:method(}{it:{help cmed_dml##method:method}}{cmd:)}
+{opt rmpw} 
+[{it:options}]
 
 
 {...}
@@ -85,12 +89,19 @@ is the binary treatement (exposure).
 {it:cvars}
 are baseline confounders.
 {p_end}
+{phang}
+{it:method}
+is one of {opt rforest} or {opt lasso}
+{p_end}
 
 
 {...}
-{synoptset 32 tabbed}{...}
+{synoptset 36 tabbed}{...}
 {synopthdr:options}
 {synoptline}
+{p2coldent :* {cmd:method(}{it:{help cmed_dml##method:method}}[{cmd:,} {it:method_options}]{cmd:)}}use 
+machine learning algorithm {it:method} to predict the nuisance terms
+{p_end}
 {synopt:{opt paths:pecific}}estimate path-specific effects
 {p_end}
 {...}
@@ -101,6 +112,8 @@ are baseline confounders.
 {p_end}
 {...}
 {synoptline}
+{pstd}* {opt method()} is required
+{p2colreset}{...}
 
 
 {...}

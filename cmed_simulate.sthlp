@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.3.0  12oct2025}{...}
+{* *! version 0.4.0  11nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -29,12 +29,10 @@ Single mediator, linear models for mediator and outcome
 {depvar}
 {help varname:{it:mvar}}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
@@ -46,12 +44,10 @@ Single mediator, generalized linear models
 {cmd:(}{cmd:(}{it:ymodel}{cmd:)} {depvar}{cmd:)}
 {cmd:(}{cmd:(}{it:mmodel}{cmd:)} {help varname:{it:mvar}}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
@@ -60,36 +56,32 @@ Interventional effects, post-treatment covariates
 {p 8 16 2}
 {cmd:cmed}
 {cmdab:sim:ulate}
-{cmd:(}{cmd:(}{it:ymodel}{cmd:)} {depvar}{cmd:)}
-{cmd:(}{cmd:(}{it:mmodel}{cmd:)} {help varname:{it:mvar}}{cmd:)}
-{cmd:(}{cmd:(}{it:lmodel}{cmd:)} {help varlist:{it:lvars}}{cmd:)}
+{cmd:(}{it:yspec}{cmd:)} 
+{cmd:(}{it:mspec}{cmd:)} 
+{cmd:(}{it:lspec}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-{cmd:,}
-{opt m:value(#)}
-[ {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
-Full syntax
+Controlled direct effect
 
 {p 8 16 2}
-{cmd:cmed} 
+{cmd:cmed}
 {cmdab:sim:ulate}
 {cmd:(}{it:yspec}{cmd:)} 
 {cmd:(}{it:mspec}{cmd:)} 
-[ {cmd:(}{it:lspec}{cmd:)} ] 
+{cmd:(}{it:lspec}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}} 
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+{cmd:,} 
+{opt m:value(#)} 
+[{it:options}]
 
 
 {...}
@@ -102,12 +94,6 @@ is the outcome of interest.
 {it:mvar} 
 is the mediator of interest.
 Only one mediator is allowed. 
-{p_end}
-{...}
-{phang}
-{it:lvar} 
-is a post-treatment covariate (exposure-induced confounder).
-Multiple post-treatment covariates are allowed.
 {p_end}
 {...}
 {phang}
@@ -124,28 +110,30 @@ are baseline confounders.
 {phang}
 {it:ysepc} 
 is 
-[ {cmd:(}{it:ymodel}{cmd:)} ] {it:depvar}
+[{cmd:(}{it:ymodel}{cmd:)}] {it:depvar}
 {p_end}
 {...}
 {phang}
 {it:msepc} 
 is 
-[ {cmd:(}{it:mmodel}{cmd:)} ] {it:mvar}
+[{cmd:(}{it:mmodel}{cmd:)}] {it:mvar}
 {p_end}
 {...}
 {phang}
 {it:lsepc} 
 is 
-[ {cmd:(}{it:lmodel1}{cmd:)} ]  {it:lvars1} 
-[
-{cmd:(}{it:lmodel2}{cmd:)} {it:lvars2}
-{it:...}
-]
+[{cmd:(}{it:lmodel}{cmd:)}]  {it:lvars} 
+[{cmd:(}{it:lmodel}{cmd:)} {it:lvars}] {it:...}
 {p_end}
 
 {phang}
 {it:ymodel}, {it:mmodel}, {it:lmodel}
 are one of {cmdab:reg:ress} (default), {cmd:logit}, or {cmd:poisson}
+{p_end}
+
+{phang}
+{it:lvars} 
+are post-treatment covariates (exposure-induced confounders).
 {p_end}
 
 

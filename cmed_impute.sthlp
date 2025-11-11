@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.3.0  12oct2025}{...}
+{* *! version 0.4.0  11nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -31,12 +31,10 @@ Pure regression imputation, single mediator
 {cmd:(}[{cmd:(}{it:ymodel}{cmd:)}] {depvar}{cmd:)}
 {help varlist:{it:mvar}}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
@@ -48,31 +46,10 @@ Pure regression imputation, multiple mediators
 {cmd:(}[{cmd:(}{it:ymodel}{cmd:)}] {depvar}{cmd:)}
 {cmd:(}{help varlist:{it:mvars}}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
-
-
-{pstd}
-Controlled direct effect
-
-{p 8 16 2}
-{cmd:cmed}
-{cmdab:imp:ute}
-{cmd:(}[{cmd:(}{it:ymodel}{cmd:)}] {depvar}{cmd:)}
-{help varname:{it:mvar}}
-{help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
-{ifin} 
-{weight}
-{cmd:,} 
-{opt m:value(#)} 
-[ {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
@@ -84,12 +61,27 @@ Imputation-based weighting
 {cmd:(}[{cmd:(}{it:ymodel}{cmd:)}] {depvar}{cmd:)}
 {cmd:(}{help varlist:{it:mvars}}{cmd:)}
 {cmd:(}{cmd:(logit)} {help varname:{it:dvar}}{cmd:)}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+[{cmd:,} {it:options}]
+
+
+{pstd}
+Controlled direct effect
+
+{p 8 16 2}
+{cmd:cmed}
+{cmdab:imp:ute}
+{cmd:(}[{cmd:(}{it:ymodel}{cmd:)}] {depvar}{cmd:)}
+{help varname:{it:mvar}}
+{help varname:{it:dvar}}
+[{cmd:=} {help varlist:{it:cvars}}]
+{ifin} 
+{weight}
+{cmd:,} 
+{opt m:value(#)} 
+[{it:options}]
 
 
 {...}

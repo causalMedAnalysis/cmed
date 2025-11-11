@@ -12,7 +12,7 @@ d KW: confounding
 d
 d Requires: Stata version 16.1
 d
-d Distribution-Date: 20251014
+d Distribution-Date: 20251111
 d
 d Author: Geoff Wodtke, University of Chicago
 d Support: email wodtke@@uchicago.edu
@@ -21,8 +21,60 @@ d Support: email klein.daniel.81@@gmail.com
 d
 f cmed.ado
 f cmed.sthlp
+f cmed_dml.sthlp
 f cmed_impute.sthlp
 f cmed_ipw.sthlp
 f cmed_linear.sthlp
 f cmed_mr.sthlp
 f cmed_simulate.sthlp
+f dmlmed.ado
+f dmlmne.ado
+f dmlpath.ado
+f impcde.ado
+f impcdebs.ado
+f impmed.ado
+f impmedbs.ado
+f ipwcde.ado
+f ipwcdebs.ado
+f ipwmed.ado
+f ipwmedbs.ado
+f ipwpath.ado
+f ipwpathbs.ado
+f ipwvent.ado
+f ipwventbs.ado
+f lincde.ado
+f lincdebs.ado
+f linmed.ado
+f linmedbs.ado
+f linpath.ado
+f linpathbs.ado
+f medsim.ado
+f medsimbs.ado
+f mipwpath.ado
+f mlinpath.ado
+f mpathimp.ado
+f mpathwimp.ado
+f mr1forest.ado
+f mr1lasso.ado
+f mr1med.ado
+f mr2forest.ado
+f mr2lasso.ado
+f mr2med.ado
+f mrmed.ado
+f mrmne.ado
+f mrpath.ado
+f mrpathbs.ado
+f pathimp.ado
+f pathimpbs.ado
+f pathwimp.ado
+f pathwimpbs.ado
+f rwrcde.ado
+f rwrcdebs.ado
+f rwrlite.ado
+f rwrlitebs.ado
+f simcde.ado
+f simcdebs.ado
+f ventsim.ado
+f ventsimbs.ado
+f wimpmed.ado
+f wimpmedbs.ado

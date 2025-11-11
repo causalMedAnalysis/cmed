@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.3.0  12oct2025}{...}
+{* *! version 0.4.0  11nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -31,12 +31,10 @@ Single mediator, logit model for treatment
 {depvar}
 {help varname:{it:mvar}}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
@@ -48,38 +46,14 @@ Multiple mediators, logit model for treatment
 {depvar}
 {cmd:(}{help varlist:{it:mvars}}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
-[ {cmd:,} {it:options} ]
+[{cmd:,} {it:options}]
 
 
 {pstd}
-Controlled direct effect, binary mediator, optional post-treatment covariates
-
-{p 8 16 2}
-{cmd:cmed}
-{cmd:ipw}
-{depvar}
-{cmd:(}{cmd:(logit)} {help varname:{it:mvar}}{cmd:)}
-[
-{cmd:(}{help varlist:{it:lvars}}{cmd:)}
-]
-{help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
-{ifin} 
-{weight}
-{cmd:,} 
-{opt m:value(#)} 
-[ {it:options} ]
-
-
-{pstd}
-Interventional effects, single post-treatment covariate
+Interventional effects, single mediator, single post-treatment covariate
 
 {p 8 16 2}
 {cmd:cmed}
@@ -88,14 +62,28 @@ Interventional effects, single post-treatment covariate
 {cmd:(}[{cmd:(}{it:mmodel}{cmd:)}] {help varname:{it:mvar}}{cmd:)}
 {cmd:(}{cmd:(}{it:lmodel}{cmd:)} {help varname:{it:lvar}}{cmd:)}
 {help varname:{it:dvar}}
-[ 
-{cmd:=} {help varlist:{it:cvars}}
-]
+[{cmd:=} {help varlist:{it:cvars}}]
+{ifin} 
+{weight}
+[{cmd:,} {it:options}]
+
+
+{pstd}
+Controlled direct effect
+
+{p 8 16 2}
+{cmd:cmed}
+{cmd:ipw}
+{depvar}
+{cmd:(}[{cmd:(}{it:mmodel}{cmd:)}] {help varname:{it:mvar}}{cmd:)}
+[{cmd:(}{help varlist:{it:lvars}}{cmd:)}]
+{help varname:{it:dvar}}
+[{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
 {weight}
 {cmd:,} 
-{opt m:value(#)}
-[ {it:options} ]
+{opt m:value(#)} 
+[{it:options}]
 
 
 {...}
@@ -107,7 +95,9 @@ is the outcome of interest.
 {phang}
 {it:mvar} 
 is a mediator of interest. 
-Only one binary mediator is allowed for estimating 
+Only one mediator is allowed 
+with post-treatment covariates
+and for estimating 
 controlled direct effects.
 {p_end}
 {...}

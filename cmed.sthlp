@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.3.0  12oct2025}{...}
+{* *! version 0.4.0  11nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -40,8 +40,10 @@ estimated via simulation
 {synopt:{helpb cmed_impute:{ul:imp}ute}}regression imputation
 {p_end}
 {...}
-{synopt:{helpb cmed_mr:mr}}multiply robust; 
-de-biased machine learning
+{synopt:{helpb cmed_mr:mr}}multiply robust
+{p_end}
+{...}
+{synopt:{helpb cmed_dml:dml}}de-biased machine learning
 {p_end}
 {...}
 {synoptline}

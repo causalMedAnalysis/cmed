@@ -1,4 +1,4 @@
-*! version 0.3.0  12oct2025
+*! version 0.4.0  11nov2025
 program cmed
     
     version 16.1
@@ -74,6 +74,7 @@ program Parse_subcommand
         ipw         ///
         IMPute      ///
         mr          ///
+        dml         ///
     ]
     if ( _rc ) ///
         Error_unknown_subcommand
@@ -84,7 +85,8 @@ program Parse_subcommand
         `simulate'          ///
         `ipw'               ///
         `impute'            ///
-        `mr'
+        `mr'                ///
+        `dml'
     
 end
 
@@ -126,7 +128,7 @@ program Split_models_and_parse_cvars
     
     if (ustrtrim(`"`models'"') != "") {
         
-        display as err `"invalid model specification `models'"'
+        display as err `"invalid model specification {bf:`models'}"'
         Error_syntax_diagram
         // NotReached
         
@@ -282,8 +284,14 @@ program Parse_options
         Mvalue(numlist max=1)   ///
         d(numlist max=1)        ///
         dstar(numlist max=1)    ///
+        ///
+        SHOWCMEDCMDLINE         /// debugging; not documented
         *                       ///
     ]
+    
+    // !! fixme no more pass-thru options
+    
+    global Cmed__showcmedcmdline : copy local showcmedcmdline
     
     if ("`mvalue'" != "") {
         
@@ -385,14 +393,21 @@ program Estimate
     if ("`weight'" != "") ///
         global Cmed__pweight [`weight' `exp']
     
+    // !! fixme note/warning message for pweights with complex survey data
+    
+    Build_cmdline_cmed_${Cmed__subcommand} , ${Cmed__options}
+    
     preserve
     
     quietly keep if ${Cmed__touse} 
     
     // !! fixme     can we keep only the required variables?
-    // !!           remember that data is possibly  -svyset-
+    // !!           Caution: the data might be -svyset-
     
-    Cmed_${Cmed__subcommand} , ${Cmed__options}
+    if ("${Cmed__showcmedcmdline}" == "showcmedcmdline") ///
+        mata : printf("{txt}. %s\n",st_global("Cmed__cmdline"))
+    
+    ${Cmed__caller_version} ${Cmed__cmdline}
     
     restore
     
@@ -404,59 +419,71 @@ end
     /*  _____________________________________________________________________
                                                               cmed linear  */
 
-program Cmed_linear
+program Build_cmdline_cmed_linear
     
     /*
         Map to
         
             linmed
             linpath
-            lincd
+            lincde
             
+            rwrcde
             rwrlite
     */
     
     syntax [ , pathspecific mvalue(string) * ]
     
     Confirm_model "d" ("")
+    Confirm_model "l" ("")
     Confirm_model "y" ("","regress") , default("regress")
     
     if ( ${Cmed__l_n_specs} ) {
         
-        // !! fixme: is mvalue() really required?
+        Confirm_model "m" ("","regress") , default("regress")
         
-        syntax , mvalue(string) [ * ]
-        
-        Confirm_model "l" ("")
-        
-    }
-    
-    if ("`mvalue'" != "") {
-        
-        Confirm_model "m" ("")
-        
-        local options `options' mvar(${Cmed__mvars}) m(`mvalue')
-        
-        if ( ${Cmed__l_n_specs} )   ///
+        if ("`mvalue'" == "") {
+            
+            Option_not_allowed "`pathspecific'" "" ///
+                "with {bf:cmed linear} and ${Cmed__l_id}s"
+            
+            Confirm_min_max_var "m" , max(1)
+            
             local cmd "rwrlite"
-        else                        ///
-            local cmd "lincde"
+            
+        }
+        else    local cmd "rwrcde"
         
     }
     else {
         
-        Confirm_model "m" ("","regress") , default("regress")
-        
-        local mvars : copy global Cmed__mvars
-        
-        if ("`pathspecific'" == "pathspecific") ///
-            local cmd "linpath"
-        else ///
-            local cmd "linmed"
+        if ("`mvalue'" != "") {
+            
+            Confirm_model "m" ("")
+            
+            local cmd "lincde"
+            
+        }
+        else {
+            
+            Confirm_model "m" ("","regress") , default("regress")
+            
+            if ("`pathspecific'" == "pathspecific") ///
+                local cmd "linpath"
+            else                                    ///
+                local cmd "linmed"
+            
+        }
         
     }
     
-    `cmd' ${Cmed__yvars} `mvars' ${Cmed__lvars} ${Cmed__pweight} , `options'
+    if ("`mvalue'" != "")   ///
+        local options `options' mvar(${Cmed__mvars}) m(`mvalue')
+    else                    ///
+        local mvars : copy global Cmed__mvars
+    
+    global Cmed__cmdline ///
+        `cmd' ${Cmed__yvars} `mvars' ${Cmed__lvars} ${Cmed__pweight} , `options'
     
 end
 
@@ -464,13 +491,14 @@ end
     /*  _____________________________________________________________________
                                                             cmed simulate  */
 
-program Cmed_simulate
+program Build_cmdline_cmed_simulate
     
     /*
         Map to
         
             medsim
             ventsim
+            simcde
     */
     
     syntax [ , pathspecific mvalue(string) * ]
@@ -480,18 +508,11 @@ program Cmed_simulate
     Confirm_min_max_var "m" , max(1)
     
     Confirm_model "d" ("")
-    Confirm_model "m" ("","regress","logit","poisson") , default("regress")
     Confirm_model "y" ("","regress","logit","poisson") , default("regress")
     
     if ( ${Cmed__l_n_specs} ) {
         
-        // !! fixme: is mvalue() really required?
-        
-        syntax , mvalue(string) [ * ]
-        
         Confirm_model "l" ("","regress","logit","poisson") , default("regress")
-        
-        local options `options' m(`mvalue')
         
         forvalues i = 1/${Cmed__l_n_specs} {
             
@@ -506,12 +527,29 @@ program Cmed_simulate
         
         local options `options' lvars(`lvars') lregs(`lregs')
         
-        local cmd "ventsim"
+        if ("`mvalue'" != "") {
+            
+            Confirm_model "m" ("")
+            
+            local options `options' m(`mvalue')
+            
+            local cmd "simcde"
+            
+        }
+        else {
+            
+            Confirm_model "m" ("","regress","logit","poisson") , default("regress")
+            
+            local cmd "ventsim"
+            
+        }
         
     }
     else {
         
         Option_not_allowed "`mvalue'" "mvalue()"
+        
+        Confirm_model "m" ("","regress","logit","poisson") , default("regress")
         
         local cmd "medsim"
         
@@ -522,7 +560,8 @@ program Cmed_simulate
         mvar(${Cmed__mvars})    ///
         mreg(${Cmed__mmodel1})
     
-    `cmd' ${Cmed__yvars} ${Cmed__pweight} , `options'
+    global Cmed__cmdline ///
+        `cmd' ${Cmed__yvars} ${Cmed__pweight} , `options'
     
 end
 
@@ -530,15 +569,16 @@ end
     /*  _____________________________________________________________________
                                                                  cmed ipw  */
 
-program Cmed_ipw
+program Build_cmdline_cmed_ipw
     
     /*
         Map to
         
             ipwmed
             ipwpath
-            ipwcde
             ipwvent
+            ipwcde
+            
     */
     
     syntax [ , pathspecific mvalue(string) * ]
@@ -548,45 +588,42 @@ program Cmed_ipw
     Confirm_model "d" ("","logit") , default("logit")
     Confirm_model "y" ("")
     
-    if ("${Cmed__lmodel1}" != "") {
+    if ("`mvalue'" != "") {
         
-        // !! fixme: is mvalue() really required?
+        capture Confirm_model "l" ("")
+        if ( _rc ) ///
+            Option_not_allowed "m" "mvalue()" "with ${Cmed__l_id} model"
+            // NotReached
         
-        syntax , mvalue(string) [ * ]
-        
-        Confirm_min_max_var "l" , max(1)
-        
-        Confirm_model "l" ("logit","ologit")
         Confirm_model "m" ("","regress","logit","poisson") , default("regress")
         
         local options `options'     ///
            mvar(${Cmed__mvars})     ///
            lvar(${Cmed__lvars})     ///
            mreg(${Cmed__mmodel1})   ///
-           lreg(${Cmed__lmodel1})   ///
            m(`mvalue')
            
-        local cmd "ipwvent"
-        
-    }
-    else if ("`mvalue'" != "") {
-        
-        Confirm_binary "m"
-        
-        Confirm_model "l" ("")
-        Confirm_model "m" ("logit")
-        
-        local options `options'     ///
-            mvar(${Cmed__mvars})    ///
-            lvars(${Cmed__lvars})   ///
-            m(`mvalue')
-            
         local cmd "ipwcde"
         
     }
-    else {
+    else if ( ${Cmed__l_n_specs} ) {
         
-        Confirm_min_max_var "l" , max(0)
+        Confirm_min_max_var "l" , max(1)
+        Confirm_min_max_var "m" , max(1)
+        
+        Confirm_model "l" ("logit","ologit")
+        Confirm_model "m" ("","regress","logit","poisson") , default("regress")
+        
+        local options `options'     ///
+            mvar(${Cmed__mvars})    ///
+            lvar(${Cmed__lvars})    ///
+            mreg(${Cmed__mmodel1})  ///
+            lreg(${Cmed__lmodel1})
+            
+        local cmd "ipwvent"
+        
+    }
+    else {
         
         Confirm_model "m" ("")
         
@@ -610,7 +647,8 @@ program Cmed_ipw
         
     }
     
-    `cmd' ${Cmed__yvars} `mvars' , `options'
+    global Cmed__cmdline ///
+        `cmd' ${Cmed__yvars} `mvars' , `options'
     
 end
 
@@ -618,7 +656,7 @@ end
     /*  _____________________________________________________________________
                                                               cmed impute  */
 
-program Cmed_impute
+program Build_cmdline_cmed_impute
     
     /*
         Map to
@@ -626,6 +664,7 @@ program Cmed_impute
             impmed
             pathimp
             impcde
+            
             wimpmed
             pathwimp
     */
@@ -637,34 +676,7 @@ program Cmed_impute
     Confirm_model "d" ("","logit")
     Confirm_model "m" ("")
     
-    if ("${Cmed__dmodel1}" == "") {
-        
-        if ("`mvalue'" != "") {
-            
-            Confirm_model "y" ("regress","logit","poisson") , default("regress")
-            
-            local options `options' mvar(${Cmed__mvars}) m(`mvalue')
-            
-            local cmd "impcde"
-            
-        }
-        else {
-            
-            Confirm_model "y" ("regress","logit") , default("regress")
-            
-            local mvars : copy global Cmed__mvars
-            
-            if ("`pathspecific'" == "pathspecific") ///
-                local cmd "pathimp"
-            else                                    ///
-                local cmd "impmed"
-            
-        }
-        
-        local pweight : copy global Cmed__pweight
-        
-    }
-    else {
+    if ("${Cmed__dmodel1}" != "") {
         
         Option_not_allowed "`mvalue'" "mvalue()"
         
@@ -691,10 +703,38 @@ program Cmed_impute
             local cmd "wimpmed"
         
     }
+    else {
+        
+        if ("`mvalue'" != "") {
+            
+            Confirm_model "y" ("regress","logit","poisson") , default("regress")
+            
+            local options `options' mvar(${Cmed__mvars}) m(`mvalue')
+            
+            local cmd "impcde"
+            
+        }
+        else {
+            
+            Confirm_model "y" ("regress","logit") , default("regress")
+            
+            local mvars : copy global Cmed__mvars
+            
+            if ("`pathspecific'" == "pathspecific") ///
+                local cmd "pathimp"
+            else                                    ///
+                local cmd "impmed"
+            
+        }
+        
+        local pweight : copy global Cmed__pweight
+        
+    }
     
     local options `options' yreg(${Cmed__ymodel1})
     
-    `cmd' ${Cmed__yvars} `mvars' `pweight' , `options'
+    global Cmed__cmdline ///
+        `cmd' ${Cmed__yvars} `mvars' `pweight' , `options'
     
 end
 
@@ -702,7 +742,113 @@ end
     /*  _____________________________________________________________________
                                                                   cmed mr  */
 
-program Cmed_mr
+program Build_cmdline_cmed_mr
+    
+    /*
+        Map to
+        
+            mrmed
+            mrpath
+    */
+    
+    syntax [ , rmpw * ]
+    
+    Confirm_model "d" ("","logit") , default("logit")
+    Confirm_model "y" ("","regress") , default("regress")
+    
+    if ("`rmpw'" == "rmpw") ///
+        Confirm_model "m" ("","logit") , default("logit")
+    else                    ///
+        Confirm_model "m" ("")
+    
+    Build_cmdline_cmed_mr_or_dml mr , `rmpw' `options'
+    
+end
+
+
+    /*  _____________________________________________________________________
+                                                                 cmed dml  */
+
+program Build_cmdline_cmed_dml
+    
+    /*
+        Map to
+        
+            dmlmed
+            dmlpath
+    */
+    
+    syntax , method(string asis) [ * ]
+    
+    Parse_cmed_dml_option_method `method'
+    
+    local options `options' model(${Cmed__dml_method}) ${Cmed__dml_options}
+    
+    Confirm_model "d" ("")
+    Confirm_model "m" ("")
+    Confirm_model "y" ("")
+    
+    Build_cmdline_cmed_mr_or_dml dml , `options'
+    
+end
+
+
+program Parse_cmed_dml_option_method
+    
+    capture noisily syntax name(name=method id="method") [ , * ]
+    if ( !_rc ) {
+        
+        if ( inlist("`method'","rforest","lasso") ) {
+            
+            if ("`method'" == "lasso") {
+                
+                local command lasso2
+                local package lassopack
+                
+            }
+            else {
+                
+                local command `method'
+                local package `method'
+                
+            }
+            
+            capture noisily quietly which `package'
+            if ( !_rc ) {
+                
+                global Cmed__dml_method  : copy local method
+                global Cmed__dml_options : copy local options
+                
+                exit
+                
+            }
+            
+            display as err
+            display as err _col(4) "{bf:cmed dml} {it:...}{bf:, method(`method')}"
+            display as err 
+            display as err "requires {bf:`command'}. " _continue
+            display as err " To install {bf:`command'} from SSC," _continue
+            display as err " type {stata ssc install `package'}"
+            display as err
+            
+            exit 111
+            
+        }
+        
+        display as err `"{it:method} must be one of {bf:rforest} or {bf:lasso}"'
+        
+    }
+    
+    display as err "option {bf:method()} invalid"
+    exit 198
+    
+end
+
+
+    /*  _____________________________________________________________________
+                                                       cmed mr / cmed dml  */
+
+program Build_cmdline_cmed_mr_or_dml
     
     /*
         Map to
@@ -713,91 +859,57 @@ program Cmed_mr
             dmlpath
     */
     
-    syntax [ , pathspecific mvalue(string) dml(string asis) * ]
+    gettoken mr_or_dml 0 : 0 , parse(" ,")
+    assert inlist("`mr_or_dml'","mr","dml")
     
-    if ("${Cmed__pweight}" != "") {
-        
-        display "weights not allowed with {bf:cmed mr}"
-        exit 101
-        
-    }
+    syntax [ , pathspecific mvalue(string) rmpw * ]
     
-    Option_not_allowed "`mvalue'" "mvalue()" "with {bf:cmed mr}"
+    Pweights_not_allowed_with_cmed "`mr_or_dml'"
     
-    Confirm_min_max_var "l" , max(0)
+    Option_not_allowed "`mvalue'" "mvalue()" "with {bf:cmed `mr_or_dml'}"
     
     Confirm_binary "d"
     
-    Confirm_model "d" ("","logit") , default("logit")
-    Confirm_model "y" ("","regress") , default("regress")
+    Confirm_min_max_var "l" , max(0)
     
-    if (`"`dml'"' != "") {
+    if ("`pathspecific'" == "pathspecific") {
         
-        Parse_dml `dml'
+        Option_not_allowed "`rmpw'" "" "with option {bf:pathspecific}"
         
-        local options `options' model(${Cmed__dml_model}) ${Cmed__dml_options}
-        
-        local cmd "dml"
-        
-    }
-    else    local cmd "mr"
-    
-    if ("${Cmed__mmodel1}" != "") {
-        
-        Confirm_min_max_var "m" , max(1)
-        
-        Confirm_binary "m"
-        
-        Confirm_model "m" ("logit")
-        
-        local options `options' type(mr1)
-        
-        local cmd "`cmd'med"
+        local cmd "`mr_or_dml'path"
         
     }
     else {
         
-        Confirm_model "m" ("")
-        
-        if ("`pathspecific'" != "pathspecific") {
+        if ("`rmpw'" == "rmpw") {
             
-            local options `options' type(mr2)
+            capture noisily {
+                
+                Confirm_min_max_var "m" , max(1)
+                
+                Confirm_binary "m"
+                
+            }
+            if ( _rc ) {
+                
+                display as err "option {bf:rmpw} only allowed" ///
+                    " with a single binary ${Cmed__m_id}"
+                
+                exit _rc
+                
+            }
             
-            local cmd "`cmd'med"
+            local options `options' type(mr1)
             
         }
-        else    local cmd "`cmd'path"
+        else    local options `options' type(mr2)
+        
+        local cmd "`mr_or_dml'med"
         
     }
     
-    `cmd' ${Cmed__yvars} ${Cmed__mvars} , `options'
-    
-end
-
-
-    /*  _____________________________________________________________________
-                                               de-biased machine learning  */
-
-program Parse_dml
-    
-    capture noisily syntax name(name=model id="model") [ , * ]
-    if ( !_rc ) {
-        
-        if ( inlist("`model'","rforest","lasso") ) {
-            
-            global Cmed__dml_model   : copy local model
-            global Cmed__dml_options : copy local options
-            
-            exit
-            
-        }
-        
-        display as err `"{it:dmlmodel} must be one of {bf:rforest} or {bf:lasso}"'
-        
-    }
-    
-    display as err "option {bf:dml()} invalid"
-    exit 198
+    global Cmed__cmdline ///
+        `cmd' ${Cmed__yvars} ${Cmed__mvars} , `options'
     
 end
 
@@ -805,7 +917,7 @@ end
 
 
 /*  _________________________________________________________________________
-                                                                auxillary  */
+                                                                auxiliary  */
 
 
 
@@ -833,7 +945,7 @@ program Confirm_binary
         capture assert inlist(`var',0,1) if ${Cmed__touse} , fast
         if ( _rc ) {
             
-            display as err "`var' not binary 0/1"
+            display as err "variable {bf:`var'} not binary 0/1"
             Error_invalid_specification `letter' 450
             // NotReached
             
@@ -862,7 +974,7 @@ program Confirm_min_max_var
         
         if (`min' == 1) ///
             display as err "${Cmed__`letter'_id} required"
-        else ///
+        else            ///
             capture noisily error 102
         
         local rc 102
@@ -873,7 +985,7 @@ program Confirm_min_max_var
         
         if (`max' == 0) ///
             display as err "${Cmed__`letter'_id}s not allowed"
-        else ///
+        else            ///
             capture noisily error 103
         
         local rc 103
@@ -925,6 +1037,19 @@ program Option_not_allowed
 end
 
 
+program Pweights_not_allowed_with_cmed
+    
+    args subcommand
+    
+    if ("${Cmed__pweight}" != "") {
+        
+        display as err "pweights not allowed with {bf:cmed `subcommand'}"
+        exit 101
+        
+    }
+    
+end
+
 
 
 
@@ -936,7 +1061,7 @@ program Error_invalid_specification
     args letter rc
     
     display as err ///
-        `"invalid ${Cmed__`letter'_id} model specification ${Cmed__`letter'spec}"'
+        `"invalid ${Cmed__`letter'_id} model specification {bf:${Cmed__`letter'spec}}"'
     
     exit `rc'
     
@@ -1003,10 +1128,10 @@ program Error_syntax_diagram
     display as err "{it:mspec} is [{bf:(}{it:model}{bf:)}] {it:mvars}"
     display as err " [ {bf:(}{it:model}{bf:)} {it:mvars ...} ]"
     display as err "{break}"
-    display as err "{it:yspec} is [{bf:(}{it:model}{bf:)}] {it:lvars}"
+    display as err "{it:lspec} is [{bf:(}{it:model}{bf:)}] {it:lvars}"
     display as err " [ {bf:(}{it:model}{bf:)} {it:lvars ...} ]"
     display as err "{break}"
-    display as err "{it:yspec} is [{bf:(}{it:model}{bf:)}] {it:dvar}"
+    display as err "{it:dspec} is [{bf:(}{it:model}{bf:)}] {it:dvar}"
     display as err "{p_end}" _newline
     
     exit 198
