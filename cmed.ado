@@ -1,4 +1,4 @@
-*! version 0.4.0  11nov2025
+*! version 0.4.1  11nov2025
 program cmed
     
     version 16.1
@@ -454,6 +454,8 @@ program Build_cmdline_cmed_linear
         }
         else    local cmd "rwrcde"
         
+        local options `options' mvar(${Cmed__mvars})
+        
     }
     else {
         
@@ -475,12 +477,12 @@ program Build_cmdline_cmed_linear
             
         }
         
+        local options `options' mvar(${Cmed__mvars})
+        
     }
     
     if ("`mvalue'" != "")   ///
-        local options `options' mvar(${Cmed__mvars}) m(`mvalue')
-    else                    ///
-        local mvars : copy global Cmed__mvars
+        local options `options' m(`mvalue')
     
     global Cmed__cmdline ///
         `cmd' ${Cmed__yvars} `mvars' ${Cmed__lvars} ${Cmed__pweight} , `options'
@@ -540,6 +542,8 @@ program Build_cmdline_cmed_simulate
             
             Confirm_model "m" ("","regress","logit","poisson") , default("regress")
             
+            local options `options' mreg(${Cmed__mmodel1})
+            
             local cmd "ventsim"
             
         }
@@ -551,14 +555,13 @@ program Build_cmdline_cmed_simulate
         
         Confirm_model "m" ("","regress","logit","poisson") , default("regress")
         
+        local options `options' mreg(${Cmed__mmodel1})
+        
         local cmd "medsim"
         
     }
     
-    local options `options'     ///
-        yreg(${Cmed__ymodel1})  ///
-        mvar(${Cmed__mvars})    ///
-        mreg(${Cmed__mmodel1})
+    local options `options' yreg(${Cmed__ymodel1}) mvar(${Cmed__mvars})
     
     global Cmed__cmdline ///
         `cmd' ${Cmed__yvars} ${Cmed__pweight} , `options'
@@ -599,7 +602,7 @@ program Build_cmdline_cmed_ipw
         
         local options `options'     ///
            mvar(${Cmed__mvars})     ///
-           lvar(${Cmed__lvars})     ///
+           lvars(${Cmed__lvars})    ///
            mreg(${Cmed__mmodel1})   ///
            m(`mvalue')
            
