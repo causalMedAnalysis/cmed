@@ -68,8 +68,8 @@ program define mr1lasso, rclass
 
 	forval k=1/`xfits' {
 		
-		di "xfit = `k' ..."
-		di "   Training LASSO logit model for `dvar' given C "
+		*di "xfit = `k' ..."
+		*di "   Training LASSO logit model for `dvar' given C "
 		qui lassologit `dvar' `cvars' if `kpart'!=`k' & `touse', lic(aic) postres 
 		
 		tempvar	phat_D1_C
@@ -77,7 +77,7 @@ program define mr1lasso, rclass
 		qui replace `pi`d'_C' = `phat_D1_C'*`d' + (1-`phat_D1_C')*(1-`d') if `kpart'==`k' & `touse'
 		qui replace `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `kpart'==`k' & `touse'
 		
-		di "   Training LASSO logit model for `mvar' given {C,D}"
+		*di "   Training LASSO logit model for `mvar' given {C,D}"
 		qui lassologit `mvar' `dvar' `cvars' `cxd_vars' if `kpart'!=`k' & `touse', lic(aic) postres 
 		
 		qui replace `dvar' = `dstar' if `touse'
@@ -110,7 +110,7 @@ program define mr1lasso, rclass
 			qui replace ``dvar'X`c'' = `dvar' * `c' if `touse'
 		}
 		
-		di "   Training LASSO regression model for `yvar' given {C,D,M}"
+		*di "   Training LASSO regression model for `yvar' given {C,D,M}"
 		qui lasso2 `yvar' `dvar' `mvar' `inter' `cvars' `cxd_vars' `cxm_vars' if `kpart'!=`k' & `touse', lic(aic) postres `options'
 		
 		qui replace `dvar' = `dstar' if `touse'
@@ -280,3 +280,4 @@ program define mr1lasso, rclass
 end mr1lasso
 
 	
+
