@@ -52,8 +52,8 @@ program define mr2forest, rclass
 		
 	forval k=1/`xfits' {
 		
-		di "xfit = `k' ..."
-		di "   Training random forest for `dvar' given C"
+		*di "xfit = `k' ..."
+		*di "   Training random forest for `dvar' given C"
 		qui rforest `dvar' `cvars' if `kpart'!=`k' & `touse', ///
 			type(class) seed(`seed') `options'
 		
@@ -62,7 +62,7 @@ program define mr2forest, rclass
 		qui replace `pi`d'_C' = `phat_D1_C'*`d' + (1-`phat_D1_C')*(1-`d') if `kpart'==`k' & `touse'
 		qui replace `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `kpart'==`k' & `touse'
 		
-		di "   Training random forest for `dvar' given {C,M}"
+		*di "   Training random forest for `dvar' given {C,M}"
 		qui rforest `dvar' `mvars' `cvars' if `kpart'!=`k' & `touse', ///
 			type(class) seed(`seed') `options'
 		
@@ -71,7 +71,7 @@ program define mr2forest, rclass
 		qui replace `pi`d'_CM' = `phat_D1_CM'*`d' + (1-`phat_D1_CM')*(1-`d') if `kpart'==`k' & `touse'
 		qui replace `pi`dstar'_CM' = `phat_D1_CM'*`dstar' + (1-`phat_D1_CM')*(1-`dstar') if `kpart'==`k' & `touse'
 		
-		di "   Training random forest for `yvar' given {C,D,M}"
+		*di "   Training random forest for `yvar' given {C,D,M}"
 		qui rforest `yvar' `dvar' `mvars' `cvars' if `kpart'!=`k' & `touse', ///
 			type(reg) seed(`seed') `options'
 
@@ -87,7 +87,7 @@ program define mr2forest, rclass
 	
 		qui replace `dvar' = `dvar_orig' if `touse'
 		
-		di "   Training random forest for mu`d'(C,M) given {C,D}"
+		*di "   Training random forest for mu`d'(C,M) given {C,D}"
 		qui rforest `xxmu`d'_CM' `dvar' `cvars' if `kpart'!=`k' & `touse', ///
 			type(reg) seed(`seed') `options'
 			
@@ -103,7 +103,7 @@ program define mr2forest, rclass
 		
 		qui replace `dvar' = `dvar_orig' if `touse'
 
-		di "   Training random forest for mu`dstar'(C,M) given {C,D}"
+		*di "   Training random forest for mu`dstar'(C,M) given {C,D}"
 		qui rforest `xxmu`dstar'_CM' `dvar' `cvars' if `kpart'!=`k' & `touse', ///
 			type(reg) seed(`seed') `options'
 	
@@ -189,3 +189,4 @@ program define mr2forest, rclass
 	return scalar pval_nie = (1-normal(abs(_b[`eifNIE']/_se[`eifNIE'])))*2
 
 end mr2forest
+
