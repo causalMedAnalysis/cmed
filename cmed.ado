@@ -1,4 +1,4 @@
-*! version 0.4.2  11nov2025
+*! version 0.4.3  12nov2025
 program cmed
     
     version 16.1
@@ -818,7 +818,7 @@ program Parse_cmed_dml_option_method
                 
             }
             
-            capture noisily quietly which `package'
+            capture noisily quietly which `command'
             if ( !_rc ) {
                 
                 global Cmed__dml_method  : copy local method
