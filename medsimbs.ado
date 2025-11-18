@@ -1,7 +1,7 @@
 *!TITLE: MEDSIM - causal mediation analysis using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 - added support for ologit models
 *!
 
 program define medsimbs, rclass
@@ -67,7 +67,43 @@ program define medsimbs, rclass
 			error 110
 		}
 	}
-	
+
+	if ("`mreg'"=="ologit") {
+
+		local mhat_var_names "mhat_Md_r001 mhat_Mdstar_r001"
+		qui levelsof `mvar' if `touse', local(levelsM)
+
+		foreach name of local mhat_var_names {
+			foreach level in `levelsM' {
+				capture confirm new variable `name'_`level'
+				if _rc {
+					display as error "{p 0 0 5 0}The command needs to create a variable"
+					display as error "with the following name: `name'_`level', "
+					display as error "but this variable has already been defined.{p_end}"
+					error 110
+				}
+			}
+		}
+	}
+
+	if ("`yreg'"=="ologit") {
+
+		local yhat_var_names "yhat_YdMd_r001 yhat_YdstarMdstar_r001 yhat_YdMdstar_r001"
+		qui levelsof `yvar' if `touse', local(levelsY)
+
+		foreach name of local yhat_var_names {
+			foreach level in `levelsY' {
+				capture confirm new variable `name'_`level'
+				if _rc {
+					display as error "{p 0 0 5 0}The command needs to create a variable"
+					display as error "with the following name: `name'_`level', "
+					display as error "but this variable has already been defined.{p_end}"
+					error 110
+				}
+			}
+		}
+	}
+			
 	foreach stub in Md_r001 Mdstar_r001 YdMd_r001 YdstarMdstar_r001 YdMdstar_r001 {
 		forval i=1/`nsim' {
 			capture confirm new variable `stub'_`i'
@@ -294,6 +330,146 @@ program define medsimbs, rclass
 				
 	}
 
+	if (("`mreg'"=="ologit") & ("`yreg'"=="regress")) {
+
+		di ""
+		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		est store Mmodel_r001
+
+		di ""
+		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		regress `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
+		est store Ymodel_r001
+
+		qui levelsof `mvar' if `touse', local(levels)
+		qui local maxLevel : word `: word count `levels'' of `levels'
+			
+		qui forval i=1/`nsim' {
+		
+			est restore Mmodel_r001
+		
+			replace `dvar'=`d' if `touse'
+
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+			
+			foreach level in `levels' {
+				qui predict mhat_Md_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Md_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
+				replace Md_r001_`i' = min(Md_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+				
+			foreach level in `levels' {
+				qui predict mhat_Mdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Mdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
+				replace Mdstar_r001_`i' = min(Mdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			est restore Ymodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			replace `mvar'=Md_r001_`i' if `touse'
+
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+			
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}
+				
+			predict yhat_YdMd_r001 if `touse'
+			gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
+					
+			replace `dvar'=`dstar' if `touse'
+			replace `mvar'=Mdstar_r001_`i' if `touse'
+
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+			
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}			
+			
+			predict yhat_YdstarMdstar_r001 if `touse'
+			gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
+			
+			replace `dvar'=`d' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}			
+			
+			predict yhat_YdMdstar_r001 if `touse'
+			gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
+					
+			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
+		
+		}
+		
+		est drop Mmodel_r001 Ymodel_r001
+				
+	}
+	
 	if (("`mreg'"=="poisson") & ("`yreg'"=="regress")) {
 
 		di ""
@@ -615,6 +791,146 @@ program define medsimbs, rclass
 		
 	}
 
+	if (("`mreg'"=="ologit") & ("`yreg'"=="logit")) {
+
+		di ""
+		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		est store Mmodel_r001
+
+		di ""
+		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		logit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
+		est store Ymodel_r001
+		
+		qui levelsof `mvar' if `touse', local(levels)
+		qui local maxLevel : word `: word count `levels'' of `levels'
+		
+		qui forval i=1/`nsim' {
+		
+			est restore Mmodel_r001
+		
+			replace `dvar'=`d' if `touse'
+
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+			
+			foreach level in `levels' {
+				qui predict mhat_Md_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Md_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
+				replace Md_r001_`i' = min(Md_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+				
+			foreach level in `levels' {
+				qui predict mhat_Mdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Mdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
+				replace Mdstar_r001_`i' = min(Mdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			est restore Ymodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			replace `mvar'=Md_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}							
+			
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}					
+			
+			predict yhat_YdMd_r001 if `touse'
+			gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
+					
+			replace `dvar'=`dstar' if `touse'
+			replace `mvar'=Mdstar_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}							
+			
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}								
+			
+			predict yhat_YdstarMdstar_r001 if `touse'
+			gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
+			
+			replace `dvar'=`d' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}							
+			
+			predict yhat_YdMdstar_r001 if `touse'
+			gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
+					
+			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
+		
+		}
+		
+		est drop Mmodel_r001 Ymodel_r001
+		
+	}
+	
 	if (("`mreg'"=="poisson") & ("`yreg'"=="logit")) {
 
 		di ""
@@ -722,6 +1038,658 @@ program define medsimbs, rclass
 		
 	}
 
+	if (("`mreg'"=="regress") & ("`yreg'"=="ologit")) {
+		
+		di ""
+		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		regress `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		est store Mmodel_r001
+
+		di ""
+		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
+		est store Ymodel_r001
+		
+		qui levelsof `yvar' if `touse', local(levels)
+		qui local maxLevel : word `: word count `levels'' of `levels'
+		
+		qui forval i=1/`nsim' {
+		
+			est restore Mmodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+			
+			predict mhat_Md_r001 if `touse'
+			gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
+		
+			replace `dvar'=`dstar' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+			
+			predict mhat_Mdstar_r001 if `touse'
+			gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
+
+			est restore Ymodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			replace `mvar'=Md_r001_`i' if `touse'
+
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}		
+
+			foreach level in `levels' {
+				qui predict yhat_YdMd_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMd_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
+				replace YdMd_r001_`i' = min(YdMd_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			replace `mvar'=Mdstar_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}					
+
+			foreach level in `levels' {
+				qui predict yhat_YdstarMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
+				replace YdstarMdstar_r001_`i' = min(YdstarMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+
+			replace `dvar'=`d' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}				
+
+			foreach level in `levels' {
+				qui predict yhat_YdMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
+				replace YdMdstar_r001_`i' = min(YdMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+					
+			drop mhat_*r001 yhat_*r001* Md_r001_`i' Mdstar_r001_`i' 
+		
+		}
+			
+		est drop Mmodel_r001 Ymodel_r001
+	
+	}
+
+	if (("`mreg'"=="logit") & ("`yreg'"=="ologit")) {
+
+		di ""
+		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		logit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		est store Mmodel_r001
+
+		di ""
+		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
+		est store Ymodel_r001
+		
+		qui levelsof `yvar' if `touse', local(levels)
+		qui local maxLevel : word `: word count `levels'' of `levels'
+		
+		qui forval i=1/`nsim' {
+		
+			est restore Mmodel_r001
+		
+			replace `dvar'=`d' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}				
+				
+			predict mhat_Md_r001 if `touse', pr
+			gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
+		
+			replace `dvar'=`dstar' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}							
+			
+			predict mhat_Mdstar_r001 if `touse', pr
+			gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
+
+			est restore Ymodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			replace `mvar'=Md_r001_`i' if `touse'
+
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}		
+
+			foreach level in `levels' {
+				qui predict yhat_YdMd_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMd_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
+				replace YdMd_r001_`i' = min(YdMd_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			replace `mvar'=Mdstar_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}					
+
+			foreach level in `levels' {
+				qui predict yhat_YdstarMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
+				replace YdstarMdstar_r001_`i' = min(YdstarMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+
+			replace `dvar'=`d' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}				
+
+			foreach level in `levels' {
+				qui predict yhat_YdMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
+				replace YdMdstar_r001_`i' = min(YdMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+					
+			drop mhat_*r001 yhat_*r001* Md_r001_`i' Mdstar_r001_`i' 
+		
+		}
+			
+		est drop Mmodel_r001 Ymodel_r001
+	
+	}
+
+	if (("`mreg'"=="ologit") & ("`yreg'"=="ologit")) {
+
+		di ""
+		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		est store Mmodel_r001
+
+		di ""
+		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
+		est store Ymodel_r001
+		
+		qui levelsof `mvar' if `touse', local(mlevels)
+		qui local maxLevelm : word `: word count `mlevels'' of `mlevels'
+		
+		qui levelsof `yvar' if `touse', local(ylevels)
+		qui local maxLevely : word `: word count `ylevels'' of `ylevels'
+		
+		qui forval i=1/`nsim' {
+		
+			est restore Mmodel_r001
+		
+			replace `dvar'=`d' if `touse'
+
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+
+			foreach level in `mlevels' {
+				qui predict mhat_Md_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Md_r001_`i'=`maxLevelm' if `touse'
+			
+			foreach level in `mlevels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
+				replace Md_r001_`i' = min(Md_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+				
+			foreach level in `mlevels' {
+				qui predict mhat_Mdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Mdstar_r001_`i'=`maxLevelm' if `touse'
+			
+			foreach level in `mlevels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
+				replace Mdstar_r001_`i' = min(Mdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+
+			est restore Ymodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			replace `mvar'=Md_r001_`i' if `touse'
+
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}		
+
+			foreach level in `ylevels' {
+				qui predict yhat_YdMd_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMd_r001_`i'=`maxLevely' if `touse'
+			
+			foreach level in `ylevels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
+				replace YdMd_r001_`i' = min(YdMd_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			replace `mvar'=Mdstar_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}					
+
+			foreach level in `ylevels' {
+				qui predict yhat_YdstarMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdstarMdstar_r001_`i'=`maxLevely' if `touse'
+			
+			foreach level in `ylevels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
+				replace YdstarMdstar_r001_`i' = min(YdstarMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+
+			replace `dvar'=`d' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}				
+
+			foreach level in `ylevels' {
+				qui predict yhat_YdMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMdstar_r001_`i'=`maxLevely' if `touse'
+			
+			foreach level in `ylevels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
+				replace YdMdstar_r001_`i' = min(YdMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+					
+			drop mhat_*r001* yhat_*r001* Md_r001_`i' Mdstar_r001_`i' 
+		
+		}
+			
+		est drop Mmodel_r001 Ymodel_r001
+	
+	}
+	
+	if (("`mreg'"=="poisson") & ("`yreg'"=="ologit")) {
+
+		di ""
+		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		poisson `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		est store Mmodel_r001
+
+		di ""
+		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
+		est store Ymodel_r001
+		
+		qui levelsof `yvar' if `touse', local(levels)
+		qui local maxLevel : word `: word count `levels'' of `levels'
+		
+		qui forval i=1/`nsim' {
+		
+			est restore Mmodel_r001
+		
+			replace `dvar'=`d' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}							
+			
+			predict mhat_Md_r001 if `touse'
+			gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
+		
+			replace `dvar'=`dstar' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}							
+			
+			predict mhat_Mdstar_r001 if `touse'
+			gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
+		
+			est restore Ymodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			replace `mvar'=Md_r001_`i' if `touse'
+
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}		
+
+			foreach level in `levels' {
+				qui predict yhat_YdMd_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMd_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
+				replace YdMd_r001_`i' = min(YdMd_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			replace `mvar'=Mdstar_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}						
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}					
+
+			foreach level in `levels' {
+				qui predict yhat_YdstarMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
+				replace YdstarMdstar_r001_`i' = min(YdstarMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+
+			replace `dvar'=`d' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}				
+
+			foreach level in `levels' {
+				qui predict yhat_YdMdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen YdMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
+				replace YdMdstar_r001_`i' = min(YdMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+					
+			drop mhat_*r001 yhat_*r001* Md_r001_`i' Mdstar_r001_`i' 
+		
+		}
+			
+		est drop Mmodel_r001 Ymodel_r001
+	
+	}
 
 	if (("`mreg'"=="regress") & ("`yreg'"=="poisson")) {
 
@@ -937,6 +1905,146 @@ program define medsimbs, rclass
 		
 	}
 
+	if (("`mreg'"=="ologit") & ("`yreg'"=="poisson")) {
+
+		di ""
+		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		est store Mmodel_r001
+
+		di ""
+		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		poisson `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
+		est store Ymodel_r001
+		
+		qui levelsof `mvar' if `touse', local(levels)
+		qui local maxLevel : word `: word count `levels'' of `levels'
+		
+		qui forval i=1/`nsim' {
+		
+			est restore Mmodel_r001
+		
+			replace `dvar'=`d' if `touse'
+
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+			
+			foreach level in `levels' {
+				qui predict mhat_Md_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Md_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
+				replace Md_r001_`i' = min(Md_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			replace `dvar'=`dstar' if `touse'
+			
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}
+				
+			foreach level in `levels' {
+				qui predict mhat_Mdstar_r001_`level' if `touse', pr outcome(`level')
+				
+			}
+			
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Mdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
+				replace Mdstar_r001_`i' = min(Mdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+			
+			drop `sum_of_p' `unif'
+			
+			est restore Ymodel_r001
+			
+			replace `dvar'=`d' if `touse'
+			replace `mvar'=Md_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+					}
+				}							
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}									
+				
+			predict yhat_YdMd_r001 if `touse'
+			gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
+					
+			replace `dvar'=`dstar' if `touse'
+			replace `mvar'=Mdstar_r001_`i' if `touse'
+			
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}							
+
+			if ("`cxm'"!="") {	
+				foreach c in `cvars' {
+					replace ``mvar'X`c'' = `mvar' * `c' if `touse'
+				}
+			}											
+			
+			predict yhat_YdstarMdstar_r001 if `touse'
+			gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
+			
+			replace `dvar'=`d' if `touse'
+
+			if ("`nointeraction'" == "") {
+				replace `inter' = `dvar' * `mvar' if `touse'
+			}
+				
+			if ("`cxd'"!="") {	
+				foreach c in `cvars' {
+					replace ``dvar'X`c'' = `dvar' * `c' if `touse'
+				}
+			}								
+			
+			predict yhat_YdMdstar_r001 if `touse'
+			gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
+					
+			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
+		
+		}
+		
+		est drop Mmodel_r001 Ymodel_r001
+		
+	}
+	
 	if (("`mreg'"=="poisson") & ("`yreg'"=="poisson")) {
 
 		di ""

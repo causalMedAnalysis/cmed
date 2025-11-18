@@ -1,7 +1,7 @@
 *!TITLE: SIMCDE - estimate controlled direct effects using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 -- added support for ordinal logit models
 *!
 
 program define simcdebs, rclass
@@ -47,14 +47,14 @@ program define simcdebs, rclass
 	/**************
 	REG TYPE ERRORS
 	***************/
-	local yregtypes regress logit poisson
+	local yregtypes regress logit ologit poisson
 	local nyreg : list posof "`yreg'" in yregtypes
 	if !`nyreg' {
 		display as error "Error: yreg must be chosen from: `yregtypes'."
 		error 198		
 	}
 
-	local lregtypes regress logit poisson
+	local lregtypes regress logit ologit poisson
 	
 	local i = 0
 	foreach l in `lregs' {
@@ -95,6 +95,24 @@ program define simcdebs, rclass
 		}
 	}
 
+	if ("`yreg'"=="ologit") {
+
+		local yhat_var_names "yhat_Ydm_r001 yhat_Ydstarm_r001"
+		qui levelsof `yvar' if `touse', local(levelsY)
+
+		foreach name of local yhat_var_names {
+			foreach level in `levelsY' {
+				capture confirm new variable `name'_`level'
+				if _rc {
+					display as error "{p 0 0 5 0}The command needs to create a variable"
+					display as error "with the following name: `name'_`level', "
+					display as error "but this variable has already been defined.{p_end}"
+					error 110
+				}
+			}
+		}
+	}
+	
 	forval i = 1/`numlvars' {
 		foreach stub in L`i'd_r001 L`i'dstar_r001 {
 			forval j = 1/`nsim' {
@@ -202,7 +220,7 @@ program define simcdebs, rclass
 			if ("`priorVars'"!="") {	
 				local numPred = wordcount("`priorVars'")
 				forval k = 1/`numPred' {
-					local currentPred = word("`prioVars'", `k')
+					local currentPred = word("`priorVars'", `k')
 					replace `currentPred' = L`k'd_r001_`i' if `touse'
 				}
 			}
@@ -221,7 +239,49 @@ program define simcdebs, rclass
 				predict lhat_Ld_r001 if `touse'
 				gen L`j'd_r001_`i'=rpoisson(lhat_Ld_r001) if `touse'
 			}				
+
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+			if ("`currentReg'"=="ologit") {
+				
+				qui levelsof `currentVar' if `touse', local(levels)
+				qui local maxLevel : word `: word count `levels'' of `levels'
 		
+				foreach level in `levels' {
+					
+					capture confirm new variable lhat_Ld_r001_`level'
+						if _rc {
+							display as error "{p 0 0 5 0}The command needs to create a variable"
+							display as error "with the following name: lhat_Ld_r001_`level', "
+							display as error "but this variable has already been defined.{p_end}"
+							error 110
+						}
+					
+					qui predict lhat_Ld_r001_`level' if `touse', pr outcome(`level')
+				}
+				
+				tempvar sum_of_p unif
+				gen `sum_of_p' = 0
+				gen `unif' = uniform()
+
+				gen L`j'd_r001_`i'=`maxLevel' if `touse'
+			
+				foreach level in `levels' {
+					replace `sum_of_p' = `sum_of_p' + lhat_Ld_r001_`level'
+					replace L`j'd_r001_`i' = min(L`j'd_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+				}
+			
+				drop `sum_of_p' `unif'
+			}	
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+
 			replace `dvar'=`dstar' if `touse'
 			
 			if ("`cxd'"!="") {	
@@ -233,7 +293,7 @@ program define simcdebs, rclass
 			if ("`priorVars'"!="") {	
 				local numPred = wordcount("`priorVars'")
 				forval k = 1/`numPred' {
-					local currentPred = word("`prioVars'", `k')
+					local currentPred = word("`priorVars'", `k')
 					replace `currentPred' = L`k'dstar_r001_`i' if `touse'
 				}
 			}
@@ -253,9 +313,51 @@ program define simcdebs, rclass
 				gen L`j'dstar_r001_`i'=rpoisson(lhat_Ldstar_r001) if `touse'
 			}				
 
-		local prioVars "`priorVars' `currentVar'"
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+			if ("`currentReg'"=="ologit") {
+				
+				qui levelsof `currentVar' if `touse', local(levels)
+				qui local maxLevel : word `: word count `levels'' of `levels'
 		
-		drop lhat_Ld_r001 lhat_Ldstar_r001
+				foreach level in `levels' {
+					
+					capture confirm new variable lhat_Ldstar_r001_`level'
+						if _rc {
+							display as error "{p 0 0 5 0}The command needs to create a variable"
+							display as error "with the following name: lhat_Ldstar_r001_`level', "
+							display as error "but this variable has already been defined.{p_end}"
+							error 110
+						}
+					
+					qui predict lhat_Ldstar_r001_`level' if `touse', pr outcome(`level')
+				}
+				
+				tempvar sum_of_p unif
+				gen `sum_of_p' = 0
+				gen `unif' = uniform()
+
+				gen L`j'dstar_r001_`i'=`maxLevel' if `touse'
+			
+				foreach level in `levels' {
+					replace `sum_of_p' = `sum_of_p' + lhat_Ldstar_r001_`level'
+					replace L`j'dstar_r001_`i' = min(L`j'dstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+				}
+			
+				drop `sum_of_p' `unif'
+			}	
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/		
+	
+		local priorVars "`priorVars' `currentVar'"
+		
+		drop lhat_Ld_r001* lhat_Ldstar_r001*
         }
 
 		/*****YVAR*****/
@@ -306,6 +408,39 @@ program define simcdebs, rclass
 			gen Ydm_r001_`i'=rpoisson(yhat_Ydm_r001) if `touse'
 		}
 
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+		if ("`yreg'"=="ologit") {
+			
+			qui levelsof `yvar' if `touse', local(levels)
+			qui local maxLevel : word `: word count `levels'' of `levels'
+		
+			foreach level in `levels' {
+				qui predict yhat_Ydm_r001_`level' if `touse', pr outcome(`level')
+			}
+				
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Ydm_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_Ydm_r001_`level'
+				replace Ydm_r001_`i' = min(Ydm_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+		
+			drop `sum_of_p' `unif'
+		}	
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/		
+		
 		replace `dvar'=`dstar' if `touse'
 
 		if ("`nointeraction'" == "") {
@@ -337,8 +472,41 @@ program define simcdebs, rclass
 			predict yhat_Ydstarm_r001 if `touse'
 			gen Ydstarm_r001_`i'=rpoisson(yhat_Ydstarm_r001) if `touse'
 		}
-	
-		drop yhat_*r001 L*d_r001_`i' L*dstar_r001_`i' 
+
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+		if ("`yreg'"=="ologit") {
+			
+			qui levelsof `yvar' if `touse', local(levels)
+			qui local maxLevel : word `: word count `levels'' of `levels'
+		
+			foreach level in `levels' {
+				qui predict yhat_Ydstarm_r001_`level' if `touse', pr outcome(`level')
+			}
+				
+			tempvar sum_of_p unif
+			gen `sum_of_p' = 0
+			gen `unif' = uniform()
+
+			gen Ydstarm_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_Ydstarm_r001_`level'
+				replace Ydstarm_r001_`i' = min(Ydstarm_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+		
+			drop `sum_of_p' `unif'
+		}	
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/		
+		
+		drop yhat_*r001* L*d_r001_`i' L*dstar_r001_`i' 
 	
 	}
 	
@@ -368,4 +536,3 @@ program define simcdebs, rclass
 	drop Ydm_r001_* Ydstarm_r001_* 
 		
 end simcdebs
-

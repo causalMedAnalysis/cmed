@@ -176,7 +176,7 @@ program define ventsimbs, rclass
 		`currentReg' `currentVar' `dvar' `cvars' `cxd_vars' `priorVars' [`weight' `exp'] if `touse'
 		est store L`i'model_r001
 		
-		local prioVars "`priorVars' `currentVar'"
+		local priorVars "`priorVars' `currentVar'"
     }
 	
 	di ""
@@ -214,7 +214,7 @@ program define ventsimbs, rclass
 			if ("`priorVars'"!="") {	
 				local numPred = wordcount("`priorVars'")
 				forval k = 1/`numPred' {
-					local currentPred = word("`prioVars'", `k')
+					local currentPred = word("`priorVars'", `k')
 					replace `currentPred' = L`k'd_r001_`i' if `touse'
 				}
 			}
@@ -245,7 +245,7 @@ program define ventsimbs, rclass
 			if ("`priorVars'"!="") {	
 				local numPred = wordcount("`priorVars'")
 				forval k = 1/`numPred' {
-					local currentPred = word("`prioVars'", `k')
+					local currentPred = word("`priorVars'", `k')
 					replace `currentPred' = L`k'dstar_r001_`i' if `touse'
 				}
 			}
@@ -265,7 +265,7 @@ program define ventsimbs, rclass
 				gen L`j'dstar_r001_`i'=rpoisson(lhat_Ldstar_r001) if `touse'
 			}				
 
-		local prioVars "`priorVars' `currentVar'"
+		local priorVars "`priorVars' `currentVar'"
 		
 		drop lhat_Ld_r001 lhat_Ldstar_r001
         }

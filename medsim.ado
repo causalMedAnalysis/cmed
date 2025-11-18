@@ -1,7 +1,7 @@
 *!TITLE: MEDSIM - causal mediation analysis using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 - added support for ologit models
 *!
 
 program define medsim, eclass
@@ -28,14 +28,14 @@ program define medsim, eclass
 		if r(N) == 0 error 2000
 	}
 
-	local yregtypes regress logit poisson
+	local yregtypes regress logit ologit poisson
 	local nyreg : list posof "`yreg'" in yregtypes
 	if !`nyreg' {
 		display as error "Error: yreg must be chosen from: `yregtypes'."
 		error 198		
 		}
 
-	local mregtypes regress logit poisson
+	local mregtypes regress logit ologit poisson
 	local nmreg : list posof "`mreg'" in mregtypes
 	if !`nmreg' {
 		display as error "Error: mreg must be chosen from: `mregtypes'."
