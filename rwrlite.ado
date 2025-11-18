@@ -31,8 +31,14 @@ program define rwrlite, eclass
 
 	gettoken yvar lvar : varlist
 
-	local mreg regress
+	if ("`detail'" != "") {		
+		rwrlitebs `varlist' if `touse' [`weight' `exp'], ///
+			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') ///
+			cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
+	}
 	
+	local mreg regress
+
 	type_text , mreg(`mreg')
 	
 	local NDE "e(`r(NDEtype)')"
@@ -41,12 +47,6 @@ program define rwrlite, eclass
 			
 	type_text , mreg(`mreg') lvar(`lvar') cvar(`cvars')	
 
-	if ("`detail'" != "") {		
-		rwrlitebs `varlist' if `touse' [`weight' `exp'], ///
-			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') ///
-			cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
-	}
-		
 	bootstrap ///
 		`r(ATEtype)'=`ATE' ///
 		`r(NDEtype)'=`NDE' ///
