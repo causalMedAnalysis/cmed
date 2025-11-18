@@ -169,7 +169,7 @@ program define simcdebs, rclass
 		`currentReg' `currentVar' `dvar' `cvars' `cxd_vars' `priorVars' [`weight' `exp'] if `touse'
 		est store L`i'model_r001
 		
-		local prioVars "`priorVars' `currentVar'"
+		local priorVars "`priorVars' `currentVar'"
     }
 	
 	di ""
@@ -368,3 +368,4 @@ program define simcdebs, rclass
 	drop Ydm_r001_* Ydstarm_r001_* 
 		
 end simcdebs
+
