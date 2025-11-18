@@ -1,7 +1,7 @@
 *!TITLE: VENTSIM - analysis of interventional effects using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 -- added support for ologit models
 *!
 
 program define ventsim, eclass

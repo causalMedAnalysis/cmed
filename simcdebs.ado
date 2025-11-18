@@ -132,13 +132,13 @@ program define simcdebs, rclass
 	******************************/
 	if ("`nointeraction'" == "") {
 		tempvar inter
-		gen `inter' = `dvar' * `mvar' if `touse'
+		qui gen `inter' = `dvar' * `mvar' if `touse'
 	}
 
 	if ("`cxd'"!="") {	
 		foreach c in `cvars' {
 			tempvar `dvar'X`c'
-			gen ``dvar'X`c'' = `dvar' * `c' if `touse'
+			qui gen ``dvar'X`c'' = `dvar' * `c' if `touse'
 			local cxd_vars `cxd_vars'  ``dvar'X`c''
 		}
 	}
@@ -146,7 +146,7 @@ program define simcdebs, rclass
 	if ("`cxm'"!="") {	
 		foreach c in `cvars' {
 			tempvar mvarX`c'
-			gen `mvarX`c'' = `mvar' * `c' if `touse'
+			qui gen `mvarX`c'' = `mvar' * `c' if `touse'
 			local cxm_vars `cxm_vars'  `mvarX`c''
 		}
 	}
@@ -154,7 +154,7 @@ program define simcdebs, rclass
 	if ("`lxm'"!="") {	
 		foreach l in `lvars' {
 			tempvar mvarX`l'
-			gen `mvarX`l'' = `mvar' * `l' if `touse'
+			qui gen `mvarX`l'' = `mvar' * `l' if `touse'
 			local lxm_vars `lxm_vars'  `mvarX`l''
 		}
 	}
@@ -226,25 +226,20 @@ program define simcdebs, rclass
 			}
 			
 			if ("`currentReg'"=="regress") {
-				predict lhat_Ld_r001 if `touse'
-				gen L`j'd_r001_`i'=rnormal(lhat_Ld_r001,e(rmse)) if `touse'
+				qui predict lhat_Ld_r001 if `touse'
+				qui gen L`j'd_r001_`i'=rnormal(lhat_Ld_r001,e(rmse)) if `touse'
 			}
 			
 			if ("`currentReg'"=="logit") {
-				predict lhat_Ld_r001 if `touse', pr
-				gen L`j'd_r001_`i'=rbinomial(1,lhat_Ld_r001) if `touse'
+				qui predict lhat_Ld_r001 if `touse', pr
+				qui gen L`j'd_r001_`i'=rbinomial(1,lhat_Ld_r001) if `touse'
 			}
 
 			if ("`currentReg'"=="poisson") {
-				predict lhat_Ld_r001 if `touse'
-				gen L`j'd_r001_`i'=rpoisson(lhat_Ld_r001) if `touse'
+				qui predict lhat_Ld_r001 if `touse'
+				qui gen L`j'd_r001_`i'=rpoisson(lhat_Ld_r001) if `touse'
 			}				
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
 			if ("`currentReg'"=="ologit") {
 				
 				qui levelsof `currentVar' if `touse', local(levels)
@@ -264,10 +259,10 @@ program define simcdebs, rclass
 				}
 				
 				tempvar sum_of_p unif
-				gen `sum_of_p' = 0
-				gen `unif' = uniform()
+				qui gen `sum_of_p' = 0
+				qui gen `unif' = uniform()
 
-				gen L`j'd_r001_`i'=`maxLevel' if `touse'
+				qui gen L`j'd_r001_`i'=`maxLevel' if `touse'
 			
 				foreach level in `levels' {
 					replace `sum_of_p' = `sum_of_p' + lhat_Ld_r001_`level'
@@ -276,11 +271,6 @@ program define simcdebs, rclass
 			
 				drop `sum_of_p' `unif'
 			}	
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
 
 			replace `dvar'=`dstar' if `touse'
 			
@@ -299,25 +289,20 @@ program define simcdebs, rclass
 			}
 			
 			if ("`currentReg'"=="regress") {
-				predict lhat_Ldstar_r001 if `touse'
-				gen L`j'dstar_r001_`i'=rnormal(lhat_Ldstar_r001,e(rmse)) if `touse'
+				qui predict lhat_Ldstar_r001 if `touse'
+				qui gen L`j'dstar_r001_`i'=rnormal(lhat_Ldstar_r001,e(rmse)) if `touse'
 			}
 			
 			if ("`currentReg'"=="logit") {
-				predict lhat_Ldstar_r001 if `touse', pr
-				gen L`j'dstar_r001_`i'=rbinomial(1,lhat_Ldstar_r001) if `touse'
+				qui predict lhat_Ldstar_r001 if `touse', pr
+				qui gen L`j'dstar_r001_`i'=rbinomial(1,lhat_Ldstar_r001) if `touse'
 			}
 
 			if ("`currentReg'"=="poisson") {
-				predict lhat_Ldstar_r001 if `touse'
-				gen L`j'dstar_r001_`i'=rpoisson(lhat_Ldstar_r001) if `touse'
+				qui predict lhat_Ldstar_r001 if `touse'
+				qui gen L`j'dstar_r001_`i'=rpoisson(lhat_Ldstar_r001) if `touse'
 			}				
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
 			if ("`currentReg'"=="ologit") {
 				
 				qui levelsof `currentVar' if `touse', local(levels)
@@ -337,10 +322,10 @@ program define simcdebs, rclass
 				}
 				
 				tempvar sum_of_p unif
-				gen `sum_of_p' = 0
-				gen `unif' = uniform()
+				qui gen `sum_of_p' = 0
+				qui gen `unif' = uniform()
 
-				gen L`j'dstar_r001_`i'=`maxLevel' if `touse'
+				qui gen L`j'dstar_r001_`i'=`maxLevel' if `touse'
 			
 				foreach level in `levels' {
 					replace `sum_of_p' = `sum_of_p' + lhat_Ldstar_r001_`level'
@@ -349,11 +334,6 @@ program define simcdebs, rclass
 			
 				drop `sum_of_p' `unif'
 			}	
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/		
 	
 		local priorVars "`priorVars' `currentVar'"
 		
@@ -394,25 +374,20 @@ program define simcdebs, rclass
 		}
 		
 		if ("`yreg'"=="regress") {
-			predict yhat_Ydm_r001 if `touse'
-			gen Ydm_r001_`i'=rnormal(yhat_Ydm_r001,e(rmse)) if `touse'
+			qui predict yhat_Ydm_r001 if `touse'
+			qui gen Ydm_r001_`i'=rnormal(yhat_Ydm_r001,e(rmse)) if `touse'
 		}
 
 		if ("`yreg'"=="logit") {
-			predict yhat_Ydm_r001 if `touse', pr
-			gen Ydm_r001_`i'=rbinomial(1,yhat_Ydm_r001) if `touse'
+			qui predict yhat_Ydm_r001 if `touse', pr
+			qui gen Ydm_r001_`i'=rbinomial(1,yhat_Ydm_r001) if `touse'
 		}
 
 		if ("`yreg'"=="poisson") {
-			predict yhat_Ydm_r001 if `touse'
-			gen Ydm_r001_`i'=rpoisson(yhat_Ydm_r001) if `touse'
+			qui predict yhat_Ydm_r001 if `touse'
+			qui gen Ydm_r001_`i'=rpoisson(yhat_Ydm_r001) if `touse'
 		}
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
 		if ("`yreg'"=="ologit") {
 			
 			qui levelsof `yvar' if `touse', local(levels)
@@ -423,10 +398,10 @@ program define simcdebs, rclass
 			}
 				
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Ydm_r001_`i'=`maxLevel' if `touse'
+			qui gen Ydm_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_Ydm_r001_`level'
@@ -435,11 +410,6 @@ program define simcdebs, rclass
 		
 			drop `sum_of_p' `unif'
 		}	
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/		
 		
 		replace `dvar'=`dstar' if `touse'
 
@@ -459,25 +429,20 @@ program define simcdebs, rclass
 		}			
 			
 		if ("`yreg'"=="regress") {
-			predict yhat_Ydstarm_r001 if `touse'
-			gen Ydstarm_r001_`i'=rnormal(yhat_Ydstarm_r001,e(rmse)) if `touse'
+			qui predict yhat_Ydstarm_r001 if `touse'
+			qui gen Ydstarm_r001_`i'=rnormal(yhat_Ydstarm_r001,e(rmse)) if `touse'
 		}
 
 		if ("`yreg'"=="logit") {
-			predict yhat_Ydstarm_r001 if `touse', pr
-			gen Ydstarm_r001_`i'=rbinomial(1,yhat_Ydstarm_r001) if `touse'
+			qui predict yhat_Ydstarm_r001 if `touse', pr
+			qui gen Ydstarm_r001_`i'=rbinomial(1,yhat_Ydstarm_r001) if `touse'
 		}
 
 		if ("`yreg'"=="poisson") {
-			predict yhat_Ydstarm_r001 if `touse'
-			gen Ydstarm_r001_`i'=rpoisson(yhat_Ydstarm_r001) if `touse'
+			qui predict yhat_Ydstarm_r001 if `touse'
+			qui gen Ydstarm_r001_`i'=rpoisson(yhat_Ydstarm_r001) if `touse'
 		}
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
 		if ("`yreg'"=="ologit") {
 			
 			qui levelsof `yvar' if `touse', local(levels)
@@ -488,10 +453,10 @@ program define simcdebs, rclass
 			}
 				
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Ydstarm_r001_`i'=`maxLevel' if `touse'
+			qui gen Ydstarm_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_Ydstarm_r001_`level'
@@ -500,11 +465,6 @@ program define simcdebs, rclass
 		
 			drop `sum_of_p' `unif'
 		}	
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/		
 		
 		drop yhat_*r001* L*d_r001_`i' L*dstar_r001_`i' 
 	

@@ -32,13 +32,13 @@ program define medsimbs, rclass
 
 	if ("`nointeraction'" == "") {
 		tempvar inter
-		gen `inter' = `dvar' * `mvar' if `touse'
+		qui gen `inter' = `dvar' * `mvar' if `touse'
 	}
 
 	if ("`cxd'"!="") {	
 		foreach c in `cvars' {
 			tempvar `dvar'X`c'
-			gen ``dvar'X`c'' = `dvar' * `c' if `touse'
+			qui gen ``dvar'X`c'' = `dvar' * `c' if `touse'
 			local cxd_vars `cxd_vars'  ``dvar'X`c''
 		}
 	}
@@ -46,7 +46,7 @@ program define medsimbs, rclass
 	if ("`cxm'"!="") {	
 		foreach c in `cvars' {
 			tempvar `mvar'X`c'
-			gen ``mvar'X`c'' = `mvar' * `c' if `touse'
+			qui gen ``mvar'X`c'' = `mvar' * `c' if `touse'
 			local cxm_vars `cxm_vars'  ``mvar'X`c''
 		}
 	}
@@ -141,7 +141,7 @@ program define medsimbs, rclass
 			}
 
 			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
+			qui gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -151,8 +151,8 @@ program define medsimbs, rclass
 				}
 			}
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
 			
 			est restore Ymodel_r001
 			
@@ -175,8 +175,8 @@ program define medsimbs, rclass
 				}
 			}
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -197,8 +197,8 @@ program define medsimbs, rclass
 				}
 			}
 				
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -212,8 +212,8 @@ program define medsimbs, rclass
 				}
 			}			
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -247,8 +247,8 @@ program define medsimbs, rclass
 				}
 			}
 				
-			predict mhat_Md_r001 if `touse', pr
-			gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse', pr
+			qui gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -258,8 +258,8 @@ program define medsimbs, rclass
 				}
 			}
 				
-			predict mhat_Mdstar_r001 if `touse', pr
-			gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse', pr
+			qui gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
 
 			est restore Ymodel_r001
 			
@@ -282,8 +282,8 @@ program define medsimbs, rclass
 				}
 			}
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -304,8 +304,8 @@ program define medsimbs, rclass
 				}
 			}			
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -319,8 +319,8 @@ program define medsimbs, rclass
 				}
 			}			
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -363,10 +363,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Md_r001_`i'=`maxLevel' if `touse'
+			qui gen Md_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
@@ -389,10 +389,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Mdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen Mdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
@@ -422,8 +422,8 @@ program define medsimbs, rclass
 				}
 			}
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -444,8 +444,8 @@ program define medsimbs, rclass
 				}
 			}			
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -459,8 +459,8 @@ program define medsimbs, rclass
 				}
 			}			
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
 			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -494,8 +494,8 @@ program define medsimbs, rclass
 				}
 			}			
 			
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -505,8 +505,8 @@ program define medsimbs, rclass
 				}
 			}			
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
 		
 			est restore Ymodel_r001
 			
@@ -529,8 +529,8 @@ program define medsimbs, rclass
 				}
 			}			
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -551,8 +551,8 @@ program define medsimbs, rclass
 				}
 			}			
 				
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -566,8 +566,8 @@ program define medsimbs, rclass
 				}
 			}						
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -601,8 +601,8 @@ program define medsimbs, rclass
 				}
 			}						
 			
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -612,8 +612,8 @@ program define medsimbs, rclass
 				}
 			}						
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
 			
 			est restore Ymodel_r001
 			
@@ -636,8 +636,8 @@ program define medsimbs, rclass
 				}
 			}		
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -658,8 +658,8 @@ program define medsimbs, rclass
 				}
 			}					
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -673,8 +673,8 @@ program define medsimbs, rclass
 				}
 			}				
 				
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -708,8 +708,8 @@ program define medsimbs, rclass
 				}
 			}				
 				
-			predict mhat_Md_r001 if `touse', pr
-			gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse', pr
+			qui gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -719,8 +719,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Mdstar_r001 if `touse', pr
-			gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse', pr
+			qui gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
 
 			est restore Ymodel_r001
 			
@@ -743,8 +743,8 @@ program define medsimbs, rclass
 				}
 			}					
 			
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -765,8 +765,8 @@ program define medsimbs, rclass
 				}
 			}								
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -780,8 +780,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -824,10 +824,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Md_r001_`i'=`maxLevel' if `touse'
+			qui gen Md_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
@@ -850,10 +850,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Mdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen Mdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
@@ -883,8 +883,8 @@ program define medsimbs, rclass
 				}
 			}					
 			
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -905,8 +905,8 @@ program define medsimbs, rclass
 				}
 			}								
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -920,8 +920,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -955,8 +955,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -966,8 +966,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
 		
 			est restore Ymodel_r001
 			
@@ -990,8 +990,8 @@ program define medsimbs, rclass
 				}
 			}				
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -1012,8 +1012,8 @@ program define medsimbs, rclass
 				}
 			}				
 				
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -1027,8 +1027,8 @@ program define medsimbs, rclass
 				}
 			}										
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -1065,8 +1065,8 @@ program define medsimbs, rclass
 				}
 			}						
 			
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -1076,8 +1076,8 @@ program define medsimbs, rclass
 				}
 			}						
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
 
 			est restore Ymodel_r001
 			
@@ -1106,10 +1106,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMd_r001_`i'=`maxLevel' if `touse'
+			qui gen YdMd_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
@@ -1143,10 +1143,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
@@ -1173,10 +1173,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen YdMdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
@@ -1220,8 +1220,8 @@ program define medsimbs, rclass
 				}
 			}				
 				
-			predict mhat_Md_r001 if `touse', pr
-			gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse', pr
+			qui gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -1231,8 +1231,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Mdstar_r001 if `touse', pr
-			gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse', pr
+			qui gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
 
 			est restore Ymodel_r001
 			
@@ -1261,10 +1261,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMd_r001_`i'=`maxLevel' if `touse'
+			qui gen YdMd_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
@@ -1298,10 +1298,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
@@ -1328,10 +1328,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen YdMdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
@@ -1384,10 +1384,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Md_r001_`i'=`maxLevelm' if `touse'
+			qui gen Md_r001_`i'=`maxLevelm' if `touse'
 			
 			foreach level in `mlevels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
@@ -1410,10 +1410,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Mdstar_r001_`i'=`maxLevelm' if `touse'
+			qui gen Mdstar_r001_`i'=`maxLevelm' if `touse'
 			
 			foreach level in `mlevels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
@@ -1449,10 +1449,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMd_r001_`i'=`maxLevely' if `touse'
+			qui gen YdMd_r001_`i'=`maxLevely' if `touse'
 			
 			foreach level in `ylevels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
@@ -1486,10 +1486,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdstarMdstar_r001_`i'=`maxLevely' if `touse'
+			qui gen YdstarMdstar_r001_`i'=`maxLevely' if `touse'
 			
 			foreach level in `ylevels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
@@ -1516,10 +1516,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMdstar_r001_`i'=`maxLevely' if `touse'
+			qui gen YdMdstar_r001_`i'=`maxLevely' if `touse'
 			
 			foreach level in `ylevels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
@@ -1563,8 +1563,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -1574,8 +1574,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
 		
 			est restore Ymodel_r001
 			
@@ -1604,10 +1604,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMd_r001_`i'=`maxLevel' if `touse'
+			qui gen YdMd_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
@@ -1641,10 +1641,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
@@ -1671,10 +1671,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen YdMdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen YdMdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
@@ -1715,8 +1715,8 @@ program define medsimbs, rclass
 				}
 			}							
 				
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -1726,8 +1726,8 @@ program define medsimbs, rclass
 				}
 			}										
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
 			
 			est restore Ymodel_r001
 			
@@ -1750,8 +1750,8 @@ program define medsimbs, rclass
 				}
 			}				
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -1772,8 +1772,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 			
@@ -1787,8 +1787,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -1822,8 +1822,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Md_r001 if `touse', pr
-			gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse', pr
+			qui gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -1833,8 +1833,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict mhat_Mdstar_r001 if `touse', pr
-			gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse', pr
+			qui gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
 
 			est restore Ymodel_r001
 			
@@ -1857,8 +1857,8 @@ program define medsimbs, rclass
 				}
 			}									
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -1879,8 +1879,8 @@ program define medsimbs, rclass
 				}
 			}											
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 
@@ -1894,8 +1894,8 @@ program define medsimbs, rclass
 				}
 			}								
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -1938,10 +1938,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Md_r001_`i'=`maxLevel' if `touse'
+			qui gen Md_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
@@ -1964,10 +1964,10 @@ program define medsimbs, rclass
 			}
 			
 			tempvar sum_of_p unif
-			gen `sum_of_p' = 0
-			gen `unif' = uniform()
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
 
-			gen Mdstar_r001_`i'=`maxLevel' if `touse'
+			qui gen Mdstar_r001_`i'=`maxLevel' if `touse'
 			
 			foreach level in `levels' {
 				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
@@ -1997,8 +1997,8 @@ program define medsimbs, rclass
 				}
 			}									
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -2019,8 +2019,8 @@ program define medsimbs, rclass
 				}
 			}											
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d' if `touse'
 
@@ -2034,8 +2034,8 @@ program define medsimbs, rclass
 				}
 			}								
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		
@@ -2069,8 +2069,8 @@ program define medsimbs, rclass
 				}
 			}					
 				
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
 		
 			replace `dvar'=`dstar' if `touse'
 			
@@ -2080,8 +2080,8 @@ program define medsimbs, rclass
 				}
 			}								
 			
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
 		
 			est restore Ymodel_r001
 			
@@ -2104,8 +2104,8 @@ program define medsimbs, rclass
 				}
 			}								
 				
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
 					
 			replace `dvar'=`dstar' if `touse'
 			replace `mvar'=Mdstar_r001_`i' if `touse'
@@ -2126,8 +2126,8 @@ program define medsimbs, rclass
 				}
 			}									
 			
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
 			
 			replace `dvar'=`d'
 			
@@ -2141,8 +2141,8 @@ program define medsimbs, rclass
 				}
 			}							
 			
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' 
 		

@@ -1,7 +1,7 @@
 *!TITLE: VENTSIM - analysis of interventional effects using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 -- added support for ologit models
 *!
 
 program define ventsimbs, rclass
@@ -47,21 +47,21 @@ program define ventsimbs, rclass
 	/**************
 	REG TYPE ERRORS
 	***************/
-	local yregtypes regress logit poisson
+	local yregtypes regress logit ologit poisson
 	local nyreg : list posof "`yreg'" in yregtypes
 	if !`nyreg' {
 		display as error "Error: yreg must be chosen from: `yregtypes'."
 		error 198		
 	}
 
-	local mregtypes regress logit poisson
+	local mregtypes regress logit ologit poisson
 	local nmreg : list posof "`mreg'" in mregtypes
 	if !`nmreg' {
 		display as error "Error: mreg must be chosen from: `mregtypes'."
 		error 198		
 	}
 
-	local lregtypes regress logit poisson
+	local lregtypes regress logit ologit poisson
 	
 	local i = 0
 	foreach l in `lregs' {
@@ -87,6 +87,42 @@ program define ventsimbs, rclass
 				display as error "with the following name: `name', "
 				display as error "but this variable has already been defined.{p_end}"
 				error 110
+		}
+	}
+
+	if ("`yreg'"=="ologit") {
+
+		local yhat_var_names "yhat_YdMd_r001 yhat_YdstarMdstar_r001 yhat_YdMdstar_r001"
+		qui levelsof `yvar' if `touse', local(levelsY)
+
+		foreach name of local yhat_var_names {
+			foreach level in `levelsY' {
+				capture confirm new variable `name'_`level'
+				if _rc {
+					display as error "{p 0 0 5 0}The command needs to create a variable"
+					display as error "with the following name: `name'_`level', "
+					display as error "but this variable has already been defined.{p_end}"
+					error 110
+				}
+			}
+		}
+	}
+
+	if ("`mreg'"=="ologit") {
+
+		local mhat_var_names "mhat_Md_r001 mhat_Mdstar_r001"
+		qui levelsof `mvar' if `touse', local(levelsM)
+
+		foreach name of local mhat_var_names {
+			foreach level in `levelsM' {
+				capture confirm new variable `name'_`level'
+				if _rc {
+					display as error "{p 0 0 5 0}The command needs to create a variable"
+					display as error "with the following name: `name'_`level', "
+					display as error "but this variable has already been defined.{p_end}"
+					error 110
+				}
+			}
 		}
 	}
 	
@@ -121,13 +157,13 @@ program define ventsimbs, rclass
 	******************************/
 	if ("`nointeraction'" == "") {
 		tempvar inter
-		gen `inter' = `dvar' * `mvar' if `touse'
+		qui gen `inter' = `dvar' * `mvar' if `touse'
 	}
 
 	if ("`cxd'"!="") {	
 		foreach c in `cvars' {
 			tempvar `dvar'X`c'
-			gen ``dvar'X`c'' = `dvar' * `c' if `touse'
+			qui gen ``dvar'X`c'' = `dvar' * `c' if `touse'
 			local cxd_vars `cxd_vars'  ``dvar'X`c''
 		}
 	}
@@ -135,7 +171,7 @@ program define ventsimbs, rclass
 	if ("`cxm'"!="") {	
 		foreach c in `cvars' {
 			tempvar mvarX`c'
-			gen `mvarX`c'' = `mvar' * `c' if `touse'
+			qui gen `mvarX`c'' = `mvar' * `c' if `touse'
 			local cxm_vars `cxm_vars'  `mvarX`c''
 		}
 	}
@@ -143,7 +179,7 @@ program define ventsimbs, rclass
 	if ("`lxm'"!="") {	
 		foreach l in `lvars' {
 			tempvar mvarX`l'
-			gen `mvarX`l'' = `mvar' * `l' if `touse'
+			qui gen `mvarX`l'' = `mvar' * `l' if `touse'
 			local lxm_vars `lxm_vars'  `mvarX`l''
 		}
 	}
@@ -220,20 +256,52 @@ program define ventsimbs, rclass
 			}
 			
 			if ("`currentReg'"=="regress") {
-				predict lhat_Ld_r001 if `touse'
-				gen L`j'd_r001_`i'=rnormal(lhat_Ld_r001,e(rmse)) if `touse'
+				qui predict lhat_Ld_r001 if `touse'
+				qui gen L`j'd_r001_`i'=rnormal(lhat_Ld_r001,e(rmse)) if `touse'
 			}
 			
 			if ("`currentReg'"=="logit") {
-				predict lhat_Ld_r001 if `touse', pr
-				gen L`j'd_r001_`i'=rbinomial(1,lhat_Ld_r001) if `touse'
+				qui predict lhat_Ld_r001 if `touse', pr
+				qui gen L`j'd_r001_`i'=rbinomial(1,lhat_Ld_r001) if `touse'
 			}
 
 			if ("`currentReg'"=="poisson") {
-				predict lhat_Ld_r001 if `touse'
-				gen L`j'd_r001_`i'=rpoisson(lhat_Ld_r001) if `touse'
+				qui predict lhat_Ld_r001 if `touse'
+				qui gen L`j'd_r001_`i'=rpoisson(lhat_Ld_r001) if `touse'
 			}				
+
+			if ("`currentReg'"=="ologit") {
+				
+				qui levelsof `currentVar' if `touse', local(levels)
+				qui local maxLevel : word `: word count `levels'' of `levels'
 		
+				foreach level in `levels' {
+					
+					capture confirm new variable lhat_Ld_r001_`level'
+						if _rc {
+							display as error "{p 0 0 5 0}The command needs to create a variable"
+							display as error "with the following name: lhat_Ld_r001_`level', "
+							display as error "but this variable has already been defined.{p_end}"
+							error 110
+						}
+					
+					qui predict lhat_Ld_r001_`level' if `touse', pr outcome(`level')
+				}
+				
+				tempvar sum_of_p unif
+				qui gen `sum_of_p' = 0
+				qui gen `unif' = uniform()
+
+				qui gen L`j'd_r001_`i'=`maxLevel' if `touse'
+			
+				foreach level in `levels' {
+					replace `sum_of_p' = `sum_of_p' + lhat_Ld_r001_`level'
+					replace L`j'd_r001_`i' = min(L`j'd_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+				}
+			
+				drop `sum_of_p' `unif'
+			}	
+			
 			replace `dvar'=`dstar' if `touse'
 			
 			if ("`cxd'"!="") {	
@@ -251,23 +319,55 @@ program define ventsimbs, rclass
 			}
 			
 			if ("`currentReg'"=="regress") {
-				predict lhat_Ldstar_r001 if `touse'
-				gen L`j'dstar_r001_`i'=rnormal(lhat_Ldstar_r001,e(rmse)) if `touse'
+				qui predict lhat_Ldstar_r001 if `touse'
+				qui gen L`j'dstar_r001_`i'=rnormal(lhat_Ldstar_r001,e(rmse)) if `touse'
 			}
 			
 			if ("`currentReg'"=="logit") {
-				predict lhat_Ldstar_r001 if `touse', pr
-				gen L`j'dstar_r001_`i'=rbinomial(1,lhat_Ldstar_r001) if `touse'
+				qui predict lhat_Ldstar_r001 if `touse', pr
+				qui gen L`j'dstar_r001_`i'=rbinomial(1,lhat_Ldstar_r001) if `touse'
 			}
 
 			if ("`currentReg'"=="poisson") {
-				predict lhat_Ldstar_r001 if `touse'
-				gen L`j'dstar_r001_`i'=rpoisson(lhat_Ldstar_r001) if `touse'
+				qui predict lhat_Ldstar_r001 if `touse'
+				qui gen L`j'dstar_r001_`i'=rpoisson(lhat_Ldstar_r001) if `touse'
 			}				
 
+			if ("`currentReg'"=="ologit") {
+				
+				qui levelsof `currentVar' if `touse', local(levels)
+				qui local maxLevel : word `: word count `levels'' of `levels'
+		
+				foreach level in `levels' {
+					
+					capture confirm new variable lhat_Ldstar_r001_`level'
+						if _rc {
+							display as error "{p 0 0 5 0}The command needs to create a variable"
+							display as error "with the following name: lhat_Ldstar_r001_`level', "
+							display as error "but this variable has already been defined.{p_end}"
+							error 110
+						}
+					
+					qui predict lhat_Ldstar_r001_`level' if `touse', pr outcome(`level')
+				}
+				
+				tempvar sum_of_p unif
+				qui gen `sum_of_p' = 0
+				qui gen `unif' = uniform()
+
+				qui gen L`j'dstar_r001_`i'=`maxLevel' if `touse'
+			
+				foreach level in `levels' {
+					replace `sum_of_p' = `sum_of_p' + lhat_Ldstar_r001_`level'
+					replace L`j'dstar_r001_`i' = min(L`j'dstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+				}
+			
+				drop `sum_of_p' `unif'
+			}	
+			
 		local priorVars "`priorVars' `currentVar'"
 		
-		drop lhat_Ld_r001 lhat_Ldstar_r001
+		drop lhat_Ld_r001* lhat_Ldstar_r001*
         }
 
 		/*****MVAR*****/
@@ -282,20 +382,43 @@ program define ventsimbs, rclass
 		}
 
 		if ("`mreg'"=="regress") {
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rnormal(mhat_Md_r001,e(rmse)) if `touse'
 		}
 		
 		if ("`mreg'"=="logit") {
-			predict mhat_Md_r001 if `touse', pr
-			gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse', pr
+			qui gen Md_r001_`i'=rbinomial(1,mhat_Md_r001) if `touse'
 		}
 		
 		if ("`mreg'"=="poisson") {
-			predict mhat_Md_r001 if `touse'
-			gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
+			qui predict mhat_Md_r001 if `touse'
+			qui gen Md_r001_`i'=rpoisson(mhat_Md_r001) if `touse'
 		}
+
+		if ("`mreg'"=="ologit") {
 			
+			qui levelsof `mvar' if `touse', local(levels)
+			qui local maxLevel : word `: word count `levels'' of `levels'
+		
+			foreach level in `levels' {
+				qui predict mhat_Md_r001_`level' if `touse', pr outcome(`level')
+			}
+				
+			tempvar sum_of_p unif
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
+
+			qui gen Md_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Md_r001_`level'
+				replace Md_r001_`i' = min(Md_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+		
+			drop `sum_of_p' `unif'
+		}	
+
 		replace `dvar'=`dstar' if `touse'
 			
 		if ("`cxd'"!="") {	
@@ -305,21 +428,44 @@ program define ventsimbs, rclass
 		}
 			
 		if ("`mreg'"=="regress") {
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rnormal(mhat_Mdstar_r001,e(rmse)) if `touse'
 		}
 		
 		if ("`mreg'"=="logit") {
-			predict mhat_Mdstar_r001 if `touse', pr
-			gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse', pr
+			qui gen Mdstar_r001_`i'=rbinomial(1,mhat_Mdstar_r001) if `touse'
 		}
 		
 		if ("`mreg'"=="poisson") {
-			predict mhat_Mdstar_r001 if `touse'
-			gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
+			qui predict mhat_Mdstar_r001 if `touse'
+			qui gen Mdstar_r001_`i'=rpoisson(mhat_Mdstar_r001) if `touse'
 		}
-	
-		drop mhat_Md_r001 mhat_Mdstar_r001
+
+		if ("`mreg'"=="ologit") {
+			
+			qui levelsof `mvar' if `touse', local(levels)
+			qui local maxLevel : word `: word count `levels'' of `levels'
+		
+			foreach level in `levels' {
+				qui predict mhat_Mdstar_r001_`level' if `touse', pr outcome(`level')
+			}
+				
+			tempvar sum_of_p unif
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
+
+			qui gen Mdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + mhat_Mdstar_r001_`level'
+				replace Mdstar_r001_`i' = min(Mdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+		
+			drop `sum_of_p' `unif'
+		}	
+		
+		drop mhat_Md_r001* mhat_Mdstar_r001*
 		
 		/*****YVAR*****/
 		est restore Ymodel_r001
@@ -355,20 +501,43 @@ program define ventsimbs, rclass
 		}
 		
 		if ("`yreg'"=="regress") {
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rnormal(yhat_YdMd_r001,e(rmse)) if `touse'
 		}
 
 		if ("`yreg'"=="logit") {
-			predict yhat_YdMd_r001 if `touse', pr
-			gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse', pr
+			qui gen YdMd_r001_`i'=rbinomial(1,yhat_YdMd_r001) if `touse'
 		}
 
 		if ("`yreg'"=="poisson") {
-			predict yhat_YdMd_r001 if `touse'
-			gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
+			qui predict yhat_YdMd_r001 if `touse'
+			qui gen YdMd_r001_`i'=rpoisson(yhat_YdMd_r001) if `touse'
 		}
 
+		if ("`yreg'"=="ologit") {
+			
+			qui levelsof `yvar' if `touse', local(levels)
+			qui local maxLevel : word `: word count `levels'' of `levels'
+		
+			foreach level in `levels' {
+				qui predict yhat_YdMd_r001_`level' if `touse', pr outcome(`level')
+			}
+				
+			tempvar sum_of_p unif
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
+
+			qui gen YdMd_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMd_r001_`level'
+				replace YdMd_r001_`i' = min(YdMd_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+		
+			drop `sum_of_p' `unif'
+		}	
+		
 		replace `dvar'=`dstar' if `touse'
 		replace `mvar'=Mdstar_r001_`i' if `touse'
 
@@ -400,20 +569,43 @@ program define ventsimbs, rclass
 		}
 		
 		if ("`yreg'"=="regress") {
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rnormal(yhat_YdstarMdstar_r001,e(rmse)) if `touse'
 		}
 
 		if ("`yreg'"=="logit") {
-			predict yhat_YdstarMdstar_r001 if `touse', pr
-			gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse', pr
+			qui gen YdstarMdstar_r001_`i'=rbinomial(1,yhat_YdstarMdstar_r001) if `touse'
 		}
 
 		if ("`yreg'"=="poisson") {
-			predict yhat_YdstarMdstar_r001 if `touse'
-			gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
+			qui predict yhat_YdstarMdstar_r001 if `touse'
+			qui gen YdstarMdstar_r001_`i'=rpoisson(yhat_YdstarMdstar_r001) if `touse'
 		}			
+
+		if ("`yreg'"=="ologit") {
 			
+			qui levelsof `yvar' if `touse', local(levels)
+			qui local maxLevel : word `: word count `levels'' of `levels'
+		
+			foreach level in `levels' {
+				qui predict yhat_YdstarMdstar_r001_`level' if `touse', pr outcome(`level')
+			}
+				
+			tempvar sum_of_p unif
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
+
+			qui gen YdstarMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdstarMdstar_r001_`level'
+				replace YdstarMdstar_r001_`i' = min(YdstarMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+		
+			drop `sum_of_p' `unif'
+		}	
+		
 		replace `dvar'=`d' if `touse'
 		replace `mvar'=Mdstar_r001_`i' if `touse'
 
@@ -445,21 +637,44 @@ program define ventsimbs, rclass
 		}
 		
 		if ("`yreg'"=="regress") {
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 		}
 
 		if ("`yreg'"=="logit") {
-			predict yhat_YdMdstar_r001 if `touse', pr
-			gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse', pr
+			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 		}
 
 		if ("`yreg'"=="poisson") {
-			predict yhat_YdMdstar_r001 if `touse'
-			gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
+			qui predict yhat_YdMdstar_r001 if `touse'
+			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 		}
+
+		if ("`yreg'"=="ologit") {
 			
-		drop yhat_*r001 Md_r001_`i' Mdstar_r001_`i' L*d_r001_`i' L*dstar_r001_`i' 
+			qui levelsof `yvar' if `touse', local(levels)
+			qui local maxLevel : word `: word count `levels'' of `levels'
+		
+			foreach level in `levels' {
+				qui predict yhat_YdMdstar_r001_`level' if `touse', pr outcome(`level')
+			}
+				
+			tempvar sum_of_p unif
+			qui gen `sum_of_p' = 0
+			qui gen `unif' = uniform()
+
+			qui gen YdMdstar_r001_`i'=`maxLevel' if `touse'
+			
+			foreach level in `levels' {
+				replace `sum_of_p' = `sum_of_p' + yhat_YdMdstar_r001_`level'
+				replace YdMdstar_r001_`i' = min(YdMdstar_r001_`i',`level') if `unif' < `sum_of_p' & `touse'
+			}
+		
+			drop `sum_of_p' `unif'
+		}	
+		
+		drop yhat_*r001* Md_r001_`i' Mdstar_r001_`i' L*d_r001_`i' L*dstar_r001_`i' 
 	
 	}
 	
