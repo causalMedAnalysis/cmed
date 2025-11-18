@@ -136,7 +136,7 @@ program define ipwventbs, rclass
 		di ""
 		di "Model for `lvar' conditional on {cvars `dvar'}:"
 		logit `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse'
-		qui ologit `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse'
+		qui ologit `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse' & e(sample)
 		qui est store Lmodel_given_CD_r001
 	}
 	else {
