@@ -46,7 +46,7 @@ program define ventsim, eclass
 				ventsimbs `varlist' if `touse' [`weight' `exp'], ///
 					dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
 					d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') lregs(`lregs') ///
-					nsim(`nsim') `nointeraction' `cxd' `cxm'
+					nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'
 
 	estat bootstrap, p noheader
 	

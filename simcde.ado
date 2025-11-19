@@ -46,7 +46,7 @@ program define simcde, eclass
 					dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
 					d(`d') dstar(`dstar') m(`m') ///
 					yreg(`yreg') lregs(`lregs') ///
-					nsim(`nsim') `nointeraction' `cxd' `cxm'
+					nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'
 
 	estat bootstrap, p noheader
 	
