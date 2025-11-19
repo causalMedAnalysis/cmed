@@ -1,4 +1,4 @@
-*!TITLE: MNESIM - analysis of multivariate natural effects using a simulation estimator
+*!TITLE: MNESIM - analysis of multivariate natural effects using a simulation approach
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
 *! version 0.1
