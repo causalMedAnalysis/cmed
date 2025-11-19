@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.4.0  11nov2025}{...}
+{* *! version 0.5.0  19nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -128,7 +128,11 @@ is
 
 {phang}
 {it:ymodel}, {it:mmodel}, {it:lmodel}
-are one of {cmdab:reg:ress} (default), {cmd:logit}, or {cmd:poisson}
+are one of 
+{cmdab:reg:ress} (default), 
+{cmd:logit}, 
+{cmd:poisson}, 
+or {cmd:ologit}
 {p_end}
 
 {phang}

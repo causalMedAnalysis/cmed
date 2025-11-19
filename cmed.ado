@@ -1,4 +1,4 @@
-*! version 0.4.3  12nov2025
+*! version 0.5.0  19nov2025
 program cmed
     
     version 16.1
@@ -512,11 +512,11 @@ program Build_cmdline_cmed_simulate
     Confirm_min_max_var "m" , max(1)
     
     Confirm_model "d" ("")
-    Confirm_model "y" ("","regress","logit","poisson") , default("regress")
+    Confirm_model "y" ("","regress","logit","poisson","ologit") , default("regress")
     
     if ( ${Cmed__l_n_specs} ) {
         
-        Confirm_model "l" ("","regress","logit","poisson") , default("regress")
+        Confirm_model "l" ("","regress","logit","poisson","ologit") , default("regress")
         
         forvalues i = 1/${Cmed__l_n_specs} {
             
@@ -542,7 +542,7 @@ program Build_cmdline_cmed_simulate
         }
         else {
             
-            Confirm_model "m" ("","regress","logit","poisson") , default("regress")
+            Confirm_model "m" ("","regress","logit","poisson","ologit") , default("regress")
             
             local options `options' mreg(${Cmed__mmodel1})
             
@@ -555,7 +555,7 @@ program Build_cmdline_cmed_simulate
         
         Option_not_allowed "`mvalue'" "mvalue()"
         
-        Confirm_model "m" ("","regress","logit","poisson") , default("regress")
+        Confirm_model "m" ("","regress","logit","poisson","ologit") , default("regress")
         
         local options `options' mreg(${Cmed__mmodel1})
         
