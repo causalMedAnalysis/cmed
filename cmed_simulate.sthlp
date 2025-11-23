@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.5.0  19nov2025}{...}
+{* *! version 0.6.0  23nov2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -36,13 +36,13 @@ Single mediator, linear models for mediator and outcome
 
 
 {pstd}
-Single mediator, generalized linear models
+Multiple mediators, generalized linear models
 
 {p 8 16 2}
 {cmd:cmed}
 {cmdab:sim:ulate}
 {cmd:(}{cmd:(}{it:ymodel}{cmd:)} {depvar}{cmd:)}
-{cmd:(}{cmd:(}{it:mmodel}{cmd:)} {help varname:{it:mvar}}{cmd:)}
+{cmd:(}{it:mspec}{cmd:)} 
 {help varname:{it:dvar}}
 [{cmd:=} {help varlist:{it:cvars}}]
 {ifin} 
@@ -57,7 +57,7 @@ Interventional effects, post-treatment covariates
 {cmd:cmed}
 {cmdab:sim:ulate}
 {cmd:(}{it:yspec}{cmd:)} 
-{cmd:(}{it:mspec}{cmd:)} 
+{cmd:(}[{cmd:(}{it:mmodel}{cmd:)}] {help varname:{it:mvar}}{cmd:)}
 {cmd:(}{it:lspec}{cmd:)}
 {help varname:{it:dvar}}
 [{cmd:=} {help varlist:{it:cvars}}]
@@ -73,7 +73,7 @@ Controlled direct effect
 {cmd:cmed}
 {cmdab:sim:ulate}
 {cmd:(}{it:yspec}{cmd:)} 
-{cmd:(}{it:mspec}{cmd:)} 
+{help varname:{it:mvar}}
 {cmd:(}{it:lspec}{cmd:)}
 {help varname:{it:dvar}}
 [{cmd:=} {help varlist:{it:cvars}}]
@@ -92,8 +92,9 @@ is the outcome of interest.
 {...}
 {phang}
 {it:mvar} 
-is the mediator of interest.
-Only one mediator is allowed. 
+is a mediator of interest.
+Only one mediator is allowed 
+for estimating interventional effects and controlled direct effects.
 {p_end}
 {...}
 {phang}
@@ -116,7 +117,8 @@ is
 {phang}
 {it:msepc} 
 is 
-[{cmd:(}{it:mmodel}{cmd:)}] {it:mvar}
+[{cmd:(}{it:mmodel}{cmd:)}]  {it:mvars} 
+[{cmd:(}{it:mmodel}{cmd:)} {it:mvars}] {it:...}
 {p_end}
 {...}
 {phang}
@@ -127,7 +129,7 @@ is
 {p_end}
 
 {phang}
-{it:ymodel}, {it:mmodel}, {it:lmodel}
+{it:ymodel}, {it:mmodel}, and {it:lmodel}
 are one of 
 {cmdab:reg:ress} (default), 
 {cmd:logit}, 
@@ -145,6 +147,8 @@ are post-treatment covariates (exposure-induced confounders).
 {synoptset 32 tabbed}{...}
 {synopthdr:options}
 {synoptline}
+{synopt:{opt paths:pecific}}estimate path-specific effects
+{p_end}
 {synopt:{opt m:value(#)}}estimate controlled direct effects at {it:mvar}={it:#}
 {p_end}
 {...}

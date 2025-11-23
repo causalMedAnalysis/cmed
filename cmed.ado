@@ -1,4 +1,4 @@
-*! version 0.5.0  19nov2025
+*! version 0.6.0  23nov2025
 program cmed
     
     version 16.1
@@ -501,20 +501,20 @@ program Build_cmdline_cmed_simulate
         Map to
         
             medsim
+            mnesim
+            pathsim
             ventsim
             simcde
     */
     
     syntax [ , pathspecific mvalue(string) * ]
     
-    Option_not_allowed "`pathspecific'" "" "with {bf:cmed simulate}"
-    
-    Confirm_min_max_var "m" , max(1)
-    
     Confirm_model "d" ("")
     Confirm_model "y" ("","regress","logit","poisson","ologit") , default("regress")
     
     if ( ${Cmed__l_n_specs} ) {
+        
+        Option_not_allowed "`pathspecific'" "" "with {bf:cmed simulate} and ${Cmed__l_id}s"
         
         Confirm_model "l" ("","regress","logit","poisson","ologit") , default("regress")
         
@@ -542,6 +542,8 @@ program Build_cmdline_cmed_simulate
         }
         else {
             
+            Confirm_min_max_var "m" , max(1)
+            
             Confirm_model "m" ("","regress","logit","poisson","ologit") , default("regress")
             
             local options `options' mreg(${Cmed__mmodel1})
@@ -550,6 +552,8 @@ program Build_cmdline_cmed_simulate
             
         }
         
+        local options `options' mvar(${Cmed__mvars})
+        
     }
     else {
         
@@ -557,13 +561,38 @@ program Build_cmdline_cmed_simulate
         
         Confirm_model "m" ("","regress","logit","poisson","ologit") , default("regress")
         
-        local options `options' mreg(${Cmed__mmodel1})
+        forvalues i = 1/${Cmed__m_n_specs} {
+            
+            foreach mvar of global Cmed__mvars`i' {
+                
+                local mvars `mvars' `mvar'
+                local mregs `mregs' ${Cmed__mmodel`i'}
+                
+            }
+            
+        }
         
-        local cmd "medsim"
+        if (${Cmed__m_n_vars} > 1) {
+            
+            local options `options' mvars(`mvars') mregs(`mregs')
+            
+            if ("`pathspecific'" == "pathspecific") ///
+                local cmd "pathsim"
+            else                                    ///
+                local cmd "mnesim"
+            
+        }
+        else {
+            
+            local options `options' mvar(`mvars') mreg(${Cmed__mmodel1})
+            
+            local cmd "medsim"
+            
+        }
         
     }
     
-    local options `options' yreg(${Cmed__ymodel1}) mvar(${Cmed__mvars})
+    local options `options' yreg(${Cmed__ymodel1})
     
     global Cmed__cmdline ///
         `cmd' ${Cmed__yvars} ${Cmed__pweight} , `options'
@@ -1155,7 +1184,7 @@ end
 
 
     /*  _____________________________________________________________________
-                                                 global macro managaement  */
+                                                  global macro management  */
 
 program Define_globals
     

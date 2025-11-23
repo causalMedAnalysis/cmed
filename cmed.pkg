@@ -12,7 +12,7 @@ d KW: confounding
 d
 d Requires: Stata version 16.1
 d
-d Distribution-Date: 20251119
+d Distribution-Date: 20251123
 d
 d Author: Geoff Wodtke, University of Chicago
 d Support: email wodtke@@uchicago.edu
@@ -52,6 +52,8 @@ f medsim.ado
 f medsimbs.ado
 f mipwpath.ado
 f mlinpath.ado
+f mnesim.ado
+f mnesimbs.ado
 f mpathimp.ado
 f mpathwimp.ado
 f mr1forest.ado
@@ -66,6 +68,8 @@ f mrpath.ado
 f mrpathbs.ado
 f pathimp.ado
 f pathimpbs.ado
+f pathsim.ado
+f pathsimbs.ado
 f pathwimp.ado
 f pathwimpbs.ado
 f rwrcde.ado
