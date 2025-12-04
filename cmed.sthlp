@@ -31,8 +31,8 @@
 for mediator(s) and outcome
 {p_end}
 {...}
-{synopt:{helpb cmed_simulate:{ul:sim}ulate}}generalized linear models,
-estimated via simulation
+{synopt:{helpb cmed_simulate:{ul:sim}ulate}}generalized linear 
+models, effects estimated via simulation
 {p_end}
 {...}
 {synopt:{helpb cmed_ipw:ipw}}inverse probability weighting
@@ -41,7 +41,7 @@ estimated via simulation
 {synopt:{helpb cmed_impute:{ul:imp}ute}}regression imputation
 {p_end}
 {...}
-{synopt:{helpb cmed_mr:mr}}multiply robust
+{synopt:{helpb cmed_mr:mr}}multiply robust estimation
 {p_end}
 {...}
 {synopt:{helpb cmed_dml:dml}}de-biased machine learning
@@ -56,8 +56,15 @@ estimated via simulation
 
 {pstd}
 {cmd:cmed}
-performs causal mediation analysis 
-using methods and formulas discussed in Wodtke and Zhou (forthcoming).
+performs causal mediation analysis using methods discussed in 
+{help cmed##references:Wodtke and Zhou (2026)}. It supports estimation of 
+natural, interventional, controlled, and path-specific effects. It can handle
+multiple mediators, exposure-induced confounders, and many different types 
+of variables, including measures that are binary, ordinal, continuous, or 
+counts. Across its different subcommands, {cmd:cmed} supports estimation using 
+linear models, generalized linear models and simulation methods, 
+inverse probability weighting, regression imputation, multiply robust
+methods that combine weighting and imputation, and de-biased machine learning.
 
 
 {...}
@@ -65,7 +72,7 @@ using methods and formulas discussed in Wodtke and Zhou (forthcoming).
 {title:References}
 
 {pstd}
-Wodtke GT, and Zhou X. 2026. Causal Mediation Analysis. Cambridge University Press.
+Wodtke GT, and Zhou X. 2026. {browse "https://www.cambridge.org/us/universitypress/subjects/social-science-research-methods/quantitative-methods/causal-mediation-analysis":Causal Mediation Analysis}. Cambridge University Press.
 {p_end}
 
 
