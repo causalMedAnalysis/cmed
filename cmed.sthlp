@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.4.0  11nov2025}{...}
+{* *! version 0.4.1  04dec2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -20,6 +20,7 @@
 {cmd:cmed} 
 {it:subcommand}
 {it:...}
+
 
 {...}
 {synoptset 16}{...}
@@ -55,14 +56,17 @@ estimated via simulation
 
 {pstd}
 {cmd:cmed}
-performs causal mediation analysis.
+performs causal mediation analysis 
+using methods and formulas discussed in Wodtke and Zhou (forthcoming).
 
 
 {...}
 {marker references}{...}
 {title:References}
 
-{pstd}Wodtke GT, and Zhou X. Causal Mediation Analysis. In preparation. {p_end}
+{pstd}
+Wodtke GT, and Zhou X. 2026. Causal Mediation Analysis. Cambridge University Press.
+{p_end}
 
 
 {...}
@@ -72,7 +76,5 @@ performs causal mediation analysis.
 {pstd}
 Geoffrey T. Wodtke {break}
 Department of Sociology{break}
-University of Chicago
-
-{pstd}
+University of Chicago{break}
 Email: wodtke@uchicago.edu

@@ -1,4 +1,4 @@
-*! version 0.6.0  23nov2025
+*! version 0.7.0  04dec2025
 program cmed
     
     version 16.1
@@ -26,7 +26,7 @@ end
 
 program Cmed
     
-    syntax anything(id="subcommand" equalok) [ if ] [ in ] [ pweight ] [ , * ]
+    syntax anything(id="subcommand" equalok) [ if ] [ in ] [ , * ]
     
     gettoken subcommand modelspecifications : anything , quotes
     
@@ -41,7 +41,7 @@ program Cmed
     
     Parse_options , `options'
     
-    Estimate [`weight' `exp']
+    Estimate
     
 end
 
@@ -284,6 +284,7 @@ program Parse_options
         Mvalue(numlist max=1)   ///
         d(numlist max=1)        ///
         dstar(numlist max=1)    ///
+        parallel                ///
         ///
         SHOWCMEDCMDLINE         /// debugging; not documented
         *                       ///
@@ -322,6 +323,9 @@ program Parse_options
         
     }
     
+    if ("`parallel'" == "parallel") ///
+        Confirm_parallel_is_installed
+    
     global Cmed__options        ///
         dvar(${Cmed__dvars})    ///
         d(`d')                  ///
@@ -329,6 +333,7 @@ program Parse_options
         cvars(${Cmed__cvars})   ///
         `pathspecific'          ///
         mvalue(`mvalue')        ///
+        `parallel'              ///
         `options'
     
 end
@@ -378,6 +383,28 @@ program Levelsof_dvar
 end
 
 
+        /*  _________________________________________________________________
+                                            confirm parallel is installed  */
+
+program Confirm_parallel_is_installed
+    
+    capture noisily which parallel
+    if (_rc != 111) /// 
+        exit _rc
+    
+    display as err
+    display as err _col(4) "Option {bf:parallel} requires {bf:parallel}. " _continue
+    display as err " To install {bf:parallel} from GitHub, type " ///
+        `"{stata "net install parallel, from(https://raw.github.com/gvegayon/parallel/stable/)"}"'
+    display as err _col(4) "After {bf:parallel} is installed, type " ///
+        `"{stata "mata: mata mlib index"}"'
+    display as err
+    
+    exit _rc
+    
+end
+
+
 
 
 /*  _________________________________________________________________________
@@ -388,10 +415,7 @@ end
 
 program Estimate
     
-    syntax [ pweight ]
-    
-    if ("`weight'" != "") ///
-        global Cmed__pweight [`weight' `exp']
+    syntax
     
     // !! fixme note/warning message for pweights with complex survey data
     
@@ -487,7 +511,7 @@ program Build_cmdline_cmed_linear
         local options `options' m(`mvalue')
     
     global Cmed__cmdline ///
-        `cmd' ${Cmed__yvars} `mvars' ${Cmed__lvars} ${Cmed__pweight} , `options'
+        `cmd' ${Cmed__yvars} `mvars' ${Cmed__lvars} , `options'
     
 end
 
@@ -595,7 +619,7 @@ program Build_cmdline_cmed_simulate
     local options `options' yreg(${Cmed__ymodel1})
     
     global Cmed__cmdline ///
-        `cmd' ${Cmed__yvars} ${Cmed__pweight} , `options'
+        `cmd' ${Cmed__yvars} , `options'
     
 end
 
@@ -670,17 +694,6 @@ program Build_cmdline_cmed_ipw
         
     }
     
-    // !! fixme: we should allow standard pweighs in syntax
-    
-    if ("${Cmed__pweight}" != "") {
-        
-        tempvar sampwts
-        Sampwts `sampwts'
-        
-        local options `options' sampwts(`sampwts') 
-        
-    }
-    
     global Cmed__cmdline ///
         `cmd' ${Cmed__yvars} `mvars' , `options'
     
@@ -720,17 +733,6 @@ program Build_cmdline_cmed_impute
         
         local mvars : copy global Cmed__mvars
         
-        // !! fixme: we should allow standard pweighs in syntax
-        
-        if ("${Cmed__pweight}" != "") {
-            
-            tempvar sampwts
-            Sampwts `sampwts'
-            
-            local options `options' sampwts(`sampwts') 
-            
-        }
-        
         if ("`pathspecific'" == "pathspecific") ///
             local cmd "pathwimp"
         else                                    ///
@@ -761,14 +763,12 @@ program Build_cmdline_cmed_impute
             
         }
         
-        local pweight : copy global Cmed__pweight
-        
     }
     
     local options `options' yreg(${Cmed__ymodel1})
     
     global Cmed__cmdline ///
-        `cmd' ${Cmed__yvars} `mvars' `pweight' , `options'
+        `cmd' ${Cmed__yvars} `mvars' , `options'
     
 end
 
@@ -944,23 +944,6 @@ program Build_cmdline_cmed_mr_or_dml
     
     global Cmed__cmdline ///
         `cmd' ${Cmed__yvars} ${Cmed__mvars} , `options'
-    
-end
-
-
-
-
-/*  _________________________________________________________________________
-                                                                auxiliary  */
-
-
-
-
-program Sampwts
-    
-    syntax name [ pweight ]
-    
-    quietly generate double `namelist' `exp'
     
 end
 
