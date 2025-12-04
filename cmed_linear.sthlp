@@ -286,7 +286,7 @@ unobserved or exposure-induced confounders for any of the mediator-mediator
 relationships.
 
 {pstd}
-See {help cmed##references:Wodtke and Zhou (2026)} for a detailed discussion.
+See {help cmed_linear##references:Wodtke and Zhou (2026)} for a detailed discussion.
 
 
 {...}
@@ -493,8 +493,7 @@ Parallelize the bootstrap replications
 {title:References}
 
 {pstd}
-Wodtke GT, and Zhou X. 2026. Causal Mediation Analysis. Cambridge University 
-Press.
+Wodtke GT, and Zhou X. 2026. {browse "https://www.cambridge.org/us/universitypress/subjects/social-science-research-methods/quantitative-methods/causal-mediation-analysis":Causal Mediation Analysis}. Cambridge University Press.
 {p_end}
 
 

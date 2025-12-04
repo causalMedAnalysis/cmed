@@ -314,7 +314,7 @@ models used to construct the weights are correctly specified and
 assumptions {bf:A1}-{bf:A2} hold.
 
 {pstd}
-See {help cmed##references:Wodtke and Zhou (2026)} for a detailed discussion.
+See {help cmed_ipw##references:Wodtke and Zhou (2026)} for a detailed discussion.
 
 
 {...}
@@ -528,8 +528,7 @@ Parallelize the bootstrap replications
 {title:References}
 
 {pstd}
-Wodtke GT, and Zhou X. 2026. Causal Mediation Analysis. Cambridge University 
-Press.
+Wodtke GT, and Zhou X. 2026. {browse "https://www.cambridge.org/us/universitypress/subjects/social-science-research-methods/quantitative-methods/causal-mediation-analysis":Causal Mediation Analysis}. Cambridge University Press.
 {p_end}
 
 
