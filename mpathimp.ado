@@ -93,7 +93,7 @@ program define mpathimp, rclass
 		}	
 		
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		reg `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		
 		tempvar yhatC`d'M
@@ -129,7 +129,7 @@ program define mpathimp, rclass
 		}
 		
 		di ""
-		di "Model for predictions from previous model under D:=d given {cvars `dvar'}:"
+		di "{bf:Model for predictions from previous model under D:=d given {cvars `dvar'}:}"
 		reg `yhatC`d'M' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		
 		tempvar yhat`d'M`dstar'
@@ -189,7 +189,7 @@ program define mpathimp, rclass
 		}	
 		
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		glm `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse', family(b) link(l)
 		
 		tempvar yhatC`d'M
@@ -225,7 +225,7 @@ program define mpathimp, rclass
 		}
 		
 		di ""
-		di "Model for predictions from previous model under D:=d given {cvars `dvar'}:"
+		di "{bf:Model for predictions from previous model under D:=d given {cvars `dvar'}:}"
 		glm `yhatC`d'M' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse', family(b) link(l)
 		
 		tempvar yhat`d'M`dstar'

@@ -119,12 +119,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="regress") & ("`yreg'"=="regress")) {
 		
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		regress `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -226,12 +226,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="logit") & ("`yreg'"=="regress")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		logit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -333,12 +333,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="ologit") & ("`yreg'"=="regress")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 
@@ -473,12 +473,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="poisson") & ("`yreg'"=="regress")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		poisson `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -580,12 +580,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="regress") & ("`yreg'"=="logit")) {
 		
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		regress `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		logit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -687,12 +687,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="logit") & ("`yreg'"=="logit")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		logit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		logit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -794,12 +794,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="ologit") & ("`yreg'"=="logit")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		logit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -934,12 +934,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="poisson") & ("`yreg'"=="logit")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		poisson `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		logit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -1041,12 +1041,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="regress") & ("`yreg'"=="ologit")) {
 		
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		regress `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -1196,12 +1196,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="logit") & ("`yreg'"=="ologit")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		logit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -1351,12 +1351,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="ologit") & ("`yreg'"=="ologit")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -1539,12 +1539,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="poisson") & ("`yreg'"=="ologit")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		poisson `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		ologit `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -1694,12 +1694,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="regress") & ("`yreg'"=="poisson")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		regress `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		poisson `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -1801,12 +1801,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="logit") & ("`yreg'"=="poisson")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		logit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		poisson `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -1908,12 +1908,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="ologit") & ("`yreg'"=="poisson")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		ologit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		poisson `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		
@@ -2048,12 +2048,12 @@ program define medsimbs, rclass
 	if (("`mreg'"=="poisson") & ("`yreg'"=="poisson")) {
 
 		di ""
-		di "Model for `mvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 		poisson `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		est store Mmodel_r001
 				
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		poisson `yvar' `mvar' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		est store Ymodel_r001
 		

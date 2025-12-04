@@ -208,7 +208,7 @@ program define ventsimbs, rclass
 		local currentReg = word("`lregs'", `i')
 	
 		di ""
-		di "Model for `currentVar' conditional on {cvars `dvar' `priorVars'}:"
+		di "{bf:Model for `currentVar' conditional on {cvars `dvar' `priorVars'}:}"
 		`currentReg' `currentVar' `dvar' `cvars' `cxd_vars' `priorVars' [`weight' `exp'] if `touse'
 		est store L`i'model_r001
 		
@@ -216,12 +216,12 @@ program define ventsimbs, rclass
     }
 	
 	di ""
-	di "Model for `mvar' conditional on {cvars `dvar'}:" 
+	di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}" 
 	`mreg' `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 	est store Mmodel_r001
 	
 	di ""
-	di "Model for `yvar' conditional on {cvars `dvar' `lvars' `mvar'}:"
+	di "{bf:Model for `yvar' conditional on {cvars `dvar' `lvars' `mvar'}:}"
 	`yreg' `yvar' `mvar' `dvar' `inter' `cvars' `lvars' `cxd_vars' `cxm_vars' `lxm_vars' [`weight' `exp'] if `touse'
 	est store Ymodel_r001
 	

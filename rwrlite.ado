@@ -1,7 +1,7 @@
 *!TITLE: RWRLITE - causal mediation analysis using regression-with-residuals
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 - added parallelization 
 *!
  
 
@@ -20,6 +20,7 @@ program define rwrlite, eclass
 		cxm ///
 		lxm ///
 		NOINTERaction ///
+		parallel ///	
 		detail * ]
 							
 	qui {
@@ -32,11 +33,14 @@ program define rwrlite, eclass
 	gettoken yvar lvar : varlist
 
 	if ("`detail'" != "") {		
+		
 		rwrlitebs `varlist' if `touse' [`weight' `exp'], ///
 			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') ///
 			cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
+			
 	}
-	
+
+/*	
 	local mreg regress
 
 	type_text , mreg(`mreg')
@@ -46,24 +50,49 @@ program define rwrlite, eclass
 	local ATE "e(`r(ATEtype)')"
 			
 	type_text , mreg(`mreg') lvar(`lvar') cvar(`cvars')	
+*/
 
-	bootstrap ///
-		`r(ATEtype)'=`ATE' ///
-		`r(NDEtype)'=`NDE' ///
-		`r(NIEtype)'=`NIE', ///
-			force `options' noheader notable: ///
-				rwrlitebs `varlist' if `touse' [`weight' `exp'], ///
-					dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') ///
-					cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
-
+	if ("`parallel'" == "") {		
 		
-	estat bootstrap, p noheader
+		bootstrap ///
+			OE=e(OE) ///
+			IDE=e(IDE) ///
+			IIE=e(IIE), ///
+				`options' force noheader notable: ///
+					rwrlitebs `varlist' if `touse' [`weight' `exp'], ///
+						dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') ///
+						cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
 
+		estat bootstrap, p noheader
+
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(OE=e(OE) IDE=e(IDE) IIE=e(IIE)) `options' : ///
+			rwrlitebs `varlist' if `touse' [`weight' `exp'], ///
+				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') ///
+				cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
+	
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+
+	}	
+	
 	ereturn local cmdline `"rwrlite `0'"'
 
 end
 
-
+/*
 capture program drop type_text
 program type_text, rclass
 
@@ -102,7 +131,7 @@ program type_text, rclass
 		return local ATEtext `ATEtext'
 		
 end
-
+*/
 
 
 			

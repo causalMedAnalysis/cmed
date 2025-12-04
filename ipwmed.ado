@@ -1,7 +1,7 @@
 *!TITLE: IPWMED - causal mediation analysis using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added parallelization 
 *!
 
 program define ipwmed, eclass
@@ -15,6 +15,7 @@ program define ipwmed, eclass
 		[cvars(varlist numeric) ///
 		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
+		parallel ///				
 		detail * ]
 
 	qui {
@@ -34,27 +35,6 @@ program define ipwmed, eclass
 	
 	local num_mvars = wordcount("`mvars'")
 	
-	if ("`detail'" != "") {
-		
-		local ipw_var_names "sw1_r001 sw2_r001 sw3_r001"
-		foreach name of local ipw_var_names {
-			capture confirm new variable `name'
-			if _rc {
-				display as error "{p 0 0 5 0}The command needs to create weight variables"
-				display as error "with the following names: `ipw_var_names', "
-				display as error "but these variables have already been defined.{p_end}"
-				error 110
-			}
-		}
-			
-		ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-			cvars(`cvars') sampwts(`sampwts') `detail' censor(`censor')
-	
-		label var sw1_r001 "IPW for estimating E(Y(d*,M(d*)))"
-		label var sw2_r001 "IPW for estimating E(Y(d,M(d)))"
-		label var sw3_r001 "IPW for estimating E(Y(d,M(d*)))"
-	}
-
 	if ("`censor'" != "") {
 		local censor1: word 1 of `censor'
 		local censor2: word 2 of `censor'
@@ -75,28 +55,85 @@ program define ipwmed, eclass
 		}
 	}
 
-	if (`num_mvars'==1) {
+	if ("`detail'" != "") {
+		
+		local ipw_var_names "sw1_r001 sw2_r001 sw3_r001"
+		foreach name of local ipw_var_names {
+			capture confirm new variable `name'
+			if _rc {
+				display as error "{p 0 0 5 0}The command needs to create weight variables"
+				display as error "with the following names: `ipw_var_names', "
+				display as error "but these variables have already been defined.{p_end}"
+				error 110
+			}
+		}
+			
+		ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
+			cvars(`cvars') sampwts(`sampwts') `detail' censor(`censor')
 	
-		bootstrap ///
-			ATE=r(ate) ///
-			NDE=r(nde) ///
-			NIE=r(nie), ///
-				`options' noheader notable: ///
-					ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-						cvars(`cvars') sampwts(`sampwts') censor(`censor')
+		label var sw1_r001 "IPW for estimating E(Y(d*,M(d*)))"
+		label var sw2_r001 "IPW for estimating E(Y(d,M(d)))"
+		label var sw3_r001 "IPW for estimating E(Y(d,M(d*)))"
 	}
+	
+	if ("`parallel'" == "") {		
+		
+		if (`num_mvars'==1) {
+	
+			bootstrap ///
+				ATE=r(ate) ///
+				NDE=r(nde) ///
+				NIE=r(nie), ///
+					`options' force noheader notable: ///
+						ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
+							cvars(`cvars') sampwts(`sampwts') censor(`censor')
+		}
 
-	if (`num_mvars'>=2) {
+		if (`num_mvars'>=2) {
 	
-		bootstrap ///
-			ATE=r(ate) ///
-			MNDE=r(nde) ///
-			MNIE=r(nie), ///
-				`options' noheader notable: ///
-					ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-						cvars(`cvars') sampwts(`sampwts') censor(`censor')
+			bootstrap ///
+				ATE=r(ate) ///
+				MNDE=r(nde) ///
+				MNIE=r(nie), ///
+					`options' force noheader notable: ///
+						ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
+							cvars(`cvars') sampwts(`sampwts') censor(`censor')
+		}
+	
+		estat bootstrap, p noheader
+		
 	}
 	
-	estat bootstrap, p noheader
+	if ("`parallel'" != "") {		
+		
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		if (`num_mvars'==1) {
+
+			qui parallel bs, expr(ATE=r(ate) NDE=r(nde) NIE=r(nie)) `options' : ///
+					ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
+						cvars(`cvars') sampwts(`sampwts') censor(`censor')
+							
+		}
+	
+		if (`num_mvars'>=2) {
+	
+			qui parallel bs, expr(ATE=r(ate) MNDE=r(nde) MNIE=r(nie)) `options' : ///
+					ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
+						cvars(`cvars') sampwts(`sampwts') censor(`censor')
+
+		}
+		
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+		
+	}
 	
 end ipwmed

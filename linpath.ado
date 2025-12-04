@@ -1,7 +1,7 @@
 *!TITLE: LINPATH - path-specific effects using linear models
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added parallelization 
 *!
 
 program define linpath, eclass
@@ -16,6 +16,7 @@ program define linpath, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
+		parallel ///				
 		detail * ]
 		
 	qui {
@@ -48,13 +49,14 @@ program define linpath, eclass
 		
 		foreach m in `mvars' {
 			di ""
-			di "Model for `m' given {cvars `dvar'}:"
+			di "{bf:Model for `m' given {cvars `dvar'}:}"
 			regress `m' `dvar' `cvars_dis_r' `cxd_vars_dis' [`weight' `exp'] if `touse' 
 		}
 		
 		linpathbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
 			dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
 			`cxd' `cxm' `nointeraction'
+			
 	}
 		
 	/***COMPUTE POINT AND INTERVAL ESTIMATES***/
@@ -66,12 +68,37 @@ program define linpath, eclass
 			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
 		}
 	}
+
+	if ("`parallel'" == "") {		
+		
+		bootstrap `effects', `options' force noheader notable: ///
+			linpathbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
+				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction'
 	
-	bootstrap `effects', `options' force noheader notable: ///
-		linpathbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
-			`cxd' `cxm' `nointeraction'
+		estat bootstrap, p noheader
 	
-	estat bootstrap, p noheader
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(`effects') `options' : ///
+			linpathbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
+				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction'
+	
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+
+	}
 	
 end linpath

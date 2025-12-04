@@ -1,7 +1,7 @@
 *!TITLE: IMPCDE - a module for estimating controlled direct effects using regression imputation
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 - added parallelization
 *!
 
 program define impcde, eclass
@@ -19,6 +19,7 @@ program define impcde, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
+		parallel ///
 		detail * ]
 
 	qui {
@@ -41,14 +42,41 @@ program define impcde, eclass
 			cvars(`cvars') `nointeraction' `cxd' `cxm'
 	
 	}
+
+	if ("`parallel'" == "") {		
 		
-	bootstrap ///
-		CDE=r(cde), ///
-			force `options' noheader notable: ///
-				impcdebs `varlist' if `touse' [`weight' `exp'], ///
+		bootstrap ///
+			CDE=r(cde), ///
+				`options' force noheader notable: ///
+					impcdebs `varlist' if `touse' [`weight' `exp'], ///
+						dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') yreg(`yreg') ///
+						cvars(`cvars') `nointeraction' `cxd' `cxm'
+			
+		estat bootstrap, p noheader
+		di as text "Note: CDE evaluated at m=`m'"
+		
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(CDE=r(cde)) `options' : ///
+			impcdebs `varlist' if `touse' [`weight' `exp'], ///
 					dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') yreg(`yreg') ///
 					cvars(`cvars') `nointeraction' `cxd' `cxm'
-			
-	estat bootstrap, p noheader
+	
+		estat bootstrap, p noheader
+		di as text "Note: CDE evaluated at m=`m'"
+		
+		capture parallel clean, all
+
+	}
 	
 end impcde

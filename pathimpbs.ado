@@ -1,7 +1,7 @@
 *!TITLE: PATHIMP - path-specific effects using pure regression imputation
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2  - added support for unlimited num of mediators
 *!
 
 program define pathimpbs, rclass
@@ -28,149 +28,47 @@ program define pathimpbs, rclass
 	gettoken yvar mvars : varlist
 	
 	local num_mvars = wordcount("`mvars'")
-	
-	local i = 1
-	foreach v of local mvars {
-		local mvar`i' `v'
-		local ++i
-	}
-	
-	if (`num_mvars' == 1) {
-	
-		mpathimp `yvar' `mvars' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-	
-		return scalar nde=r(nde)
-		return scalar nie=r(nie)
-		return scalar ate=r(ate)
-	
-	}
 
-	if (`num_mvars' == 2) {
-	
-		mpathimp `yvar' `mvar1' `mvar2' [`weight' `exp'] if `touse', ///
+	* loop over mediators in reverse order
+	forv k=`num_mvars'(-1)1 {
+		
+		* select all mediators up to the mediator in question
+		local mvars_include
+		forv j=1/`k' {
+			local mvars_include `mvars_include' `=word("`mvars'",`j')'
+		}
+		
+		* estimate natural effects
+		mpathimp `yvar' `mvars_include' [`weight' `exp'] if `touse', ///
 			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-	
-		qui scalar mnde_M1M2=r(nde)
-
-		mpathimp `yvar' `mvar1' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
+			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'			
 		
-		qui scalar mnde_M1=r(nde)
+		* special case: only one total mediator
+		if `num_mvars'==1 {
+			return scalar nde = r(nde)
+			return scalar nie = r(nie)
+			return scalar ate = r(ate)
+		}
 		
-		return scalar pse_DY=mnde_M1M2
-		return scalar pse_DM2Y=mnde_M1-mnde_M1M2
-		return scalar pse_DM1Y=r(nie)
-		return scalar ate=r(ate)
+		* 2+ total mediators: last mediator
+		if `num_mvars'>1 & `k'==`num_mvars' {
+			return scalar pse_DY = r(nde)
+			scalar prev_mnde = r(nde)
+		}
 		
-	}
-
-	if (`num_mvars' == 3) {
-	
-		mpathimp `yvar' `mvar1' `mvar2' `mvar3' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-	
-		qui scalar mnde_M1M2M3=r(nde)
-
-		mpathimp `yvar' `mvar1' `mvar2' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
+		* 2+ total mediators: first mediator
+		if `num_mvars'>1 & `k'==1 {
+			return scalar pse_DM`=`k'+1'Y = r(nde) - prev_mnde
+			return scalar pse_DM1Y = r(nie)
+			return scalar ate = r(ate)
+		}
 		
-		qui scalar mnde_M1M2=r(nde)
-		
-		mpathimp `yvar' `mvar1' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-		
-		qui scalar mnde_M1=r(nde)
-		
-		return scalar pse_DY=mnde_M1M2M3
-		return scalar pse_DM3Y=mnde_M1M2-mnde_M1M2M3
-		return scalar pse_DM2Y=mnde_M1-mnde_M1M2
-		return scalar pse_DM1Y=r(nie)
-		return scalar ate=r(ate)
-		
-	}
-
-	if (`num_mvars' == 4) {
-	
-		mpathimp `yvar' `mvar1' `mvar2' `mvar3' `mvar4' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-	
-		qui scalar mnde_M1M2M3M4=r(nde)
-
-		mpathimp `yvar' `mvar1' `mvar2' `mvar3' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-		
-		scalar mnde_M1M2M3=r(nde)
-		
-		qui mpathimp `yvar' `mvar1' `mvar2' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-		
-		qui scalar mnde_M1M2=r(nde)
-		
-		mpathimp `yvar' `mvar1' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-		
-		qui scalar mnde_M1=r(nde)
-		
-		return scalar pse_DY=mnde_M1M2M3M4
-		return scalar pse_DM4Y=mnde_M1M2M3-mnde_M1M2M3M4
-		return scalar pse_DM3Y=mnde_M1M2-mnde_M1M2M3
-		return scalar pse_DM2Y=mnde_M1-mnde_M1M2
-		return scalar pse_DM1Y=r(nie)
-		return scalar ate=r(ate)
-		
-	}
-	
-	if (`num_mvars' == 5) {
-
-		mpathimp `yvar' `mvar1' `mvar2' `mvar3' `mvar4' `mvar5' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-	
-		qui scalar mnde_M1M2M3M4M5=r(nde)
-
-		mpathimp `yvar' `mvar1' `mvar2' `mvar3' `mvar4' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-	
-		qui scalar mnde_M1M2M3M4=r(nde)
-
-		mpathimp `yvar' `mvar1' `mvar2' `mvar3' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-		
-		qui scalar mnde_M1M2M3=r(nde)
-		
-		mpathimp `yvar' `mvar1' `mvar2' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-		
-		qui scalar mnde_M1M2=r(nde)
-		
-		mpathimp `yvar' `mvar1' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-		
-		qui scalar mnde_M1=r(nde)
-		
-		return scalar pse_DY=mnde_M1M2M3M4M5
-		return scalar pse_DM5Y=mnde_M1M2M3M4-mnde_M1M2M3M4M5
-		return scalar pse_DM4Y=mnde_M1M2M3-mnde_M1M2M3M4
-		return scalar pse_DM3Y=mnde_M1M2-mnde_M1M2M3
-		return scalar pse_DM2Y=mnde_M1-mnde_M1M2
-		return scalar pse_DM1Y=r(nie)
-		return scalar ate=r(ate)
-		
-	}
+		* 2+ total mediators: all other mediators
+		if `num_mvars'>1 & !inlist(`k',1,`num_mvars') {
+			return scalar pse_DM`=`k'+1'Y = r(nde) - prev_mnde
+			scalar prev_mnde = r(nde)
+		}
+			
+	}	
 
 end pathimpbs

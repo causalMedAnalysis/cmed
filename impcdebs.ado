@@ -58,7 +58,7 @@ program define impcdebs, rclass
 	qui gen ``mvar'_orig_r001' = `mvar' if `touse'
 	
 	di ""
-	di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+	di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 	`yreg' `yvar' `dvar' `mvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		
 	qui replace `mvar'=`m'

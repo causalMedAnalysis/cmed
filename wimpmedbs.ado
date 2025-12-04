@@ -82,7 +82,7 @@ program define wimpmedbs, rclass
 
 	/***COMPUTE INVERSE PROBABILITY WEIGHTS***/
 	di ""
-	di "Model for `dvar' given {cvars}:"	
+	di "{bf:Model for `dvar' given {cvars}:}"	
 	logit `dvar' `cvars' [pw=`wts'] if `touse'
 	tempvar phat_D1_C phat_D0_C
 	qui predict `phat_D1_C' if e(sample), pr
@@ -108,7 +108,7 @@ program define wimpmedbs, rclass
 	if ("`yreg'"=="regress") {
 	
 		di ""
-		di "Model for `yvar' given {cvars `dvar'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar'}:}"
 		reg `yvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse'
 
 		tempvar yhat`d'M`d' yhat`dstar'M`dstar'
@@ -142,7 +142,7 @@ program define wimpmedbs, rclass
 		}	
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		reg `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [pw=`wts'] if `touse'
 		
 		tempvar yhatC`d'M
@@ -182,7 +182,7 @@ program define wimpmedbs, rclass
 	if ("`yreg'"=="logit") {
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar'}:}"
 		glm `yvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse', family(b) link(l)
 
 		tempvar yhat`d'M`d' yhat`dstar'M`dstar'
@@ -216,7 +216,7 @@ program define wimpmedbs, rclass
 		}	
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		glm `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [pw=`wts'] if `touse', family(b) link(l)
 		
 		tempvar yhatC`d'M

@@ -1,7 +1,7 @@
 *!TITLE: LINCDE - estimating controlled direct effects using linear models
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 - added parallelization 
 *!
 
 program define lincde, eclass
@@ -18,6 +18,7 @@ program define lincde, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
+		parallel ///						
 		detail * ]
 
 	qui {
@@ -27,18 +28,46 @@ program define lincde, eclass
 	}
 
 	if ("`detail'" != "") {
+		
 		lincdebs `varlist' [`weight' `exp'] if `touse' , ///
 			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
 			cvars(`cvars') `nointeraction' `cxd' `cxm'
+			
 	}
 	
-	bootstrap ///
-		CDE=r(cde), `options' force noheader notable: ///
-		lincdebs `varlist' [`weight' `exp'] if `touse', ///
-			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
-			cvars(`cvars') `nointeraction' `cxd' `cxm'
+	if ("`parallel'" == "") {		
+	
+		bootstrap ///
+			CDE=r(cde), `options' force noheader notable: ///
+			lincdebs `varlist' [`weight' `exp'] if `touse', ///
+				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
+				cvars(`cvars') `nointeraction' `cxd' `cxm'
 			
-	estat bootstrap, p noheader
-	di "Note: CDE evaluated at m=`m'"
+		estat bootstrap, p noheader
+		di as text "Note: CDE evaluated at m=`m'"
+	
+	}
 
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(CDE=r(cde)) `options' : ///
+			lincdebs `varlist' [`weight' `exp'] if `touse', ///
+				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
+				cvars(`cvars') `nointeraction' `cxd' `cxm'
+	
+		estat bootstrap, p noheader
+		di as text "Note: CDE evaluated at m=`m'"
+		
+		capture parallel clean, all
+
+	}
+	
 end lincde

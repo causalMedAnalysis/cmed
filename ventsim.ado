@@ -1,7 +1,7 @@
 *!TITLE: VENTSIM - analysis of interventional effects using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 -- added support for ologit models
+*! version 0.3 -- added support for parallelization
 *!
 
 program define ventsim, eclass
@@ -23,6 +23,7 @@ program define ventsim, eclass
 		cxd ///
 		cxm ///
 		lxm ///
+		parallel ///			
 		detail * ]
 		
 	qui {
@@ -32,22 +33,50 @@ program define ventsim, eclass
 	}
 	
 	if ("`detail'" != "") {		
+		
 		ventsimbs `varlist' [`weight' `exp'] if `touse' , ///
 			dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
 			d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') lregs(`lregs') /// 
 			nsim(1) `nointeraction' `cxd' `cxm' `lxm'
+			
 	}
 		
-	bootstrap ///
-		OE=r(oe) ///
-		IDE=r(ide) ///
-		IIE=r(iie), ///
-			force `options' noheader notable: ///
-				ventsimbs `varlist' if `touse' [`weight' `exp'], ///
-					dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
-					d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') lregs(`lregs') ///
-					nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'
+	if ("`parallel'" == "") {		
+		
+		bootstrap ///
+			OE=r(oe) ///
+			IDE=r(ide) ///
+			IIE=r(iie), ///
+				`options' force noheader notable: ///
+					ventsimbs `varlist' if `touse' [`weight' `exp'], ///
+						dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
+						d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') lregs(`lregs') ///
+						nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'
 
-	estat bootstrap, p noheader
+		estat bootstrap, p noheader
+	
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(OE=r(oe) IDE=r(ide) IIE=r(iie)) `options' : ///
+			ventsimbs `varlist' if `touse' [`weight' `exp'], ///
+				dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
+				d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') lregs(`lregs') ///
+				nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'
+	
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+
+	}		
 	
 end ventsim

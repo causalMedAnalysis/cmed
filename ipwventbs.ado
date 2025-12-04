@@ -1,7 +1,7 @@
 *!TITLE: IPWVENT - causal mediation analysis of interventional effects using inverse probability weighting	
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - fixed problem with detail option 
 *!
 
 program define ipwventbs, rclass
@@ -35,7 +35,7 @@ program define ipwventbs, rclass
 	/*****
 	ERRORS
 	******/
-	local ipw_var_names "sw1_r001 sw2_r001 sw3_r001"
+	local ipw_var_names "sw1_r001_temp sw2_r001_temp sw3_r001_temp"
 	foreach name of local ipw_var_names {
 		capture confirm new variable `name'
 		if _rc {
@@ -89,7 +89,7 @@ program define ipwventbs, rclass
 	qui gen `wts' = 1 if `touse'
 	
 	if ("`sampwts'" != "") {
-		qui replace `wts' = `wts' * `sampwts'
+		qui replace `wts' = `wts' * `sampwts' 
 		qui sum `wts'
 		qui replace `wts' = `wts' / r(mean)
 	}
@@ -124,7 +124,7 @@ program define ipwventbs, rclass
 	**********/
 	/*****DVAR*****/
 	di ""
-	di "Model for `dvar' conditional on {cvars}:"
+	di "{bf:Model for `dvar' conditional on {cvars}:}"
 	logit `dvar' `cvars' [pw=`wts'] if `touse'
 	qui est store Dmodel_given_C_r001
 		
@@ -134,21 +134,21 @@ program define ipwventbs, rclass
 	/*****LVAR*****/
 	if ("`lreg'"=="logit") {
 		di ""
-		di "Model for `lvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `lvar' conditional on {cvars `dvar'}:}"
 		logit `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse'
 		qui ologit `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse' & e(sample)
 		qui est store Lmodel_given_CD_r001
 	}
 	else {
 		di ""
-		di "Model for `lvar' conditional on {cvars `dvar'}:"
+		di "{bf:Model for `lvar' conditional on {cvars `dvar'}:}"
 		`lreg' `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse'
 		qui est store Lmodel_given_CD_r001
 	}
 	
 	/*****MVAR*****/
 	di ""
-	di "Model for `mvar' conditional on {cvars `dvar' `lvar'}:"
+	di "{bf:Model for `mvar' conditional on {cvars `dvar' `lvar'}:}"
 	`mreg' `mvar' `dvar' `lvar' `cvars' `cxd_vars' `lxd_var' [pw=`wts'] if `touse'
 	qui est store Mmodel_given_CDL_r001
 	
@@ -333,40 +333,40 @@ program define ipwventbs, rclass
 	COMPUTE IPWs
 	************/
 	/*****SW1*****/
-	qui gen sw1_r001=0 if `dvar'==`dstar' & `touse'
+	qui gen sw1_r001_temp=0 if `dvar'==`dstar' & `touse'
 	
 	foreach level in `levels' {
-		qui replace sw1_r001 = sw1_r001 + (phat_M_CD`dstar'L`level'_r001 * phat_L`level'_CD`dstar'_r001) if `dvar'==`dstar' & `touse'
+		qui replace sw1_r001_temp = sw1_r001_temp + (phat_M_CD`dstar'L`level'_r001 * phat_L`level'_CD`dstar'_r001) if `dvar'==`dstar' & `touse'
 	}
 	
-	qui replace sw1_r001 = sw1_r001 / (phat_D`dstar'_C_r001 * phat_M_CD`dstar'L_r001) if `dvar'==`dstar' & `touse'
-	qui replace sw1_r001 = sw1_r001 * phat_D`dstar'_r001 if `dvar'==`dstar' & `touse'
+	qui replace sw1_r001_temp = sw1_r001_temp / (phat_D`dstar'_C_r001 * phat_M_CD`dstar'L_r001) if `dvar'==`dstar' & `touse'
+	qui replace sw1_r001_temp = sw1_r001_temp * phat_D`dstar'_r001 if `dvar'==`dstar' & `touse'
 	
 	/*****SW2*****/
-	qui gen sw2_r001=0 if `dvar'==`d' & `touse'
+	qui gen sw2_r001_temp=0 if `dvar'==`d' & `touse'
 	
 	foreach level in `levels' {
-		qui replace sw2_r001 = sw2_r001 + (phat_M_CD`d'L`level'_r001 * phat_L`level'_CD`d'_r001) if `dvar'==`d' & `touse'
+		qui replace sw2_r001_temp = sw2_r001_temp + (phat_M_CD`d'L`level'_r001 * phat_L`level'_CD`d'_r001) if `dvar'==`d' & `touse'
 	}
 	
-	qui replace sw2_r001 = sw2_r001 / (phat_D`d'_C_r001 * phat_M_CD`d'L_r001) if `dvar'==`d' & `touse'
-	qui replace sw2_r001 = sw2_r001 * phat_D`d'_r001 if `dvar'==`d' & `touse' 
+	qui replace sw2_r001_temp = sw2_r001_temp / (phat_D`d'_C_r001 * phat_M_CD`d'L_r001) if `dvar'==`d' & `touse'
+	qui replace sw2_r001_temp = sw2_r001_temp * phat_D`d'_r001 if `dvar'==`d' & `touse' 
 	
 	/*****SW3*****/
-	qui gen sw3_r001=0 if `dvar'==`d' & `touse'
+	qui gen sw3_r001_temp=0 if `dvar'==`d' & `touse'
 	
 	foreach level in `levels' {
-		qui replace sw3_r001 = sw3_r001 + (phat_M_CD`dstar'L`level'_r001 * phat_L`level'_CD`dstar'_r001) if `dvar'==`d' & `touse'
+		qui replace sw3_r001_temp = sw3_r001_temp + (phat_M_CD`dstar'L`level'_r001 * phat_L`level'_CD`dstar'_r001) if `dvar'==`d' & `touse'
 	}
 	
-	qui replace sw3_r001 = sw3_r001 / (phat_D`d'_C_r001 * phat_M_CD`d'L_r001) if `dvar'==`d' & `touse'
-	qui replace sw3_r001 = sw3_r001 * phat_D`d'_r001 if `dvar'==`d' & `touse'	
+	qui replace sw3_r001_temp = sw3_r001_temp / (phat_D`d'_C_r001 * phat_M_CD`d'L_r001) if `dvar'==`d' & `touse'
+	qui replace sw3_r001_temp = sw3_r001_temp * phat_D`d'_r001 if `dvar'==`d' & `touse'	
 	
 	/*************
 	CENSOR WEIGHTS
 	**************/
 	if ("`censor'"!="") {
-		foreach i of var sw1_r001 sw2_r001 sw3_r001 {
+		foreach i of var sw1_r001_temp sw2_r001_temp sw3_r001_temp {
 			qui centile `i' if `i'!=. & `touse', c(`censor') 
 			qui replace `i'=r(c_1) if `i'<r(c_1) & `i'!=. & `touse'
 			qui replace `i'=r(c_2) if `i'>r(c_2) & `i'!=. & `touse'
@@ -376,17 +376,17 @@ program define ipwventbs, rclass
 	/***********************
 	COMPUTE EFFECT ESTIMATES
 	************************/
-	foreach i of var sw1_r001 sw2_r001 sw3_r001 {
+	foreach i of var sw1_r001_temp sw2_r001_temp sw3_r001_temp {
 		qui replace `i'=`i' * `wts' if `touse'
 	}
 				
-	qui reg `yvar' [pw=sw1_r001] if `dvar'==`dstar' & `touse'
+	qui reg `yvar' [pw=sw1_r001_temp] if `dvar'==`dstar' & `touse'
 	local Ehat_Y0M0=_b[_cons]
 		
-	qui reg `yvar' [pw=sw2_r001] if `dvar'==`d' & `touse'
+	qui reg `yvar' [pw=sw2_r001_temp] if `dvar'==`d' & `touse'
 	local Ehat_Y1M1=_b[_cons]
 		
-	qui reg `yvar' [pw=sw3_r001] if `dvar'==`d' & `touse'
+	qui reg `yvar' [pw=sw3_r001_temp] if `dvar'==`d' & `touse'
 	local Ehat_Y1M0=_b[_cons]
 
 	return scalar oe=`Ehat_Y1M1'-`Ehat_Y0M0'
@@ -401,10 +401,31 @@ program define ipwventbs, rclass
 	drop phat*_r001 mhat*_r001 `wts'
 	
 	if ("`detail'"=="") {
-		drop sw1_r001 sw2_r001 sw3_r001
 		
-	qui reg `yvar' if `touse'
-	
+		drop sw1_r001_temp sw2_r001_temp sw3_r001_temp
+		
 	}
+
+	if ("`detail'"!="") {
+		
+		local ipw_var_names "sw1_r001 sw2_r001 sw3_r001"
+		foreach name of local ipw_var_names {
+			capture confirm new variable `name'
+			if _rc {
+				drop sw1_r001_temp sw2_r001_temp sw3_r001_temp
+				display as error "{p 0 0 5 0}The command needs to save weight variables"
+				display as error "with the following names: `ipw_var_names', "
+				display as error "but these variables have already been defined.{p_end}"
+				error 110
+			}
+		}		
+		
+		rename sw1_r001_temp sw1_r001
+		rename sw2_r001_temp sw2_r001
+		rename sw3_r001_temp sw3_r001
+		
+	}
+	
+	qui reg `yvar' if `touse'
 	
 end ipwventbs

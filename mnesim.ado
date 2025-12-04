@@ -1,7 +1,7 @@
 *!TITLE: MNESIM - analysis of multivariate natural effects using a simulation approach
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 - added parallelization 
 *!
 
 program define mnesim, eclass
@@ -20,6 +20,7 @@ program define mnesim, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
+		parallel ///			
 		detail * ]
 		
 	qui {
@@ -34,17 +35,43 @@ program define mnesim, eclass
 			d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') /// 
 			nsim(1) `nointeraction' `cxd' `cxm'
 	}
-		
-	bootstrap ///
-		ATE=r(ate) ///
-		MNDE=r(mnde) ///
-		MNIE=r(mnie), ///
-			force `options' noheader notable: ///
-				mnesimbs `varlist' if `touse' [`weight' `exp'], ///
-					dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
-					d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
-					nsim(`nsim') `nointeraction' `cxd' `cxm'
 
-	estat bootstrap, p noheader
+	if ("`parallel'" == "") {		
+		
+		bootstrap ///
+			ATE=r(ate) ///
+			MNDE=r(mnde) ///
+			MNIE=r(mnie), ///
+				`options' force noheader notable: ///
+					mnesimbs `varlist' if `touse' [`weight' `exp'], ///
+						dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
+						d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
+						nsim(`nsim') `nointeraction' `cxd' `cxm'
+
+		estat bootstrap, p noheader
+		
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(ATE=r(ate) MNDE=r(mnde) MNIE=r(mnie)) `options' : ///
+			mnesimbs `varlist' if `touse' [`weight' `exp'], ///
+				dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
+				d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
+				nsim(`nsim') `nointeraction' `cxd' `cxm'
+	
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+
+	}
 	
 end mnesim

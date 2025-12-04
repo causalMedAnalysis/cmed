@@ -30,9 +30,9 @@ program define mnesimbs, rclass
 		
 	local yvar `varlist'
 
-	/***********************************************************
-    CHECK IF NUM OF VARS IN LVAR MATCHES NUM OF COMMANDS IN LREG
-	************************************************************/
+	/*************************************************************
+    CHECK IF NUM OF VARS IN MVARS MATCHES NUM OF COMMANDS IN MREGS
+	**************************************************************/
     local numMvars = wordcount("`mvars'")
     local numMregs = wordcount("`mregs'")
 
@@ -182,7 +182,7 @@ program define mnesimbs, rclass
 		local currentReg = word("`mregs'", `i')
 	
 		di ""
-		di "Model for `currentVar' conditional on {cvars `dvar' `priorVars'}:"
+		di "{bf:Model for `currentVar' conditional on {cvars `dvar' `priorVars'}:}"
 		`currentReg' `currentVar' `dvar' `cvars' `cxd_vars' `priorVars' [`weight' `exp'] if `touse'
 		est store M`i'model_r001
 		
@@ -190,7 +190,7 @@ program define mnesimbs, rclass
     }
 	
 	di ""
-	di "Model for `yvar' conditional on {cvars `dvar' `mvars'}:"
+	di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvars'}:}"
 	`yreg' `yvar' `mvars' `dvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 	est store Ymodel_r001
 	

@@ -1,7 +1,7 @@
 *!TITLE: IPWCDE - analysis of controlled direct effects using inverse probability weighting	
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added parallelization 
 *!
 
 program define ipwcde, eclass
@@ -22,6 +22,7 @@ program define ipwcde, eclass
 		lxd ///		
 		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
+		parallel ///		
 		detail * ]
 
 	qui {
@@ -77,14 +78,38 @@ program define ipwcde, eclass
 			cvars(`cvars') lvars(`lvars') sampwts(`sampwts') censor(`censor') `nointeraction' `cxd' `lxd' `detail'
 	
 		label var sw4_r001 "IPW for estimating E(Y(d,m))"
-		}
-	
-	bootstrap ///
-		CDE=r(cde), ///
-			`options' noheader notable: ///
-				ipwcdebs `varlist' if `touse', dvar(`dvar') mvar(`mvar') mreg(`mreg') d(`d') dstar(`dstar') m(`m') ///
-					cvars(`cvars') lvars(`lvars') sampwts(`sampwts') censor(`censor') `nointeraction' `cxd' `lxd'
+	}
+
+	if ("`parallel'" == "") {		
+		
+		bootstrap CDE=r(cde), `options' force noheader notable: ///
+			ipwcdebs `varlist' if `touse', dvar(`dvar') mvar(`mvar') mreg(`mreg') cvars(`cvars') lvars(`lvars') ///
+				d(`d') dstar(`dstar') m(`m') sampwts(`sampwts') censor(`censor') `nointeraction' `cxd' `lxd'
 			
-	estat bootstrap, p noheader
+		estat bootstrap, p noheader
+		di as text "Note: CDE evaluated at m=`m'"
+	
+	}
+
+	if ("`parallel'" != "") {		
+		
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+
+		qui parallel bs, expr(CDE=r(cde)) `options' : ///
+			ipwcdebs `varlist' if `touse', dvar(`dvar') mvar(`mvar') mreg(`mreg') cvars(`cvars') lvars(`lvars') ///
+				d(`d') dstar(`dstar') m(`m') sampwts(`sampwts') censor(`censor') `nointeraction' `cxd' `lxd'
+	
+		estat bootstrap, p noheader
+		di as text "Note: CDE evaluated at m=`m'"
+		
+		capture parallel clean, all
+		
+	}
 	
 end ipwcde

@@ -19,6 +19,7 @@ program define wimpmed, eclass
 		cxm ///
 		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
+		parallel ///	
 		detail * ]
 
 	qui {
@@ -67,39 +68,82 @@ program define wimpmed, eclass
 		}
 	}
 	
-	/***REPORT MODELS AND SAVE WEIGHTS IF REQUESTED***/
 	if ("`detail'" != "") {
+		
 		wimpmedbs `yvar' `mvars' if `touse', ///
 			dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
 			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor') `detail'
+			
 	}
 	
-	/***COMPUTE POINT AND INTERVAL ESTIMATES FOR NDE/NIE***/
-	if (`num_mvars'==1) {
-	
-		bootstrap ///
-			ATE = (r(YdMd) - r(YdstarMdstar)) ///
-			NDE = (r(YdMdstar) - r(YdstarMdstar)) ///
-			NIE = (r(YdMd) - r(YdMdstar)), ///
-				`options' noheader notable: ///
-					wimpmedbs `yvar' `mvars' if `touse', ///
-						dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
-						d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
-
-	}
-	
-	if (`num_mvars'>1) {
-	
-		bootstrap ///
-			ATE = (r(YdMd) - r(YdstarMdstar)) ///
-			MNDE = (r(YdMdstar) - r(YdstarMdstar)) ///
-			MNIE = (r(YdMd) - r(YdMdstar)), ///
-				`options' noheader notable: ///
-					wimpmedbs `yvar' `mvars' if `touse', ///
-						dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
-						d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
-	}
+	if ("`parallel'" == "") {		
 		
-	estat bootstrap, p noheader
+		if (`num_mvars'==1) {
+	
+			bootstrap ///
+				ATE = (r(YdMd) - r(YdstarMdstar)) ///
+				NDE = (r(YdMdstar) - r(YdstarMdstar)) ///
+				NIE = (r(YdMd) - r(YdMdstar)), ///
+					`options' noheader notable: ///
+						wimpmedbs `yvar' `mvars' if `touse', ///
+							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
+							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
+
+		}
+	
+		if (`num_mvars'>1) {
+	
+			bootstrap ///
+				ATE = (r(YdMd) - r(YdstarMdstar)) ///
+				MNDE = (r(YdMdstar) - r(YdstarMdstar)) ///
+				MNIE = (r(YdMd) - r(YdMdstar)), ///
+					`options' noheader notable: ///
+						wimpmedbs `yvar' `mvars' if `touse', ///
+							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
+							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
+		}
+		
+		estat bootstrap, p noheader
+	
+	}
+
+	if ("`parallel'" != "") {		
+		
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		if (`num_mvars'==1) {
+	
+			qui parallel bs, ///
+				expr(ATE = (r(YdMd) - r(YdstarMdstar)) ///
+					NDE = (r(YdMdstar) - r(YdstarMdstar)) ///
+					NIE = (r(YdMd) - r(YdMdstar))) `options' : ///
+						wimpmedbs `yvar' `mvars' if `touse', ///
+							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
+							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
+
+		}
+	
+		if (`num_mvars'>1) {
+	
+			qui parallel bs, ///
+				expr(ATE = (r(YdMd) - r(YdstarMdstar)) ///
+					MNDE = (r(YdMdstar) - r(YdstarMdstar)) ///
+					MNIE = (r(YdMd) - r(YdMdstar))) `options' : ///
+						wimpmedbs `yvar' `mvars' if `touse', ///
+							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
+							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
+		}
+		
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+	
+	}
 	
 end wimpmed

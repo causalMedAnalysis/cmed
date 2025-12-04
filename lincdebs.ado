@@ -66,7 +66,7 @@ program define lincdebs, rclass
 		
 	if ("`nointeraction'"!="") {
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `dvar' `mvar' `cvars_r' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse' 
 		
 		return scalar cde = _b[`dvar']*(`d'-`dstar')
@@ -74,7 +74,7 @@ program define lincdebs, rclass
 		
 	if ("`nointeraction'"=="") {
 		di ""
-		di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `dvar' `mvar' __DxM__ `cvars_r' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse' 
 		
 		return scalar cde = (_b[`dvar'] + _b[__DxM__]*`m')*(`d'-`dstar')

@@ -88,7 +88,7 @@ program define ipwcdebs, rclass
 	**********/	
 	/*****DVAR*****/
 	di ""
-	di "Model for `dvar' conditional on {`cvars'}:"
+	di "{bf:Model for `dvar' conditional on {`cvars'}:}"
 	logit `dvar' `cvars' [pw=`wts'] if `touse'
 	qui est store Dmodel_given_C_r001
 		
@@ -97,7 +97,7 @@ program define ipwcdebs, rclass
 	
 	/*****MVAR*****/
 	di ""
-	di "Model for `mvar' conditional on {`cvars' `dvar' `lvars'}:"
+	di "{bf:Model for `mvar' conditional on {`cvars' `dvar' `lvars'}:}"
 	`mreg' `mvar' `dvar' `lvars' `cvars' `cxd_vars' `lxd_vars' [pw=`wts'] if `touse'
 	qui est store Mmodel_given_CDL_r001
 	
@@ -176,7 +176,7 @@ program define ipwcdebs, rclass
 	COMPUTE EFFECT ESTIMATES
 	************************/	
 	di ""
-	di "Model for Y(d,m) fit using IPWs:"
+	di "{bf:Model for Y(d,m) fit using IPWs:}"
 	reg `yvar' `dvar' `mvar' `inter' [pw=`sw4'] if `touse'		
 	return scalar cde=(_b[`dvar']+(_b[`inter']*`m'))*(`d'-`dstar')
 		

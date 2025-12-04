@@ -1,7 +1,7 @@
 *!TITLE: PATHSIM - analysis of path-specific effects using a simulation approach
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added parallelization 
 *!
 
 
@@ -35,10 +35,12 @@ program define pathsim, eclass
 	local num_mvars = wordcount("`mvars'")
 
 	if ("`detail'" != "") {		
+		
 		mnesimbs `varlist' [`weight' `exp'] if `touse' , ///
 			dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 			d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') /// 
 			nsim(1) `nointeraction' `cxd' `cxm'
+			
 	}
 	
 	local effects ATE = r(ate)
@@ -52,7 +54,7 @@ program define pathsim, eclass
 	
 	if ("`parallel'" == "") {		
 		
-		bootstrap `effects', `options' noheader notable: ///
+		bootstrap `effects', `options' force noheader notable: ///
 			pathsimbs `yvar' if `touse' [`weight' `exp'], ///
 				dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 				d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
@@ -72,7 +74,7 @@ program define pathsim, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(`effects') `options' noheader notable: ///
+		qui parallel bs, expr(`effects') `options' : ///
 			pathsimbs `yvar' if `touse' [`weight' `exp'], ///
 				dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 				d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///

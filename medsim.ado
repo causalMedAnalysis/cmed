@@ -1,7 +1,7 @@
 *!TITLE: MEDSIM - causal mediation analysis using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added support for ologit models
+*! version 0.3 - added parallelization 
 *!
 
 program define medsim, eclass
@@ -20,6 +20,7 @@ program define medsim, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
+		parallel ///	
 		detail * ]
 		
 	qui {
@@ -42,23 +43,51 @@ program define medsim, eclass
 		error 198		
 		}
 		
-	if ("`detail'" != "") {		
+	if ("`detail'" != "") {	
+		
 		medsimbs `varlist' [`weight' `exp'] if `touse' , ///
 			dvar(`dvar') mvar(`mvar') cvars(`cvars') ///
 			d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') nsim(1) /// 
 			`nointeraction' `cxd' `cxm'
+			
 	}
-		
-	bootstrap ///
-		ATE=r(ate) ///
-		NDE=r(nde) ///
-		NIE=r(nie), ///
-			force `options' noheader notable: ///
-				medsimbs `varlist' if `touse' [`weight' `exp'], ///
-					dvar(`dvar') mvar(`mvar') cvars(`cvars') ///
-					d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') nsim(`nsim') ///
-					`nointeraction' `cxd' `cxm'
 
-	estat bootstrap, p noheader
+	if ("`parallel'" == "") {		
+		
+		bootstrap ///
+			ATE=r(ate) ///
+			NDE=r(nde) ///
+			NIE=r(nie), ///
+				`options' force noheader notable: ///
+					medsimbs `varlist' if `touse' [`weight' `exp'], ///
+						dvar(`dvar') mvar(`mvar') cvars(`cvars') ///
+						d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') nsim(`nsim') ///
+						`nointeraction' `cxd' `cxm'
+
+		estat bootstrap, p noheader
+	
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(ATE=r(ate) NDE=r(nde) NIE=r(nie)) `options' : ///
+			medsimbs `varlist' if `touse' [`weight' `exp'], ///
+				dvar(`dvar') mvar(`mvar') cvars(`cvars') ///
+				d(`d') dstar(`dstar') mreg(`mreg') yreg(`yreg') nsim(`nsim') ///
+				`nointeraction' `cxd' `cxm'
+	
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+
+	}
 	
 end medsim

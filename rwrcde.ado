@@ -1,7 +1,7 @@
 *!TITLE: RWRCDE - estimating controlled direct effects using regression-with-residuals
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.2 - added parallelization 
 *!
  
 
@@ -21,6 +21,7 @@ program define rwrcde, eclass
 		cxm ///
 		lxm ///
 		NOINTERaction ///
+		parallel ///			
 		detail * ]
 							
 	qui {
@@ -33,24 +34,51 @@ program define rwrcde, eclass
 	gettoken yvar lvar : varlist
 
 	if ("`detail'" != "") {		
+		
 		rwrcdebs `varlist' if `touse' [`weight' `exp'], ///
 			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
 			cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
+			
 	}
+
+	if ("`parallel'" == "") {		
 		
-	bootstrap ///
-		CDE=e(CDE), ///
-			force `options' noheader notable: ///
-				rwrcdebs `varlist' if `touse' [`weight' `exp'], ///
-					dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
-					cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
+		bootstrap ///
+			CDE=e(CDE), ///
+				`options' force noheader notable: ///
+					rwrcdebs `varlist' if `touse' [`weight' `exp'], ///
+						dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
+						cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
 
-	estat bootstrap, p noheader
+		estat bootstrap, p noheader
+		di as txt "CDE: controlled direct effect at m=`m'"
 
-	di as txt "CDE: controlled direct effect at m=`m'"
-				
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(CDE=e(CDE)) `options' : ///
+			rwrcdebs `varlist' if `touse' [`weight' `exp'], ///
+				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
+				cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
+	
+		estat bootstrap, p noheader
+		di as txt "CDE: controlled direct effect at m=`m'"
+		
+		capture parallel clean, all
+
+	}	
+	
 	ereturn local cmdline `"rwrcde `0'"'
-
+	
 end
 
 

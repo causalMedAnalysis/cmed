@@ -1,7 +1,7 @@
 *!TITLE: IPWPATH - analysis of path-specific effects using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added parallelization 
 *!
 
 
@@ -16,6 +16,7 @@ program define ipwpath, eclass
 		[cvars(varlist numeric) ///
 		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
+		parallel ///					
 		detail * ]
 		
 	qui {
@@ -62,14 +63,24 @@ program define ipwpath, eclass
 		qui gen `sampwts' = 1 if `touse'
 	}
 		
-	/***COMPUTE POINT AND INTERVAL ESTIMATES***/
 	if ("`detail'" != "") {
+		
+		di ""
+		di "{bf:Model for `dvar' conditional on cvars:}"
 		logit `dvar' `cvars' [pw=`sampwts'] if `touse'
+		
 		local mvars_include
+		
 		forv i=1/`num_mvars' {
+			
 			local mvars_include `mvars_include' `=word("`mvars'",`i')'
+			
+			di ""
+			di "{bf:Model for `dvar' conditional on {cvars `mvars_include'}:}"
 			logit `dvar' `mvars_include' `cvars' [pw=`sampwts'] if `touse'
+			
 		}
+		
 	}
 	
 	local effects ATE = r(ate)
@@ -80,12 +91,37 @@ program define ipwpath, eclass
 			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
 		}
 	}
+
+	if ("`parallel'" == "") {		
+		
+		bootstrap `effects', `options' force noheader notable: ///
+			ipwpathbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
+				sampwts(`sampwts') censor(`censor')
 	
-	bootstrap `effects', `options' noheader notable: ///
-		ipwpathbs `yvar' `mvars' if `touse', ///
-			dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
-			sampwts(`sampwts') censor(`censor')
+		estat bootstrap, p noheader
 	
-	estat bootstrap, p noheader
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(`effects') `options' : ///
+			ipwpathbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
+				sampwts(`sampwts') censor(`censor')
+	
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+
+	}
 	
 end ipwpath

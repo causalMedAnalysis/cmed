@@ -183,7 +183,7 @@ program define simcdebs, rclass
 		local currentReg = word("`lregs'", `i')
 	
 		di ""
-		di "Model for `currentVar' conditional on {cvars `dvar' `priorVars'}:"
+		di "{bf:Model for `currentVar' conditional on {cvars `dvar' `priorVars'}:}"
 		`currentReg' `currentVar' `dvar' `cvars' `cxd_vars' `priorVars' [`weight' `exp'] if `touse'
 		est store L`i'model_r001
 		
@@ -191,7 +191,7 @@ program define simcdebs, rclass
     }
 	
 	di ""
-	di "Model for `yvar' conditional on {cvars `dvar' `lvars' `mvar'}:"
+	di "{bf:Model for `yvar' conditional on {cvars `dvar' `lvars' `mvar'}:}"
 	`yreg' `yvar' `mvar' `dvar' `inter' `cvars' `lvars' `cxd_vars' `cxm_vars' `lxm_vars' [`weight' `exp'] if `touse'
 	est store Ymodel_r001
 	

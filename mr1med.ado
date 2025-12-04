@@ -56,7 +56,7 @@ program define mr1med, rclass
 	qui gen `mvar_orig' = `mvar' if `touse'
 	
 	di ""
-	di "Model for `dvar' conditional on {cvars}:"
+	di "{bf:Model for `dvar' conditional on {cvars}:}"
 	logit `dvar' `cvars' if `touse'
 	
 	tempvar phat_D1_C pi`d'_C pi`dstar'_C
@@ -65,7 +65,7 @@ program define mr1med, rclass
 	qui gen `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `touse'
 	
 	di ""
-	di "Model for `mvar' conditional on {cvars `dvar'}:"
+	di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
 	logit `mvar' `dvar' `cvars' `cxd_vars' if `touse'
 	
 	qui replace `dvar' = `dstar' if `touse'
@@ -103,7 +103,7 @@ program define mr1med, rclass
 	}
 
 	di ""
-	di "Model for `yvar' conditional on {cvars `dvar' `mvar'}:"
+	di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 	
 	reg `yvar' `dvar' `mvar' `inter' `cvars' `cxd_vars' `cxm_vars' if `touse'
 

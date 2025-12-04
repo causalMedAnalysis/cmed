@@ -1,7 +1,7 @@
 *!TITLE: IPWVENT - causal mediation analysis of interventional effects using inverse probability weighting	
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added parallelization 
 *!
 
 program define ipwvent, eclass
@@ -21,6 +21,7 @@ program define ipwvent, eclass
 		lxd ///
 		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
+		parallel ///				
 		detail * ]
 
 	qui {
@@ -76,21 +77,8 @@ program define ipwvent, eclass
 		}
 	}
 
-	/***COMPUTE POINT AND INTERVAL ESTIMATES***/
-	bootstrap ///
-		OE=r(oe) ///
-		IDE=r(ide) ///
-		IIE=r(iie), ///
-			noheader notable `options' : ///
-				ipwventbs `varlist' if `touse', ///
-					dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
-					d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
-					sampwts(`sampwts') `cxd' `lxd' censor(`censor')
-			
-	estat bootstrap, p noheader
-
-	/***REPORT MODELS AND SAVE WEIGHTS IF REQUESTED***/
 	if ("`detail'" != "") {
+		
 		ipwventbs `varlist' if `touse', ///
 			dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
 			d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') sampwts(`sampwts') ///
@@ -102,4 +90,42 @@ program define ipwvent, eclass
 
 	}
 	
+	if ("`parallel'" == "") {		
+		
+		bootstrap ///
+			OE=r(oe) ///
+			IDE=r(ide) ///
+			IIE=r(iie), ///
+				force noheader notable `options' : ///
+					ipwventbs `varlist' if `touse', ///
+						dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
+						d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
+						sampwts(`sampwts') `cxd' `lxd' censor(`censor')
+			
+		estat bootstrap, p noheader
+	
+	}
+
+	if ("`parallel'" != "") {		
+	
+		di ""
+		di "{bf:Parallel Bootstrapping with Stata}"
+		
+		parallel initialize
+		
+		di "{it:Waiting for the child processes to finish...}"
+		di ""
+		
+		qui parallel bs, expr(OE=r(oe) IDE=r(ide) IIE=r(iie)) `options' : ///
+			ipwventbs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
+				d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
+				sampwts(`sampwts') `cxd' `lxd' censor(`censor')
+	
+		estat bootstrap, p noheader
+		
+		capture parallel clean, all
+
+	}
+
 end ipwvent

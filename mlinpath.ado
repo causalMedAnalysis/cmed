@@ -78,7 +78,7 @@ program define mlinpath, rclass
 		}
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		regress `yvar' `dvar' `mvars' `cvars_r' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse' 
 		scalar gamma2 = _b[`dvar']
 		local k = 1
@@ -107,7 +107,7 @@ program define mlinpath, rclass
 		}
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"		
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"		
 		regress `yvar' `dvar' `mvars' `inter' `cvars_r' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse' 
 		scalar gamma2 = _b[`dvar']
 		local k = 1

@@ -138,7 +138,7 @@ program define mpathwimp, rclass
 		}	
 		
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		reg `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [pw=`wts'] if `touse'
 		
 		tempvar yhatC`d'M
@@ -210,7 +210,7 @@ program define mpathwimp, rclass
 		}	
 		
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		glm `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [pw=`wts'] if `touse', family(b) link(l)
 		
 		tempvar yhatC`d'M
@@ -260,6 +260,7 @@ program define mpathwimp, rclass
 	return scalar nde = YdMdstar - YdstarMdstar
 	return scalar nie = YdMd - YdMdstar	
 	
+	/*
 	if ("`detail'"!="") {
 		local ipw_var_names "sw1_r001"
 		foreach name of local ipw_var_names {
@@ -274,5 +275,6 @@ program define mpathwimp, rclass
 		
 		qui gen sw1_r001 = `sw1'
 	}
+	*/
 	
 end mpathwimp

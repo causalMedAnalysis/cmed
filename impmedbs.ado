@@ -71,7 +71,7 @@ program define impmedbs, rclass
 	if ("`yreg'"=="regress") {
 	
 		di ""
-		di "Model for `yvar' given {cvars `dvar'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar'}:}"
 		reg `yvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 
 		tempvar yhat`d'M`d' yhat`dstar'M`dstar'
@@ -105,7 +105,7 @@ program define impmedbs, rclass
 		}	
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		reg `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 		
 		tempvar yhatC`d'M
@@ -141,7 +141,7 @@ program define impmedbs, rclass
 		}
 
 		di ""
-		di "Model for predictions from previous model under D:=d given {cvars `dvar'}:"
+		di "{bf:Model for predictions from previous model under D:=d given {cvars `dvar'}:}"
 		reg `yhatC`d'M' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		
 		tempvar yhat`d'M`dstar'
@@ -169,7 +169,7 @@ program define impmedbs, rclass
 	if ("`yreg'"=="logit") {
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar'}:}"
 		glm `yvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse', family(b) link(l)
 
 		tempvar yhat`d'M`d' yhat`dstar'M`dstar'
@@ -203,7 +203,7 @@ program define impmedbs, rclass
 		}	
 
 		di ""
-		di "Model for `yvar' given {cvars `dvar' `mvars'}:"
+		di "{bf:Model for `yvar' given {cvars `dvar' `mvars'}:}"
 		glm `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse', family(b) link(l)
 		
 		tempvar yhatC`d'M
@@ -239,7 +239,7 @@ program define impmedbs, rclass
 		}
 
 		di ""
-		di "Model for predictions from previous model under D:=d given {cvars `dvar'}:"
+		di "{bf:Model for predictions from previous model under D:=d given {cvars `dvar'}:}"
 		glm `yhatC`d'M' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse', family(b) link(l)
 		
 		tempvar yhat`d'M`dstar'

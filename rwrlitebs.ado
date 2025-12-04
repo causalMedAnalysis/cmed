@@ -192,10 +192,14 @@ program define rwrlitebs, eclass
 				scalar treatM = b[1,colnumb(matrix(b),"`mvar':`dvar'")]
 				scalar medO = b[1,colnumb(matrix(b),"`yvar':`mvar'")]
 
-				type_text , mreg(`mreg')
-				ereturn scalar `r(NDEtype)' = treatO * (`d'-`dstar')
-				ereturn scalar `r(NIEtype)' = treatM * medO * (`d'-`dstar')
-				ereturn scalar `r(ATEtype)' = (treatO * (`d'-`dstar')) + (treatM * medO * (`d'-`dstar'))
+				*type_text , mreg(`mreg')
+				*ereturn scalar `r(NDEtype)' = treatO * (`d'-`dstar')
+				*ereturn scalar `r(NIEtype)' = treatM * medO * (`d'-`dstar')
+				*ereturn scalar `r(ATEtype)' = (treatO * (`d'-`dstar')) + (treatM * medO * (`d'-`dstar'))
+				
+				ereturn scalar IDE = treatO * (`d'-`dstar')
+				ereturn scalar IIE = treatM * medO * (`d'-`dstar')
+				ereturn scalar OE = (treatO * (`d'-`dstar')) + (treatM * medO * (`d'-`dstar'))
 			
 			} // end no interaction
 			
@@ -215,16 +219,21 @@ program define rwrlitebs, eclass
 				scalar interY = b[1,colnumb(matrix(b),"`yvar':`inter'")]
 				scalar consM =  b[1,colnumb(matrix(b),"`mvar':_cons")]
 				
-				type_text , mreg(`mreg')
-				ereturn scalar `r(NDEtype)' = (treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')
-				ereturn scalar `r(NIEtype)' = treatM * (medO + interY * `d') * (`d'-`dstar')
-				ereturn scalar `r(ATEtype)' = ((treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')) + (treatM * (medO + interY * `d') * (`d'-`dstar'))
+				*type_text , mreg(`mreg')
+				*ereturn scalar `r(NDEtype)' = (treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')
+				*ereturn scalar `r(NIEtype)' = treatM * (medO + interY * `d') * (`d'-`dstar')
+				*ereturn scalar `r(ATEtype)' = ((treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')) + (treatM * (medO + interY * `d') * (`d'-`dstar'))
+				
+				ereturn scalar IDE = (treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')
+				ereturn scalar IIE = treatM * (medO + interY * `d') * (`d'-`dstar')
+				ereturn scalar OE = ((treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')) + (treatM * (medO + interY * `d') * (`d'-`dstar'))
 							
 			} // end with interaction 
 		} // end mreg == regress
 
 end
 
+/*
 capture program drop type_text
 program type_text, rclass
     version 14
@@ -259,4 +268,4 @@ program type_text, rclass
 		return local ATEtype `ATEtype'
 		return local ATEtext `ATEtext'
 end
-
+*/

@@ -62,7 +62,7 @@ program define mr2med, rclass
 	qui gen `dvar_orig' = `dvar'
 	
 	di ""
-	di "Model for `dvar' conditional on {cvars}:"
+	di "{bf:Model for `dvar' conditional on {cvars}:}"
 	logit `dvar' `cvars'  if `touse'
 	
 	tempvar phat_D1_C pi`d'_C pi`dstar'_C
@@ -71,7 +71,7 @@ program define mr2med, rclass
 	qui gen `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `touse'
 	
 	di ""
-	di "Model for `dvar' conditional on {cvars `mvars'}:"
+	di "{bf:Model for `dvar' conditional on {cvars `mvars'}:}"
 	logit `dvar' `mvars' `cvars' `cxm_vars' if `touse'
 	
 	tempvar phat_D1_CM pi`d'_CM pi`dstar'_CM
@@ -80,7 +80,7 @@ program define mr2med, rclass
 	qui gen `pi`dstar'_CM' = `phat_D1_CM'*`dstar' + (1-`phat_D1_CM')*(1-`dstar') if `touse'
 
 	di ""
-	di "Model for `yvar' conditional on {cvars `dvar' `mvars'}:"
+	di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvars'}:}"
 	reg `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' if `touse'
 	
 	qui replace `dvar' = `dstar' if `touse'
@@ -132,7 +132,7 @@ program define mr2med, rclass
 	}	
 
 	di ""
-	di "Model for mu`d'(C,M) conditional on {cvars `dvar'}:"
+	di "{bf:Model for mu`d'(C,M) conditional on {cvars `dvar'}:}"
 	reg `mu`d'_CM' `dvar' `cvars' `cxd_vars' if `touse'
 	
 	qui replace `dvar' = `d' if `touse'
@@ -166,7 +166,7 @@ program define mr2med, rclass
 	}	
 
 	di ""
-	di "Model for mu`dstar'(C,M) conditional on {cvars `dvar'}"
+	di "{bf:Model for mu`dstar'(C,M) conditional on {cvars `dvar'}}"
 	reg `mu`dstar'_CM' `dvar' `cvars' `cxd_vars' if `touse'
 
 	qui replace `dvar' = `dstar' if `touse'

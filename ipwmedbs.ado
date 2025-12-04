@@ -36,14 +36,14 @@ program define ipwmedbs, rclass
 	}
 	
 	di ""
-	di "Model for `dvar' conditional on cvars:"
+	di "{bf:Model for `dvar' conditional on cvars:}"
 	logit `dvar' `cvars' [pw=`wts'] if `touse'
 	tempvar phat_D1_C phat_D0_C
 	qui predict `phat_D1_C' if e(sample), pr
 	qui gen `phat_D0_C'=1-`phat_D1_C' if `touse'
 	
 	di ""
-	di "Model for `dvar' conditional on {cvars `dvar' `mvars'}:"
+	di "{bf:Model for `dvar' conditional on {cvars `mvars'}:}"
 	logit `dvar' `mvars' `cvars' [pw=`wts'] if `touse'
 	tempvar phat_D1_CM phat_D0_CM
 	qui predict `phat_D1_CM' if e(sample), pr
