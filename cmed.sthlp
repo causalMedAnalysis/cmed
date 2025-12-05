@@ -58,7 +58,9 @@ models, effects estimated via simulation
 {cmd:cmed}
 performs causal mediation analysis using methods discussed in 
 {help cmed##references:Wodtke and Zhou (2026)}. It supports estimation of 
-natural, interventional, controlled, and path-specific effects. It can handle
+natural, interventional, controlled, and path-specific effects, which
+capture in different ways how the effect of a treatment on an outcome is
+transmitted, or not, through one or more mediators. The command can handle
 multiple mediators, exposure-induced confounders, and many different types 
 of variables, including measures that are binary, ordinal, continuous, or 
 counts. Across its different subcommands, {cmd:cmed} supports estimation using 
