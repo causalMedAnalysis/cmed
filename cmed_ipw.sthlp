@@ -314,7 +314,8 @@ models used to construct the weights are correctly specified and
 assumptions {bf:A1}-{bf:A2} hold.
 
 {pstd}
-See {help cmed_ipw##references:Wodtke and Zhou (2026)} for a detailed discussion.
+See {help cmed_ipw##references:Wodtke and Zhou (2026)} for a detailed 
+discussion.
 
 
 {...}

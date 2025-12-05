@@ -243,8 +243,8 @@ baseline confounders as predictors
 baseline confounders, and mediator as predictors
 {p_end}
 {phang2}
-(3) a linear or logit model for the predicted values from the previous model, 
-conditional on the treatment and baseline confounders.
+(3) a linear or logit model for a set of predicted values from the 
+previous model, conditional on the treatment and baseline confounders.
 {p_end}
 
 {pstd}
