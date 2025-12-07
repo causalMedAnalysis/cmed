@@ -30,7 +30,7 @@ net install cmed, from("https://raw.github.com/causalMedAnalysis/cmed/master/") 
 
 ## Overview
 
-`cmed` is a comprehensive Stata package for causal mediation analysis, implementing a wide range of methods for a wide range of estimands. It can accommodate multiple mediators, exposure-induced confounders, and variables of many types (binary, ordinal, continuous, counts).
+`cmed` is a comprehensive Stata package for conducting causal mediation analysis. It implements a wide range of estimation methods targeting a diverse set of causal estimands. It can accommodate multiple mediators, exposure-induced confounders, and variables of many types (binary, ordinal, continuous, counts).
 
 Supported causal effects include:
 
