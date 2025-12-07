@@ -128,12 +128,14 @@ cmed simulate (yspec) ([ (mmodel) ] mvar) dvar [= cvars] [if] [in] [, options]
 
 ### Multivariate natural effects through multiple mediators
 
-```stata cmed simulate (yspec) (mspec) dvar [= cvars] [if] [in] [, options]
+```stata
+cmed simulate (yspec) (mspec) dvar [= cvars] [if] [in] [, options]
 ```
 
 ### Path-specific effects through multiple mediators
 
-```stata cmed simulate (yspec) (mspec) dvar [= cvars] [if] [in] , paths [options]
+```stata
+cmed simulate (yspec) (mspec) dvar [= cvars] [if] [in] , paths [options]
 ```
 
 ### Interventional effects through a single mediator with post-treatment confounders
@@ -308,13 +310,4 @@ where `method` is `rforest` or `lasso`.
 
 ---
 
-# Identification Assumptions
-
-Across subcommands, interpretting the estimated effects causally typically relies on some or all of:
-
-* **A1:** No unobserved treatment–outcome confounders
-* **A2:** No unobserved mediator–outcome confounders
-* **A3:** No unobserved treatment–mediator confounders
-* **A4:** No exposure-induced confounders of the mediator–outcome relationship
-
-The different estimators also impose modeling assumptions. See help files for details.
+See help files for additional details and examples.
