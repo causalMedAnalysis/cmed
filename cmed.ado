@@ -1,4 +1,4 @@
-*! version 0.7.0  04dec2025
+*! version 0.7.1  07dec2025
 program cmed
     
     version 16.1
@@ -388,9 +388,11 @@ end
 
 program Confirm_parallel_is_installed
     
-    capture noisily which parallel
+    capture which parallel
     if (_rc != 111) /// 
         exit _rc
+    
+    capture noisily which parallel
     
     display as err
     display as err _col(4) "Option {bf:parallel} requires {bf:parallel}. " _continue
@@ -812,11 +814,13 @@ program Build_cmdline_cmed_dml
             dmlpath
     */
     
-    syntax , method(string asis) [ * ]
+    syntax , method(string asis) [ parallel * ]
     
     Parse_cmed_dml_option_method `method'
     
     local options `options' model(${Cmed__dml_method}) ${Cmed__dml_options}
+    
+    Option_not_allowed "`parallel'" "" "with {bf:cmed dml}"
     
     Confirm_model "d" ("")
     Confirm_model "m" ("")
@@ -897,8 +901,6 @@ program Build_cmdline_cmed_mr_or_dml
     assert inlist("`mr_or_dml'","mr","dml")
     
     syntax [ , pathspecific mvalue(string) rmpw * ]
-    
-    Pweights_not_allowed_with_cmed "`mr_or_dml'"
     
     Option_not_allowed "`mvalue'" "mvalue()" "with {bf:cmed `mr_or_dml'}"
     
@@ -1050,20 +1052,6 @@ program Option_not_allowed
     display as err `"option {bf:`opname'} not allowed `message'"'
     
     exit 198
-    
-end
-
-
-program Pweights_not_allowed_with_cmed
-    
-    args subcommand
-    
-    if ("${Cmed__pweight}" != "") {
-        
-        display as err "pweights not allowed with {bf:cmed `subcommand'}"
-        exit 101
-        
-    }
     
 end
 
