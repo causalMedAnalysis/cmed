@@ -1,7 +1,7 @@
 *!TITLE: DMLMED - causal mediation analysis using de-biased machine learning
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added ereturn of for est and std errors
 *!
 
 
@@ -24,6 +24,7 @@ program define dmlmed, eclass
 		marksample touse
 		count if `touse'
 		if r(N) == 0 error 2000
+		local N = r(N)
 	}
 
 	gettoken yvar mvars : varlist
@@ -187,7 +188,8 @@ program define dmlmed, eclass
 			xfits(`xfits') seed(`seed') censor(`censor') `options'
 				
 	}
-	
+
+/*	
 	matrix results = ///
 		(r(ate), r(se_ate), r(pval_ate), r(ll95_ate), r(ul95_ate) \ ///
 		r(nde), r(se_nde), r(pval_nde), r(ll95_nde), r(ul95_nde) \ ///
@@ -204,5 +206,33 @@ program define dmlmed, eclass
 	matrix colnames results = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
 
 	matrix list results
+*/
+
+	tempname b se results
+
+	local nde_name = cond(`num_mvars'==1, "NDE",  "MNDE")
+	local nie_name = cond(`num_mvars'==1, "NIE",  "MNIE")
+	
+	matrix `results' = ///
+		(r(ate), r(se_ate), r(pval_ate), r(ll95_ate), r(ul95_ate) \ ///
+		r(nde), r(se_nde), r(pval_nde), r(ll95_nde), r(ul95_nde) \ ///
+		r(nie), r(se_nie), r(pval_nie), r(ll95_nie), r(ul95_nie))
 		
+	matrix rownames `results' = "ATE" `nde_name' `nie_name'
+	matrix colnames `results' = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+
+	matrix `b' = (r(ate), r(nde), r(nie))
+	matrix colnames `b' = "ATE" `nde_name' `nie_name'
+
+	matrix `se' = (r(se_ate), r(se_nde), r(se_nie))
+	matrix colnames `se' = "ATE" `nde_name' `nie_name'	
+
+	matlist `results', format(%10.0g)
+	
+	ereturn clear
+	
+	ereturn scalar N = `N'
+	ereturn matrix est = `b' 
+	ereturn matrix se = `se'
+	
 end dmlmed

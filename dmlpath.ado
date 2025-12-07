@@ -1,10 +1,10 @@
 *!TITLE: DMLPATH - path-specific effects using de-biased machine learning
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.2 - added ereturn of for est and std errors 
 *!
 
-program define dmlpath, rclass
+program define dmlpath, eclass
 	
 	version 15	
 
@@ -130,13 +130,21 @@ program define dmlpath, rclass
 		scalar pval_nde = (1-normal(abs(_b[eifNDE_r001_1]/_se[eifNDE_r001_1])))*2
 		scalar pval_nie = (1-normal(abs(_b[eifNIE_r001_1]/_se[eifNIE_r001_1])))*2
 
-		matrix results = ///
+		tempname b se results
+
+		matrix `results' = ///
 			(ate, se_ate, pval_ate, ll95_ate, ul95_ate \ ///
 			nde, se_nde, pval_nde, ll95_nde, ul95_nde \ ///
 			nie, se_nie, pval_nie, ll95_nie, ul95_nie)
-	
-		matrix rownames results = "ATE" "NDE" "NIE"
-		matrix colnames results = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+		
+		matrix rownames `results' = "ATE" "NDE" "NIE"
+		matrix colnames `results' = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+
+		matrix `b' = (ate, nde, nie)
+		matrix colnames `b' = "ATE" "NDE" "NIE"
+
+		matrix `se' = (se_ate, se_nde, se_nie)
+		matrix colnames `se' = "ATE" "NDE" "NIE"
 		
 		capture drop eifATE_r001_1 eifNDE_r001_1 eifNIE_r001_1
 		
@@ -188,15 +196,23 @@ program define dmlpath, rclass
 		scalar pval_pse_DM1Y = (1-normal(abs(_b[eifNIE_r001_1]/_se[eifNIE_r001_1])))*2
 		scalar pval_ate = (1-normal(abs(_b[eifATE_r001_1]/_se[eifATE_r001_1])))*2
 
-		matrix results = ///
+		tempname b se results
+		
+		matrix `results' = ///
 			(ate, se_ate, pval_ate, ll95_ate, ul95_ate \ ///
 			pse_DY, se_pse_DY, pval_pse_DY, ll95_pse_DY, ul95_pse_DY \ ///
 			pse_DM2Y, se_pse_DM2Y, pval_pse_DM2Y, ll95_pse_DM2Y, ul95_pse_DM2Y \ ///
 			pse_DM1Y, se_pse_DM1Y, pval_pse_DM1Y, ll95_pse_DM1Y, ul95_pse_DM1Y)
 	
-		matrix rownames results = "ATE" "PSE_DY" "PSE_DM2Y" "PSE_DM1Y"
-		matrix colnames results = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+		matrix rownames `results' = "ATE" "PSE_DY" "PSE_DM2Y" "PSE_DM1Y"
+		matrix colnames `results' = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
 		
+		matrix `b' = (ate, pse_DY, pse_DM2Y, pse_DM1Y)
+		matrix colnames `b' = "ATE" "PSE_DY" "PSE_DM2Y" "PSE_DM1Y"
+
+		matrix `se' = (se_ate, se_pse_DY, se_pse_DM2Y, se_pse_DM1Y)
+		matrix colnames `se' = "ATE" "PSE_DY" "PSE_DM2Y" "PSE_DM1Y"
+
 		capture drop eifATE_r001_1 eifNDE_r001_1 eifNIE_r001_1
 		
 	}
@@ -262,20 +278,27 @@ program define dmlpath, rclass
 		scalar pval_pse_DM1Y = (1-normal(abs(_b[eifNIE_r001_1]/_se[eifNIE_r001_1])))*2
 		scalar pval_ate = (1-normal(abs(_b[eifATE_r001_1]/_se[eifATE_r001_1])))*2
 
-		matrix results = ///
+		tempname b se results
+		
+		matrix `results' = ///
 			(ate, se_ate, pval_ate, ll95_ate, ul95_ate \ ///
 			pse_DY, se_pse_DY, pval_pse_DY, ll95_pse_DY, ul95_pse_DY \ ///
 			pse_DM3Y, se_pse_DM3Y, pval_pse_DM3Y, ll95_pse_DM3Y, ul95_pse_DM3Y \ ///
 			pse_DM2Y, se_pse_DM2Y, pval_pse_DM2Y, ll95_pse_DM2Y, ul95_pse_DM2Y \ ///
 			pse_DM1Y, se_pse_DM1Y, pval_pse_DM1Y, ll95_pse_DM1Y, ul95_pse_DM1Y)
 	
-		matrix rownames results = "ATE" "PSE_DY" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
-		matrix colnames results = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+		matrix rownames `results' = "ATE" "PSE_DY" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
+		matrix colnames `results' = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+		
+		matrix `b' = (ate, pse_DY, pse_DM3Y, pse_DM2Y, pse_DM1Y)
+		matrix colnames `b' = "ATE" "PSE_DY" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
+
+		matrix `se' = (se_ate, se_pse_DY, se_pse_DM3Y, se_pse_DM2Y, se_pse_DM1Y)
+		matrix colnames `se' = "ATE" "PSE_DY" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
 		
 		capture drop eifATE_r001_1 eifNDE_r001_1 eifNIE_r001_1		
 		
 	}
-
 
 	if (`num_mvars' == 4) {
 
@@ -353,7 +376,9 @@ program define dmlpath, rclass
 		scalar pval_pse_DM1Y = (1-normal(abs(_b[eifNIE_r001_1]/_se[eifNIE_r001_1])))*2
 		scalar pval_ate = (1-normal(abs(_b[eifATE_r001_1]/_se[eifATE_r001_1])))*2
 
-		matrix results = ///
+		tempname b se results
+		
+		matrix `results' = ///
 			(ate, se_ate, pval_ate, ll95_ate, ul95_ate \ ///
 			pse_DY, se_pse_DY, pval_pse_DY, ll95_pse_DY, ul95_pse_DY \ ///
 			pse_DM4Y, se_pse_DM4Y, pval_pse_DM4Y, ll95_pse_DM4Y, ul95_pse_DM4Y \ ///
@@ -361,8 +386,14 @@ program define dmlpath, rclass
 			pse_DM2Y, se_pse_DM2Y, pval_pse_DM2Y, ll95_pse_DM2Y, ul95_pse_DM2Y \ ///
 			pse_DM1Y, se_pse_DM1Y, pval_pse_DM1Y, ll95_pse_DM1Y, ul95_pse_DM1Y)
 	
-		matrix rownames results = "ATE" "PSE_DY" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
-		matrix colnames results = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+		matrix rownames `results' = "ATE" "PSE_DY" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
+		matrix colnames `results' = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+		
+		matrix `b' = (ate, pse_DY, pse_DM4Y, pse_DM3Y, pse_DM2Y, pse_DM1Y)
+		matrix colnames `b' = "ATE" "PSE_DY" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
+
+		matrix `se' = (se_ate, se_pse_DY, se_pse_DM4Y, se_pse_DM3Y, se_pse_DM2Y, se_pse_DM1Y)
+		matrix colnames `se' = "ATE" "PSE_DY" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
 		
 		capture drop eifATE_r001_1 eifNDE_r001_1 eifNIE_r001_1		
 		
@@ -459,7 +490,9 @@ program define dmlpath, rclass
 		scalar pval_pse_DM1Y = (1-normal(abs(_b[eifNIE_r001_1]/_se[eifNIE_r001_1])))*2
 		scalar pval_ate = (1-normal(abs(_b[eifATE_r001_1]/_se[eifATE_r001_1])))*2
 
-		matrix results = ///
+		tempname b se results 
+		
+		matrix `results' = ///
 			(ate, se_ate, pval_ate, ll95_ate, ul95_ate \ ///
 			pse_DY, se_pse_DY, pval_pse_DY, ll95_pse_DY, ul95_pse_DY \ ///
 			pse_DM5Y, se_pse_DM5Y, pval_pse_DM5Y, ll95_pse_DM5Y, ul95_pse_DM5Y \ ///
@@ -468,13 +501,26 @@ program define dmlpath, rclass
 			pse_DM2Y, se_pse_DM2Y, pval_pse_DM2Y, ll95_pse_DM2Y, ul95_pse_DM2Y \ ///
 			pse_DM1Y, se_pse_DM1Y, pval_pse_DM1Y, ll95_pse_DM1Y, ul95_pse_DM1Y)
 	
-		matrix rownames results = "ATE" "PSE_DY" "PSE_DM5Y" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
-		matrix colnames results = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
+		matrix rownames `results' = "ATE" "PSE_DY" "PSE_DM5Y" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
+		matrix colnames `results' = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
 		
+		matrix `b' = (ate, pse_DY, pse_DM5Y, pse_DM4Y, pse_DM3Y, pse_DM2Y, pse_DM1Y)
+		matrix colnames `b' = "ATE" "PSE_DY" "PSE_DM5Y" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
+
+		matrix `se' = (se_ate, se_pse_DY, pse_DM5Y, se_pse_DM4Y, se_pse_DM3Y, se_pse_DM2Y, se_pse_DM1Y)
+		matrix colnames `se' = "ATE" "PSE_DY" "PSE_DM5Y" "PSE_DM4Y" "PSE_DM3Y" "PSE_DM2Y" "PSE_DM1Y"
+
 		capture drop eifATE_r001_1 eifNDE_r001_1 eifNIE_r001_1		
 
 	}
 
-	matrix list results
+	matlist `results', format(%10.0g)
+	
+	ereturn clear
+	
+	ereturn scalar N = `N'
+	ereturn matrix est = `b' 
+	ereturn matrix se = `se'		
+	
 
 end dmlpath

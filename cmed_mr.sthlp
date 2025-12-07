@@ -121,10 +121,6 @@ are baseline confounders (pre-treatment confounders).
 {synopt:{opt paths:pecific}}estimate path-specific effects
 {p_end}
 {...}
-{synopt:{opt rmpw}}use a robust estimator that involves 
-ratio-of-mediator-probability weighting
-{p_end}
-{...}
 {synopt:{opt d(#)}}specify reference level of treatment; default is 1
 {p_end}
 {...}
@@ -147,13 +143,14 @@ include interactions between baseline confounders (if specified) and
 mediator(s) in all relevant models
 {p_end}
 {...}
-
-{synopt:{opt censor(numlist)}}
-censor the inverse probability and/or ratio-of-mediator-probability weights at 
-the percentiles supplied in numlist
+{synopt:{opt rmpw}}use an estimator that involves 
+ratio-of-mediator-probability weighting
 {p_end}
 {...}
-
+{synopt:{opt censor(numlist)}}censor the inverse probability and/or 
+ratio-of-mediator-probability weights at the percentiles supplied in numlist
+{p_end}
+{...}
 {synopt:{opt detail}}
 print the fitted models used to compute effect estimates
 {p_end}
@@ -187,7 +184,7 @@ through a set of causally ordered mediators. Standard errors and
 confidence intervals are obtained using the nonparametric {help bootstrap}.
 
 {pstd}
-In the simplest case with one mediator and no post-treatment confounders,
+In the simplest case with a single mediator,
 {cmd:cmed mr} constructs multiply robust estimates of the natural direct and
 indirect effects, as well as of the total effect, by fitting the following models:
 
@@ -210,15 +207,17 @@ conditional on the treatment and baseline confounders
 {pstd}
 These models are used to construct all the nuisance terms in a multiply robust
 estimator for natural effects, which is then evaluated to produce the 
-estimates of interest. The estimated effects have a causal interpretation 
-under a set of modeling and identification assumptions. The modeling 
-assumptions require that at least one of the following three conditions 
-is met: (i) Models 1 and 2 are correctly specified, (ii) Models 1 and 3 are 
-correctly specified, or (iii) Models 3 and 4 are correctly specified. This 
-estimator is sometimes described as "triply robust" because it provides three 
-distinct opportunities to satisfy its modeling requirements. Beyond these 
-modeling requirements, the identification assumptions stipulate that the 
-following conditions hold:
+estimates of interest. This estimator involves a combination of inverse 
+probability weighting and regression imputation. The estimated effects 
+have a causal interpretation under a set of modeling and identification 
+assumptions. The modeling assumptions require that at least one of the 
+following three conditions is met: (i) Models 1 and 2 are correctly 
+specified, (ii) Models 1 and 3 are correctly specified, or (iii) Models 3 
+and 4 are correctly specified. This estimator is sometimes described 
+as "triply robust" because it provides three distinct opportunities to 
+satisfy its modeling requirements. Beyond these modeling requirements, 
+the identification assumptions stipulate that the following conditions 
+hold:
 
 {phang2}
 ({bf:A1}) There are no unobserved treatment–outcome confounders.
@@ -250,7 +249,8 @@ relationships.
 {pstd}
 Alternatively, with a single binary mediator, option
 {helpb cmed_mr##rmpw:rmpw} can be used to implement a different multiply
-robust estimator that involves ratio-of-mediator-probability weighting.
+robust estimator. This estimator involves a combination of 
+ratio-of-mediator-probability weighting and regression imputation.
 In this case, estimates for the natural direct and indirect effects through
 this binary mediator are constructed by fitting the following models:
 
@@ -267,16 +267,17 @@ baseline confounders as predictors
 {p_end}
 
 {pstd}
-These models are used to construct all the nuisance terms in another multiply
-robust estimator for natural effects, which is then evaluated to produce the 
-estimates of interest. The estimated effects in this case have a causal
-interpretation provided that assumptions {bf:A1}–{bf:A4} hold and that
-at least two of the three models above are correctly specified. In other words,
-this approach to multiply robust estimation requires that either (i) Models 1b
-and 2b are correctly specified, (ii) Models 2b and 3b are correctly specified,
-or (iii) Models 1b and 3b are correctly specified. Thus, it is also
-sometimes described as "triply robust," offering three opportunities to
-satisfy its modeling requirements.
+These models are used to construct all the nuisance terms in the multiply
+robust estimator, which is then evaluated to produce estimates of 
+natural direct and indirect effects. The estimated effects in this case 
+have a causal interpretation provided that assumptions {bf:A1}–{bf:A4} 
+hold and that at least two of the three models above are correctly 
+specified. In other words, this approach to multiply robust estimation 
+requires that either (i) Models 1b and 2b are correctly specified, (ii) 
+Models 2b and 3b are correctly specified, or (iii) Models 1b and 3b are 
+correctly specified. Thus, it is also sometimes described as 
+"triply robust," offering three opportunities to satisfy its modeling 
+requirements.
 
 {pstd}
 See {help cmed_mr##references:Wodtke and Zhou (2026)} for a detailed
@@ -307,12 +308,6 @@ capture the unique explanatory role of each mediator, net of the other
 mediators that precede it in causal order. 
 
 {phang}
-{opt rmpw}
-is only allowed with a single binary treatment. This option implements an 
-alternative approach to multiply robust estimation that involves 
-ratio-of-mediator-probability weighting and a logit model for the mediator.
-
-{phang}
 {opt d(#)}
 allows the user to specify the reference level of treatment. The default is 1.
 
@@ -339,6 +334,12 @@ includes all two-way interactions between the baseline confounders
 {opt cxm}
 includes all two-way interactions between the baseline confounders 
 (if specified) and the mediator(s) in every relevant model.
+
+{phang}
+{opt rmpw}
+is only allowed with a single binary treatment. This option implements an 
+alternative approach to multiply robust estimation that involves 
+ratio-of-mediator-probability weighting and a logit model for the mediator.
 
 {phang}
 {opt censor(numlist)}
