@@ -23,7 +23,7 @@
 To install directly from GitHub:
 
 ```stata
-net install cmed, from("https://raw.githubusercontent.com/causalMedAnalysis/cmed/main/")
+net install cmed, from("https://raw.github.com/causalMedAnalysis/cmed/master/") replace
 ````
 
 ---
