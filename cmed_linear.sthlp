@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.5.0  03dec2025}{...}
+{* *! version 0.7.0  18dec2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -102,7 +102,6 @@ Controlled direct effects with a single mediator
 [{it:options}]
 
 
-
 {...}
 {phang}
 {it:depvar}
@@ -123,7 +122,7 @@ are post-treatment confounders (exposure-induced confounders).
 {...}
 {phang}
 {it:dvar} 
-is the treatment (exposure).
+is the treatment (exposure). 
 {p_end}
 {...}
 {phang}
@@ -135,69 +134,72 @@ are baseline confounders (pre-treatment confounders).
 {*  ___________________________________________________  Options short }{...}
 {...}
 {...}
-{synoptset 23 tabbed}{...}
+{synoptset 24 tabbed}{...}
 {synopthdr:options}
 {synoptline}
 {...}
 {syntab:Effects}
-{synopt:{opt paths:pecific}}
-estimate path-specific effects
+{synopt:{opt paths:pecific}}estimate path-specific effects
 {p_end}
 {...}
-{synopt:{opt m:value(#)}}
-estimate controlled direct effects at {it:mvar}={it:#}
+{synopt:{opt m:value(#)}}estimate controlled direct effect at {it:mvar}={it:#}
 {p_end}
 {...}
-{synopt:{opt d(#)}}
-specify reference level of treatment; 
-default is 1
+{p2coldent :* {opt d(#)}}specify alternative level of {it:dvar}; 
+default for dichotomous treatments is the second treatment level
 {p_end}
 {...}
-{synopt:{opt dstar(#)}}
-specify alternative level of treatment; 
-default is 0
+{p2coldent:* {opt dstar(#)}}specify reference level of {it:dvar}; 
+default for dichotomous treatments is the first treatment level
 {p_end}
 
 {syntab:Models}
-{synopt:{opt nointer:action}}
-do not include interaction(s) between mediator(s) and treatment 
-in the outcome model
+{synopt:{opt nointer:action}}do not include interaction(s) 
+between mediator(s) and treatment in the outcome model
 {p_end}
 {...}
-{synopt:{opt cxd}}
-include interactions between baseline confounders (if specified) and treatment 
-in all relevant models
+{synopt:{opt cxd}}include interactions between baseline confounders 
+(if specified) and treatment in all relevant models
 {p_end}
 {...}
-{synopt:{opt cxm}}
-include interactions between baseline confounders (if specified) and 
-mediator(s) in the outcome model
+{synopt:{opt cxm}}include interactions between baseline confounders 
+(if specified) and mediator(s) in the outcome model
 {p_end}
 {...}
-{synopt:{opt lxm}}
-include interactions between post-treatment confounders (if specified) 
-and mediator in the outcome model
+{synopt:{opt lxm}}include interactions between post-treatment confounders 
+(if specified) and mediator in the outcome model
 {p_end}
 {...}
-{synopt:{opt cat(lvars)}}
-treat {it:lvars} as categorical
-{p_end}
-{...}
-{synopt:{opt detail}}
-print the fitted models for mediator(s) and outcome
+{synopt:{opt cat(lvars)}}treat {it:lvars} as categorical
 {p_end}
 
 {syntab:Bootstrap}
-{synopt:{it:...}}
-any options are passed through
+{synopt:{opt r:eps(#)}}perform {it:#} bootstrap replications; 
+default is {cmd:reps(50)}
 {p_end}
 {...}
-{synopt:{opt parallel}}
-parallelize the bootstrap using {help parallel bs} 
-(requires the {cmd:parallel} module)
+{synopt:{cmd:seed(}{it:#}{c |}{it:{help numlist}}{cmd:)}}set random number seed to {it:#}; 
+when {opt parallel} is specified, supply one seed per processor 
+{p_end}
+{...}
+{synopt:{opt parallel}}parallelize the bootstrap using {helpb parallel bs};
+requires community-contributed {cmd:parallel} 
+from {browse "https://github.com/gvegayon/parallel":GitHub} 
+{p_end}
+{synopt:{it:{help bootstrap##options:bootstrap_options}}}options are passed through 
+to {helpb bootstrap}
 {p_end}
 
+{syntab:Reporting}
+{synopt:{opt l:evel(#)}}set confidence level; 
+default is {cmd:level(}{cmd:{ccl level})}
+{p_end}
+{...}
+{synopt:{opt detail}}print fitted models for mediator(s) and outcome
+{p_end}
 {synoptline}
+{pstd}
+* {opt d()} and {opt dstar()} are required with continuous treatments.
 
 
 {...}
@@ -210,14 +212,17 @@ parallelize the bootstrap using {help parallel bs}
 {pstd}
 {cmd:cmed linear} estimates the natural direct and indirect effects 
 of a treatment (exposure) on an outcome using linear models 
-for both the mediator and the outcome. When multiple mediators are specified,
-the command estimates multivariate natural effects using linear models for
-all the mediators and the outcome. If post-treatment confounders
-are specified, the command estimates interventional direct and indirect 
-effects. Optionally, the command estimates path-specific effects through a set 
-of causally ordered mediators as well as controlled direct effects with a 
-single mediator. Standard errors and confidence intervals are obtained 
-using the nonparametric {help bootstrap}. 
+for both the mediator and the outcome. 
+When multiple mediators are specified, 
+the command estimates multivariate natural effects 
+using linear models for all the mediators and the outcome. 
+If post-treatment confounders are specified, 
+the command estimates interventional direct and indirect effects. 
+Optionally, the command estimates path-specific effects 
+through a set of causally ordered mediators 
+as well as controlled direct effects with a single mediator. 
+Standard errors and confidence intervals are obtained 
+using the nonparametric bootstrap; see {manlink R bootstrap}. 
 
 {pstd}
 In the simplest case with one mediator and no post-treatement confounders, 
@@ -248,42 +253,46 @@ are correctly specified and the following assumptions hold:
 ({bf:A3}) There are no unobserved treatment-mediator confounders.
 {p_end}
 {phang2}
-({bf:A4}) There are no exposure-induced confounders of the mediator-outcome
+({bf:A4}) There are no post-treatement confounders of the mediator-outcome
 relationship.
 {p_end}
+
+{pstd}
+When more than one mediator is specified, 
+{cmd:cmed linear} estimates multivariate natural direct and indirect effects 
+using a separate linear model for each mediator 
+and a linear model for the outcome that includes all mediators as predictors, 
+in addition to the treatment and baseline confounders. 
+The estimated effects in this case have a causal interpretation provided that 
+every model is correctly specified, assumption {bf:A1} holds, 
+and assumptions {bf:A2}-{bf:A4} hold with respect to all the mediators 
+under consideration. 
+When option {helpb cmed_linear##pathspecific:pathspecific} is specified, 
+{cmd:cmed linear} estimates path-specific effects of multiple mediators 
+using linear models. 
+To have a causal interpretation, these estimates additionally require 
+that the mediators are specified in the correct causal order 
+and there are no unobserved or post-treatment confounders 
+for any of the mediator-mediator relationships.
 
 {pstd}
 When post-treatment (i.e., exposure-induced) confounders are specified, 
 {cmd:cmed linear} uses a regression-with-residuals approach 
 to estimate interventional direct and indirect effects, also known as 
 randomized intervention analogues to natural direct and indirect effects. 
-For each post-treatment confounder, {cmd:cmed linear} fits a model with the 
-treatment and baseline confounders as predictors, computes the residuals, 
-and then includes these residuals as additional predictors in the linear model 
-for the outcome. The estimated effects in this case have a causal 
-interpretation when assumptions {bf:A1}-{bf:A3} hold.
+For each post-treatment confounder, {cmd:cmed linear} fits a model 
+with the treatment and baseline confounders as predictors, 
+computes the residuals, and then includes these residuals 
+as additional predictors in the linear model for the outcome. 
+The estimated effects in this case have a causal interpretation 
+provided that assumptions {bf:A1}-{bf:A3} hold.
 
 {pstd}
-With a single mediator, option {helpb cmed_linear##mvalue:mvalue} can 
-be used for estimating controlled direct effects, which only involves
-the linear model for the outcome. These effects have a causal interpretation 
+When option {opt mvalue()} is specified to estimate controlled direct effects
+of a single mediator, {cmd:cmed linear} fits only a linear model for the outcome. 
+These effects have a causal interpretation 
 provided that the outcome model is correctly specified and assumptions 
 {bf:A1}-{bf:A2} hold.
-
-{pstd}
-When more than one mediator is specified, {cmd:cmed linear} estimates 
-multivariate natural direct and indirect effects using a separate 
-linear model for each mediator and a linear model for the outcome that
-includes all mediators as predictors, in addition to the treatment and
-baseline confounders. The estimated effects in this case have a causal 
-interpretation if every model is correctly specified, assumption 
-{bf:A1} holds, and assumptions {bf:A2}-{bf:A4} hold with respect to all the 
-mediators under consideration. If the mediators are specified in causal order, 
-option {helpb cmed_linear##pathspecific:pathspecific} can be used for 
-estimating path-specific effects using linear models. To have a causal 
-interpretation, these estimates additionally require that there are no 
-unobserved or exposure-induced confounders for any of the mediator-mediator 
-relationships.
 
 {pstd}
 See {help cmed_linear##references:Wodtke and Zhou (2026)} for a detailed discussion.
@@ -301,39 +310,46 @@ See {help cmed_linear##references:Wodtke and Zhou (2026)} for a detailed discuss
 {marker pathspecific}{...}
 {phang}
 {opt pathspecific}
-estimates path-specific effects. When using this option, the mediators must be 
-specified in their causal order, where the first mediator listed in the command 
-syntax causally precedes the second mediator, which in turn precedes the third, 
-and so on for all the mediators supplied. The path-specific effects will then 
-capture the unique explanatory role of each mediator, net of the other 
-mediators that precede it in causal order. 
+estimates path-specific effects of multiple mediators. 
+The mediators must be specified in their causal order, 
+where the first mediator causally precedes the second mediator, 
+which in turn precedes the third, and so on 
+for all mediators. 
+The path-specific effects will then capture the unique explanatory role 
+of each mediator, net of the other mediators that precede it in causal order. 
 
 {phang}
 {opt mvalue(#)}
-estimates controlled direct effects at {it:mvar}={it:#}. This option may only 
-be specified with a single mediator. Controlled direct effects capture the 
-influence of the treatment on the outcome if the mediator for each observation 
-were set at a single specific value.
+estimates controlled direct effects at {it:mvar}={it:#}. 
+Controlled direct effects capture the influence of the treatment on the outcome 
+if the mediator for each observation were set at a single specific value. 
+This option may only be specified with a single mediator. 
 
 {phang}
 {opt d(#)}
-allows the user to specify the reference level of treatment. The default is 1.
+specifies the alternative level of {it:dvar}. 
+For dichotomous treatments, the default alternative level 
+is the second treatment level. 
+Option {opt d()} is required with continuous treatments. 
+The difference, {opt d()} - {opt dstar()} defines the treatment contrast 
+evaluated for all estimated effects.
 
 {phang}
 {opt dstar(#)}
-allows the user to specify the alternative level of treatment. The default 
-is 0. d - dstar defines the treatment contrast evaluated for all estimated 
-effects. With treatments that have many values or are continuous, users can 
-estimate the effects of different contrasts comparing particular levels of 
-treatment by specifying d(#) and dstar(#).
+specifies the reference or control level of {it:dvar}. 
+For dichotomous treatments, the default reference level 
+is the first treatment level. 
+Option {opt dstar()} is required with continuous treatments. 
+The difference, {opt d()} - {opt dstar()} defines the treatment contrast 
+evaluated for all estimated effects.
 
 {dlgtab:Models}
 
 {phang}
 {opt nointeraction}
 excludes any two-way interaction(s) between the mediator(s) and treatment 
-in the outcome model. Interactions between the mediator(s) and treatment are
-included by default.
+in the outcome model. 
+By default, all interactions between the mediator(s) and treatment are included.
 
 {phang}
 {opt cxd}
@@ -345,43 +361,67 @@ after mean-centering the baseline confounders.
 {phang}
 {opt cxm}
 includes all two-way interactions between the baseline confounders 
-(if specified) and the mediator(s) in the outcome model. These interactions 
-are constructed after mean-centering the baseline confounders.
+(if specified) and the mediator(s) in the outcome model. 
+Interactions are constructed after mean-centering the baseline confounders.
 
 {phang}
 {opt lxm}
 includes all two-way interactions between the post-treatment confounders 
-(if specified) and the mediator(s) in the outcome model. These interactions 
-are constructed after residualizing the post-treatment confounders with 
-respect to treatment and the baseline confounders.
+(if specified) and the mediator(s) in the outcome model. 
+Interactions are constructed after residualizing the post-treatment confounders 
+with respect to treatment and the baseline confounders. 
 
 {phang}
-{opt cat(lavrs)}
-is only allowed if post-treatment confounders are specified. Variables passed 
-to this option are automatically one-hot encoded and then residualized using 
-logistic models when implementing regression-with-residuals for interventional 
-and controlled effects.
-
-{phang}
-{opt detail}
-prints output from each fitted model for the mediator(s) and outcome. When 
-this option is omitted, only the estimated causal effects are reported.
+{opt cat(lvars)}
+creates indicator variables for each level of the variables in {it:lvars} 
+(i.e., applies one-hot encoding) 
+and residualizes them using logistic regression models. 
 
 {dlgtab:Bootstrap}
 
 {phang}
-all {help bootstrap} options are available and passed through.
+{opt reps(#)}
+specifies the number of bootstrap replications to be performed.  
+The default is 50.  
+See {helpb bootstrap##options:bootstrap}. 
+
+{phang}
+{cmd:seed(}{it:#}{c |}{it:{help numlist}}{cmd:)}
+sets the random-number seed(s).  
+
+{phang2}
+{bf:Note}:
+When option {opt parallel} is specified, 
+option {opt seed(numlist)} is required for reproducibility. 
+Specify as many seeds as there are processors. 
+Using the command {cmd:set seed} alone is insufficient 
+to reproduce results obtained with {opt parallel}.
 
 {phang}
 {opt parallel}
 implements a parallelized version of the bootstrap procedure using 
-{help parallel bs} with default settings. This option requires the 
-{cmd:parallel} module. Parallelization can be used to decrease the wall time 
-needed to obtain inferential statistics when using a multicore system. 
-The bootstrap procedure will not be parallelized when this option 
-is omitted. 
+{helpb parallel bs} with default settings. 
+This option requires community-contributed {cmd:parallel} 
+from {browse "https://github.com/gvegayon/parallel":GitHub}. 
+Parallelization decrease the wall time needed to obtain inferential statistics 
+when using a multicore system. 
 
-{synoptline}
+{phang}
+{it:{help bootstrap##options:bootstrap_options}} 
+are any additional options; 
+these options are passed through to {helpb bootstrap}.
+
+{dlgtab:Reporting}
+
+{phang}
+{opt level(#)}
+specifies the confidence level, as a percentage, for confidence intervals.  
+The default is {cmd:level(}{cmd:{ccl level})} or as set by {helpb set level}.
+
+{phang}
+{opt detail}
+prints output from each fitted model for the mediator(s) and outcome. 
+By default, only the estimated causal effects are reported.
 
 
 {...}
@@ -395,87 +435,64 @@ Setup
 {cmd:. use nlsy79.dta} 
 {p_end}
 
-{phang2}
-{cmd:. global cvars female black hispan paredu parprof parinc_prank famsize afqt3} 
+{pstd}
+Estimate natural direct and indirect effects
+of {cmd:att22} on {cmd:cesd_age40} through {cmd:ever_unemp_age3539},
+adjusting for pre-treament confounders 
 {p_end}
 {phang2}
-{cmd:. global dvar att22} 
-{p_end}
-{phang2}
-{cmd:. global mvar1 ever_unemp_age3539} 
-{p_end}
-{phang2}
-{cmd:. global mvar2 log_faminc_adj_age3539}
-{p_end}
-{phang2}
-{cmd:. global depvar cesd_age40} 
+{cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate natural direct and indirect effects through mvar1
+Same as above, but use optional parentheses 
+to explicitly group the outcome, mediator, and treatment variables.
 {p_end}
 {phang2}
-{cmd:. cmed linear $depvar $mvar1 $dvar = $cvars}
+{cmd:. cmed linear (cesd_age40) (ever_unemp_age3539) (att22) = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate natural effects, including interactions
+Estimate multivariate natural effects through 
+{cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539} together;
+parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed linear $depvar $mvar1 $dvar = $cvars, cxd cxm}
+{cmd:. cmed linear cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate controlled direct effects, including interactions
+Estimate path-specific effects through 
+{cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539};
+parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed linear $depvar $mvar1 $dvar = $cvars, cxd cxm m(1)}
-{p_end}
-{phang2}
-{cmd:. cmed linear $depvar $mvar1 $dvar = $cvars, cxd cxm m(0)}
+{cmd:. cmed linear cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize, pathspecific}
 {p_end}
 
 {pstd}
-Estimate interventional effects through mvar2, adjusting for mvar1 as a 
-post-treatment confounder
+Estimate interventional effects through {cmd:log_faminc_adj_age3539}, 
+treating {cmd:ever_unemp_age3539} as a post-treatment confounder
 {p_end}
 {phang2}
-{cmd:. cmed linear $depvar $mvar2 ($mvar1) $dvar = $cvars}
+{cmd:. cmed linear cesd_age40 log_faminc_adj_age3539 ever_unemp_age3539 att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate multivariate natural effects through mvar1 and mvar2 together
+Estimate controlled direct effects of {cmd:ever_unemp_age3539}
 {p_end}
 {phang2}
-{cmd:. cmed linear $depvar ($mvar1 $mvar2) $dvar = $cvars}
+{cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, mvalue(1)}
+{p_end}
+{phang2}
+{cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, mvalue(0)}
 {p_end}
 
 {pstd}
-Estimate multivariate natural effects, including interactions
+Parallelize the bootstrap replications and increase default number of replications
 {p_end}
 {phang2}
-{cmd:. cmed linear $depvar ($mvar1 $mvar2) $dvar = $cvars, cxd cxm}
-{p_end}
-
-{pstd}
-Estimate path-specific effects through mvar1 and mvar2, including interactions
-{p_end}
-{phang2}
-{cmd:. cmed linear $depvar ($mvar1 $mvar2) $dvar = $cvars, cxd cxm paths}
-{p_end}
-
-{pstd}
-Specify the number of bootstrap replications
-{p_end}
-{phang2}
-{cmd:. cmed linear $depvar ($mvar1 $mvar2) $dvar = $cvars, cxd cxm paths reps(1000)}
-{p_end}
-
-{pstd}
-Parallelize the bootstrap replications
-{p_end}
-{phang2}
-{cmd:. cmed linear $depvar ($mvar1 $mvar2) $dvar = $cvars, cxd cxm paths reps(1000) parallel}
+{cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, reps(1000) parallel}
 {p_end}
 
 
@@ -509,5 +526,5 @@ Email: wodtke@uchicago.edu
 
 {pstd}
 Daniel Klein{break}
-YOUR AFFILIATION{break}
-Email: YOUR INSTITUTIONAL EMAIL
+German Centre for Higher Education Research and Science Studies{break}
+Email: klein@dzhw.eu
