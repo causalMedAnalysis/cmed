@@ -81,7 +81,7 @@ models, effects estimated via simulation
 Multiple mediators must be enclosed in parentheses.
 {p_end}
 {phang}
-{it:lvar} is a post-treatment confounders (exposure-induced confounders).
+{it:lvar} is a post-treatment confounder (exposure-induced confounder).
 Multiple post-treatment confounders must be enclosed in parentheses.
 {p_end}
 {phang}
