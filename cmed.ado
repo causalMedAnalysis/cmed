@@ -1,4 +1,4 @@
-*! version 0.7.1  07dec2025
+*! version 0.8.0  18dec2025
 program cmed
     
     version 16.1
@@ -7,8 +7,13 @@ program cmed
         
         version `=_caller()' : Define_globals
         
+        local c_type = c(type)
+        set type double
+        
         capture noisily break Cmed `0'
         local rc = _rc
+        
+        set type `c_type'
         
         Drop_globals
         
@@ -285,12 +290,13 @@ program Parse_options
         d(numlist max=1)        ///
         dstar(numlist max=1)    ///
         parallel                ///
+        svy                     ///
         ///
         SHOWCMEDCMDLINE         /// debugging; not documented
         *                       ///
     ]
     
-    // !! fixme no more pass-thru options
+    // !! fixme reduce pass-thru options
     
     global Cmed__showcmedcmdline : copy local showcmedcmdline
     
@@ -323,8 +329,30 @@ program Parse_options
         
     }
     
-    if ("`parallel'" == "parallel") ///
+    if ("`parallel'" == "parallel") {
+        
+        if ("`svy'" == "svy") ///
+            Option_not_allowed "parallel" "" "with option {bf:svy}"
+            // NotReached
+        
         Confirm_parallel_is_installed
+        
+    }
+    
+    if ("`svy'" == "svy") {
+        
+        quietly svyset
+        
+        if ("`r(bsrweight)'" == "") {
+            
+            display as err "no replicate weight variables declared;" ///
+                " use {bf:svyset} with the {bf:bsrweight()} option"
+            
+            exit 459
+            
+        }
+        
+    }
     
     global Cmed__options        ///
         dvar(${Cmed__dvars})    ///
@@ -334,6 +362,7 @@ program Parse_options
         `pathspecific'          ///
         mvalue(`mvalue')        ///
         `parallel'              ///
+        `svy'                   ///
         `options'
     
 end
@@ -418,8 +447,6 @@ end
 program Estimate
     
     syntax
-    
-    // !! fixme note/warning message for pweights with complex survey data
     
     Build_cmdline_cmed_${Cmed__subcommand} , ${Cmed__options}
     
