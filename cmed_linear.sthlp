@@ -331,7 +331,7 @@ specifies the alternative level of {it:dvar}.
 For dichotomous treatments, the default alternative level 
 is the second treatment level. 
 Option {opt d()} is required with continuous treatments. 
-The difference, {opt d()} - {opt dstar()} defines the treatment contrast 
+The difference, {opt d()} - {opt dstar()}, defines the treatment contrast 
 evaluated for all estimated effects.
 
 {phang}
@@ -340,7 +340,7 @@ specifies the reference or control level of {it:dvar}.
 For dichotomous treatments, the default reference level 
 is the first treatment level. 
 Option {opt dstar()} is required with continuous treatments. 
-The difference, {opt d()} - {opt dstar()} defines the treatment contrast 
+The difference, {opt d()} - {opt dstar()}, defines the treatment contrast 
 evaluated for all estimated effects.
 
 {dlgtab:Models}
@@ -403,7 +403,7 @@ implements a parallelized version of the bootstrap procedure using
 {helpb parallel bs} with default settings. 
 This option requires community-contributed {cmd:parallel} 
 from {browse "https://github.com/gvegayon/parallel":GitHub}. 
-Parallelization decrease the wall time needed to obtain inferential statistics 
+Parallelization decreases the wall time needed to obtain inferential statistics 
 when using a multicore system. 
 
 {phang}
@@ -479,7 +479,7 @@ treating {cmd:ever_unemp_age3539} as a post-treatment confounder
 {p_end}
 
 {pstd}
-Estimate controlled direct effects of {cmd:ever_unemp_age3539}
+Estimate controlled direct effects of {cmd:att22}, controlling for {cmd:ever_unemp_age3539}
 {p_end}
 {phang2}
 {cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, mvalue(1)}
@@ -489,7 +489,7 @@ Estimate controlled direct effects of {cmd:ever_unemp_age3539}
 {p_end}
 
 {pstd}
-Parallelize the bootstrap replications and increase default number of replications
+Parallelize the bootstrap and increase default number of replications
 {p_end}
 {phang2}
 {cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, reps(1000) parallel}
