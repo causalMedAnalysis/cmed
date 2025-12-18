@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.4.1  04dec2025}{...}
+{* *! version 0.5.0  18dec2025}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -16,10 +16,33 @@
 {marker syntax}{...}
 {title:Syntax}
 
+{p 5 8 2}
+Basic syntax
+
 {p 8 16 2}
 {cmd:cmed} 
 {it:subcommand}
-{it:...}
+{it:depvar}
+{it:mvar}
+[{it:lvar}]
+{it:dvar}
+[{cmd:=} {it:cvars}]
+{ifin}
+[{cmd:,} {it:options}]
+
+{p 5 8 2}
+Full syntax
+
+{p 8 16 2}
+{cmd:cmed} 
+{it:subcommand}
+{cmd:(}{it:yspec}{cmd:)}
+{cmd:(}{it:mspec}{cmd:)}
+[{cmd:(}{it:lspec}{cmd:)}]
+{cmd:(}{it:dspec}{cmd:)}
+[{cmd:=} {it:cvars}]
+{ifin}
+[{cmd:,} {it:options}]
 
 
 {...}
@@ -49,6 +72,51 @@ models, effects estimated via simulation
 {...}
 {synoptline}
 
+{...}
+{phang}
+{it:depvar} is the outcome of interest.
+{p_end}
+{phang}
+{it:mvar} is a mediator of interest. 
+Multiple mediators must be enclosed in parentheses.
+{p_end}
+{phang}
+{it:lvar} is a post-treatment confounders (exposure-induced confounders).
+Multiple post-treatment confounders must be enclosed in parentheses.
+{p_end}
+{phang}
+{it:dvar} is the treatment (exposure).
+{p_end}
+{phang}
+{it:cvars} are baseline confounders (pre-treatment confounders).
+{p_end}
+
+{...}
+{phang}
+{it:yspec} is [{cmd:(}{it:ymodel}{cmd:)}] {depvar}
+{p_end}
+{phang}
+{it:mspec} is [{cmd:(}{it:mmodel}{cmd:)}] {varlist} [{cmd:(}{it:mmodel}{cmd:)} {varlist} {it:...}]
+{p_end}
+{phang}
+{it:lspec} is [{cmd:(}{it:lmodel}{cmd:)}] {varlist} [{cmd:(}{it:lmodel}{cmd:)} {varlist} {it:...}]
+{p_end}
+{phang}
+{it:dspec} is [{cmd:(}{cmd:logit}{cmd:)}] {varname}
+{p_end}
+
+{...}
+{phang}
+{it:ymodel}, {it:mmodel}, and {it:lmodel} are 
+{it:subcommand}-specific 
+and one of
+{cmdab:reg:ress}, 
+{cmd:logit}, 
+{cmd:poission}, 
+or
+{cmd:ologit}
+{p_end}
+
 
 {...}
 {marker description}{...}
@@ -56,14 +124,15 @@ models, effects estimated via simulation
 
 {pstd}
 {cmd:cmed}
-performs causal mediation analysis using methods discussed in 
-{help cmed##references:Wodtke and Zhou (2026)}. It supports estimation of 
-natural, interventional, controlled, and path-specific effects, which
-capture in different ways how the effect of a treatment on an outcome is
-transmitted, or not, through one or more mediators. The command can handle
-multiple mediators, exposure-induced confounders, and many different types 
-of variables, including measures that are binary, ordinal, continuous, or 
-counts. Across its different subcommands, {cmd:cmed} supports estimation using 
+performs causal mediation analysis 
+using the methods discussed in {help cmed##references:Wodtke and Zhou (2026)}. 
+The command supports estimation of natural, interventional, controlled direct, 
+and path-specific effects, which capture in different ways how the effect 
+of a treatment on an outcome is transmitted, or not, through one or more mediators. 
+The command handles multiple mediators, exposure-induced confounders, 
+and different variable types, including binary, ordinal, continuous, 
+and count measures. 
+Across its subcommands, {cmd:cmed} provides estimators based on  
 linear models, generalized linear models and simulation methods, 
 inverse probability weighting, regression imputation, multiply robust
 methods that combine weighting and imputation, and de-biased machine learning.
@@ -74,7 +143,9 @@ methods that combine weighting and imputation, and de-biased machine learning.
 {title:References}
 
 {pstd}
-Wodtke GT, and Zhou X. 2026. {browse "https://www.cambridge.org/us/universitypress/subjects/social-science-research-methods/quantitative-methods/causal-mediation-analysis":Causal Mediation Analysis}. Cambridge University Press.
+Wodtke GT, and Zhou X. 2026. 
+{browse "https://www.cambridge.org/us/universitypress/subjects/social-science-research-methods/quantitative-methods/causal-mediation-analysis":Causal Mediation Analysis}. 
+Cambridge University Press.
 {p_end}
 
 
@@ -87,3 +158,8 @@ Geoffrey T. Wodtke {break}
 Department of Sociology{break}
 University of Chicago{break}
 Email: wodtke@uchicago.edu
+
+{pstd}
+Daniel Klein{break}
+German Centre for Higher Education Research and Science Studies{break}
+Email: klein@dzhw.eu
