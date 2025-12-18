@@ -479,6 +479,14 @@ treating {cmd:ever_unemp_age3539} as a post-treatment confounder
 {p_end}
 
 {pstd}
+Estimate interventional effects through {cmd:log_faminc_adj_age3539}, 
+treating {cmd:cesd_1994} and {cmd:ever_unemp_age3539} as post-treatment confounders
+{p_end}
+{phang2}
+{cmd:. cmed linear cesd_age40 log_faminc_adj_age3539 (cesd_1994 ever_unemp_age3539) att22 = female black hispan famsize}
+{p_end}
+
+{pstd}
 Estimate controlled direct effects of {cmd:att22}, controlling for {cmd:ever_unemp_age3539}
 {p_end}
 {phang2}
