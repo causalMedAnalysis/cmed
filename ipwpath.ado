@@ -1,9 +1,8 @@
 *!TITLE: IPWPATH - analysis of path-specific effects using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
-
 
 program define ipwpath, eclass
 
@@ -14,9 +13,9 @@ program define ipwpath, eclass
 		d(real) ///
 		dstar(real) ///
 		[cvars(varlist numeric) ///
-		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
-		parallel ///					
+		parallel ///		
+		svy ///
 		detail * ]
 		
 	qui {
@@ -58,16 +57,21 @@ program define ipwpath, eclass
 		}
 	}
 	
-	if ("`sampwts'" == "") {
-		tempvar sampwts
-		qui gen `sampwts' = 1 if `touse'
-	}
-		
 	if ("`detail'" != "") {
+		
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
 		
 		di ""
 		di "{bf:Model for `dvar' conditional on cvars:}"
-		logit `dvar' `cvars' [pw=`sampwts'] if `touse'
+		logit `dvar' `cvars' [`svywgt' `wgtexp'] if `touse'
 		
 		local mvars_include
 		
@@ -77,29 +81,25 @@ program define ipwpath, eclass
 			
 			di ""
 			di "{bf:Model for `dvar' conditional on {cvars `mvars_include'}:}"
-			logit `dvar' `mvars_include' `cvars' [pw=`sampwts'] if `touse'
+			logit `dvar' `mvars_include' `cvars' [`svywgt' `wgtexp'] if `touse'
 			
 		}
 		
 	}
 	
-	local effects ATE = r(ate)
-	if (`num_mvars' == 1) local effects `effects' NDE = r(nde) NIE = r(nie)
-	if (`num_mvars' > 1) {
-		local effects `effects' PSE_DY = r(pse_DY)
-		forv k=`num_mvars'(-1)1 {
-			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
-		}
-	}
-
 	if ("`parallel'" == "") {		
 		
-		bootstrap `effects', `options' force noheader notable: ///
+		bootstrap, `options' `svy' noheader notable : ///
 			ipwpathbs `yvar' `mvars' if `touse', ///
 				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
-				sampwts(`sampwts') censor(`censor')
+				censor(`censor')
 	
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 	
 	}
 
@@ -113,10 +113,10 @@ program define ipwpath, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(`effects') `options' : ///
+		qui parallel bs, `options' `svy' : ///
 			ipwpathbs `yvar' `mvars' if `touse', ///
 				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
-				sampwts(`sampwts') censor(`censor')
+				censor(`censor')
 	
 		estat bootstrap, p noheader
 		

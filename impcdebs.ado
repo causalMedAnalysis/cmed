@@ -1,14 +1,14 @@
 *!TITLE: IMPCDE - a module for estimating controlled direct effects using regression imputation
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.3 - added svy compatibility
 *!
 
-program define impcdebs, rclass
+program define impcdebs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		d(real) ///
@@ -49,7 +49,6 @@ program define impcdebs, rclass
 			local cxm_vars `cxm_vars'  ``mvar'X`c''
 		}
 	}
-
 
 	tempvar `dvar'_orig_r001
 	qui gen ``dvar'_orig_r001' = `dvar' if `touse'
@@ -116,10 +115,20 @@ program define impcdebs, rclass
 	qui gen `CDEgivenC' = `Ydm' - `Ydstarm'
 		
 	qui reg `CDEgivenC' [`weight' `exp'] if `touse'
-		
-	return scalar cde = _b[_cons]
+	
+	tempname cde
+	scalar `cde' = _b[_cons]
 
 	qui replace `dvar' = ``dvar'_orig_r001'
 	qui replace `mvar' = ``mvar'_orig_r001'
+	
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (`cde')
+	matrix colnames `b' = "CDE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')	
 	
 end impcdebs

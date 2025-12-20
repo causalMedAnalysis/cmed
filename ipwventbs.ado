@@ -1,14 +1,14 @@
 *!TITLE: IPWVENT - causal mediation analysis of interventional effects using inverse probability weighting	
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - fixed problem with detail option 
+*! version 0.3 - added svy compatibility
 *!
 
-program define ipwventbs, rclass
+program define ipwventbs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in], ///
+	syntax varlist(min=1 max=1 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		lvar(varname numeric) ///
@@ -19,7 +19,6 @@ program define ipwventbs, rclass
 		[cvars(varlist numeric)] ///
 		[cxd] ///
 		[lxd] ///
-		[sampwts(varname numeric)] ///
 		[censor(numlist min=2 max=2)] ///
 		[detail]
 	
@@ -86,12 +85,16 @@ program define ipwventbs, rclass
 	/**********************************
 	GENERATE AND SCALE SAMPLING WEIGHTS
 	***********************************/
-	qui gen `wts' = 1 if `touse'
+	tempvar sampwts
+	qui gen `sampwts' = 1 if `touse'
 	
-	if ("`sampwts'" != "") {
-		qui replace `wts' = `wts' * `sampwts' 
-		qui sum `wts'
-		qui replace `wts' = `wts' / r(mean)
+	if ("`weight'" != "") {
+		tempvar wtvar
+		quietly {
+			gen double `wtvar' `exp'
+			sum `wtvar' if `touse' , meanonly
+			replace `sampwts' = `wtvar'/r(mean) if `touse'
+		}
 	}
 
 	/*****************************
@@ -125,34 +128,34 @@ program define ipwventbs, rclass
 	/*****DVAR*****/
 	di ""
 	di "{bf:Model for `dvar' conditional on {cvars}:}"
-	logit `dvar' `cvars' [pw=`wts'] if `touse'
+	logit `dvar' `cvars' [`weight' `exp'] if `touse'
 	qui est store Dmodel_given_C_r001
 		
-	qui logit `dvar' [pw=`wts'] if `touse'
+	qui logit `dvar' [`weight' `exp'] if `touse'
 	qui est store Dmodel_r001
 
 	/*****LVAR*****/
 	if ("`lreg'"=="logit") {
 		di ""
 		di "{bf:Model for `lvar' conditional on {cvars `dvar'}:}"
-		logit `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse'
-		qui ologit `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse' & e(sample)
+		logit `lvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
+		qui ologit `lvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse' & e(sample)
 		qui est store Lmodel_given_CD_r001
 	}
 	else {
 		di ""
 		di "{bf:Model for `lvar' conditional on {cvars `dvar'}:}"
-		`lreg' `lvar' `dvar' `cvars' `cxd_vars' [pw=`wts'] if `touse'
+		`lreg' `lvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 		qui est store Lmodel_given_CD_r001
 	}
 	
 	/*****MVAR*****/
 	di ""
 	di "{bf:Model for `mvar' conditional on {cvars `dvar' `lvar'}:}"
-	`mreg' `mvar' `dvar' `lvar' `cvars' `cxd_vars' `lxd_var' [pw=`wts'] if `touse'
+	`mreg' `mvar' `dvar' `lvar' `cvars' `cxd_vars' `lxd_var' [`weight' `exp'] if `touse'
 	qui est store Mmodel_given_CDL_r001
 	
-	qui `mreg' `mvar' `dvar' [pw=`wts'] if `touse'
+	qui `mreg' `mvar' `dvar' [`weight' `exp'] if `touse'
 	qui est store Mmodel_given_D_r001
 	
 	/********************
@@ -286,6 +289,8 @@ program define ipwventbs, rclass
 			
 			qui replace phat_M_CD1L_r001=phat_M_CD1L`level'_r001 if ``lvar'_orig'==`level' & `touse'
 			qui replace phat_M_CD0L_r001=phat_M_CD0L`level'_r001 if ``lvar'_orig'==`level' & `touse'
+			
+			drop mhat*_r001
 		}
 		
 		if ("`mreg'"=="regress") {
@@ -323,6 +328,8 @@ program define ipwventbs, rclass
 			
 			qui replace phat_M_CD1L_r001=phat_M_CD1L`level'_r001 if ``lvar'_orig'==`level' & `touse'
 			qui replace phat_M_CD0L_r001=phat_M_CD0L`level'_r001 if ``lvar'_orig'==`level' & `touse'
+			
+			drop mhat*_r001
 		}
 	}
 		
@@ -372,14 +379,14 @@ program define ipwventbs, rclass
 			qui replace `i'=r(c_2) if `i'>r(c_2) & `i'!=. & `touse'
 		}
 	}
+
+	foreach i of var sw1_r001_temp sw2_r001_temp sw3_r001_temp {
+		qui replace `i'=`i' * `sampwts' if `touse'
+	}
 	
 	/***********************
 	COMPUTE EFFECT ESTIMATES
 	************************/
-	foreach i of var sw1_r001_temp sw2_r001_temp sw3_r001_temp {
-		qui replace `i'=`i' * `wts' if `touse'
-	}
-				
 	qui reg `yvar' [pw=sw1_r001_temp] if `dvar'==`dstar' & `touse'
 	local Ehat_Y0M0=_b[_cons]
 		
@@ -389,16 +396,17 @@ program define ipwventbs, rclass
 	qui reg `yvar' [pw=sw3_r001_temp] if `dvar'==`d' & `touse'
 	local Ehat_Y1M0=_b[_cons]
 
-	return scalar oe=`Ehat_Y1M1'-`Ehat_Y0M0'
-	return scalar ide=`Ehat_Y1M0'-`Ehat_Y0M0'
-	return scalar iie=`Ehat_Y1M1'-`Ehat_Y1M0'
+	tempname oe ide iie
+	scalar `oe'=`Ehat_Y1M1'-`Ehat_Y0M0'
+	scalar `ide'=`Ehat_Y1M0'-`Ehat_Y0M0'
+	scalar `iie'=`Ehat_Y1M1'-`Ehat_Y1M0'
 	
 	est drop ///
 		Dmodel_given_C_r001 Dmodel_r001 ///
 		Lmodel_given_CD_r001 ///
 		Mmodel_given_CDL_r001 Mmodel_given_D_r001
 	
-	drop phat*_r001 mhat*_r001 `wts'
+	drop phat*_r001 
 	
 	if ("`detail'"=="") {
 		
@@ -426,6 +434,13 @@ program define ipwventbs, rclass
 		
 	}
 	
-	qui reg `yvar' if `touse'
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (`oe', `ide', `iie')
+	matrix colnames `b' = "OE" "IDE" "IIE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 	
 end ipwventbs

@@ -1,14 +1,14 @@
 *!TITLE: MRMED - causal mediation analysis using parametric multiply robust methods
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define mr1med, rclass
+program define mr1med, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in], ///
+	syntax varlist(min=1 max=1 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		d(real) ///
@@ -57,7 +57,7 @@ program define mr1med, rclass
 	
 	di ""
 	di "{bf:Model for `dvar' conditional on {cvars}:}"
-	logit `dvar' `cvars' if `touse'
+	logit `dvar' `cvars' [`weight' `exp'] if `touse'
 	
 	tempvar phat_D1_C pi`d'_C pi`dstar'_C
 	qui predict `phat_D1_C' if `touse', pr
@@ -66,7 +66,7 @@ program define mr1med, rclass
 	
 	di ""
 	di "{bf:Model for `mvar' conditional on {cvars `dvar'}:}"
-	logit `mvar' `dvar' `cvars' `cxd_vars' if `touse'
+	logit `mvar' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 	
 	qui replace `dvar' = `dstar' if `touse'
 	
@@ -105,7 +105,7 @@ program define mr1med, rclass
 	di ""
 	di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 	
-	reg `yvar' `dvar' `mvar' `inter' `cvars' `cxd_vars' `cxm_vars' if `touse'
+	reg `yvar' `dvar' `mvar' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 
 	qui replace `dvar' = `dstar' if `touse'
 	
@@ -240,14 +240,14 @@ program define mr1med, rclass
 	
 	tempvar ipw`d' ipw`dstar' rmpw
 
-	qui gen `ipw`d'' = 0 if `touse'
+	qui gen double `ipw`d'' = 0 if `touse'
 	qui replace `ipw`d'' = 1/`pi`d'_C' if `dvar'==`d' & `touse'
 
 	
-	qui gen `ipw`dstar'' = 0 if `touse'
+	qui gen double `ipw`dstar'' = 0 if `touse'
 	qui replace `ipw`dstar'' = 1/`pi`dstar'_C' if `dvar'==`dstar' & `touse'
 		
-	qui gen `rmpw' = `ipw`d''*(`f_M_CD`dstar''/`f_M_CD`d'') if `touse'
+	qui gen double `rmpw' = `ipw`d''*(`f_M_CD`dstar''/`f_M_CD`d'') if `touse'
 
 	if ("`censor'"!="") {
 		qui centile `ipw`d'' if `ipw`d''!=. & `dvar'==`d' & `touse', c(`censor') 
@@ -264,27 +264,42 @@ program define mr1med, rclass
 	}
 		
 	tempvar dr`d'`d'_summand
-	qui gen `dr`d'`d'_summand' = `ipw`d''*(`yvar' - `mu`d'_CM') ///
+	qui gen double `dr`d'`d'_summand' = `ipw`d''*(`yvar' - `mu`d'_CM') ///
 		+ `ipw`d''*(`mu`d'_CM' - (`mu`d'_CM0'*`f_M0_CD`d'' + `mu`d'_CM1'*`f_M1_CD`d'')) ///
 		+ (`mu`d'_CM0'*`f_M0_CD`d'' + `mu`d'_CM1'*`f_M1_CD`d'') if `touse'
 	
 	tempvar dr`dstar'`dstar'_summand
-	qui gen `dr`dstar'`dstar'_summand' = `ipw`dstar''*(`yvar' - `mu`dstar'_CM') ///
+	qui gen double `dr`dstar'`dstar'_summand' = `ipw`dstar''*(`yvar' - `mu`dstar'_CM') ///
 		+ `ipw`dstar''*(`mu`dstar'_CM' - (`mu`dstar'_CM0'*`f_M0_CD`dstar'' + `mu`dstar'_CM1'*`f_M1_CD`dstar'')) ///
 		+ (`mu`dstar'_CM0'*`f_M0_CD`dstar'' + `mu`dstar'_CM1'*`f_M1_CD`dstar'') if `touse'
 
 	tempvar dr`dstar'`d'_summand
-	qui gen `dr`dstar'`d'_summand' = `rmpw'*(`yvar' - `mu`d'_CM') ///
+	qui gen double `dr`dstar'`d'_summand' = `rmpw'*(`yvar' - `mu`d'_CM') ///
 		+ `ipw`dstar''*(`mu`d'_CM' - (`mu`d'_CM0'*`f_M0_CD`dstar'' + `mu`d'_CM1'*`f_M1_CD`dstar'')) ///
 		+ (`mu`d'_CM0'*`f_M0_CD`dstar'' + `mu`d'_CM1'*`f_M1_CD`dstar'') if `touse'
-			
-	qui reg `dr`d'`d'_summand' if `touse'
-	return scalar psi`d'`d' = _b[_cons]
+	
+	tempname psi`d'`d' psi`dstar'`dstar' psi`dstar'`d'
+	qui reg `dr`d'`d'_summand' [`weight' `exp'] if `touse'
+	scalar `psi`d'`d'' = _b[_cons]
 
-	qui reg `dr`dstar'`dstar'_summand' if `touse'
-	return scalar psi`dstar'`dstar' = _b[_cons]
+	qui reg `dr`dstar'`dstar'_summand' [`weight' `exp'] if `touse'
+	scalar `psi`dstar'`dstar'' = _b[_cons]
 
-	qui reg `dr`dstar'`d'_summand' if `touse'
-	return scalar psi`dstar'`d' = _b[_cons]
+	qui reg `dr`dstar'`d'_summand' [`weight' `exp'] if `touse'
+	scalar `psi`dstar'`d'' = _b[_cons]
+	
+	tempname ate nde nie
+	scalar `ate' = `psi`d'`d'' - `psi`dstar'`dstar''
+	scalar `nde' = `psi`dstar'`d'' - `psi`dstar'`dstar''
+	scalar `nie' = `psi`d'`d'' - `psi`dstar'`d''
+					
+	ereturn clear
 
+	tempname b 
+	
+	matrix `b' = (`ate', `nde', `nie')
+	matrix colnames `b' = "ATE" "NDE" "NIE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
+	
 end mr1med

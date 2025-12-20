@@ -1,7 +1,7 @@
 *!TITLE: PATHWIMP - path-specific effects using an imputation-based weighting estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 
@@ -18,9 +18,9 @@ program define pathwimp, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
-		sampwts(varname numeric)  ///
 		censor(numlist min=2 max=2) ///
 		parallel ///			
+		svy ///
 		detail * ]
 		
 	qui {
@@ -90,52 +90,50 @@ program define pathwimp, eclass
 			}
 		}
 		
-		tempvar wts_dis
-		qui gen `wts_dis' = 1 if `touse'
-		if ("`sampwts'" != "") {
-			qui replace `wts_dis' = `wts_dis' * `sampwts' if `touse'
-			qui sum `wts_dis' if `touse'
-			qui replace `wts_dis' = `wts_dis' / r(mean) if `touse'
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
 		}
 		
 		di ""
 		di "{bf:Model for `dvar' given cvars:}"
-		logit `dvar' `cvars' [pw=`wts_dis'] if `touse'
+		logit `dvar' `cvars' [`svywgt' `wgtexp'] if `touse'
 		
 		di ""
 		di "{bf:Model for `yvar' given {cvars `dvar'}:}"
 		if ("`yreg'"=="regress") {
-			reg `yvar' `dvar' `cvars' `cxd_vars_dis' [pw=`wts_dis'] if `touse'
+			reg `yvar' `dvar' `cvars' `cxd_vars_dis' [`svywgt' `wgtexp'] if `touse'
 		}
 
 		if ("`yreg'"=="logit") {
-			glm `yvar' `dvar' `cvars' `cxd_vars_dis' [pw=`wts_dis'] if `touse', family(b) link(l)
+			glm `yvar' `dvar' `cvars' `cxd_vars_dis' [`svywgt' `wgtexp'] if `touse', family(b) link(l)
 		}
 
-		pathwimpbs `yvar' `mvars' if `touse', ///
+		pathwimpbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
 			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' ///
-			sampwts(`sampwts') censor(`censor') `detail'
-		}
-
-	local effects ATE = r(ate)
-	if (`num_mvars' == 1) local effects `effects' NDE = r(nde) NIE = r(nie)
-	if (`num_mvars' > 1) {
-		local effects `effects' PSE_DY = r(pse_DY)
-		forv k=`num_mvars'(-1)1 {
-			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
-		}
+			censor(`censor') `detail'
+			
 	}
 
 	if ("`parallel'" == "") {		
 		
-		bootstrap `effects', `options' force noheader notable: ///
+		bootstrap, `options' `svy' noheader notable : ///
 			pathwimpbs `yvar' `mvars' if `touse', ///
-				dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-				d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' ///
-				sampwts(`sampwts') censor(`censor')
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction' censor(`censor')
 	
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 	
 	}
 
@@ -149,11 +147,10 @@ program define pathwimp, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(`effects') `options' : ///
+		qui parallel bs, `options' `svy' : ///
 			pathwimpbs `yvar' `mvars' if `touse', ///
-				dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-				d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' ///
-				sampwts(`sampwts') censor(`censor')
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction' censor(`censor')
 	
 		estat bootstrap, p noheader
 		

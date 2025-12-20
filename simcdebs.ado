@@ -1,14 +1,14 @@
 *!TITLE: SIMCDE - estimate controlled direct effects using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 -- added support for ordinal logit models
+*! version 0.3 - added svy compatibility
 *!
 
-program define simcdebs, rclass
+program define simcdebs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		lvars(varlist numeric) ///
@@ -479,11 +479,12 @@ program define simcdebs, rclass
 		qui replace `l' = ``l'_orig' if `touse'
 	}
 	
-	tempvar Ydm_r001
-	tempvar Ydstarm_r001
+	tempvar Ydm_r001 Ydstarm_r001
 	
 	qui egen `Ydm_r001'=rowmean(Ydm_r001_*) if `touse'
 	qui egen `Ydstarm_r001'=rowmean(Ydstarm_r001_*) if `touse'
+
+	drop Ydm_r001_* Ydstarm_r001_* 
 	
 	qui reg `Ydm_r001' [`weight' `exp'] if `touse'
 	local Ehat_Ydm=_b[_cons]
@@ -491,8 +492,16 @@ program define simcdebs, rclass
 	qui reg `Ydstarm_r001' [`weight' `exp'] if `touse'
 	local Ehat_Ydstarm=_b[_cons]
 	
-	return scalar cde=`Ehat_Ydm'-`Ehat_Ydstarm'
+	tempname cde
+	scalar `cde' = `Ehat_Ydm' - `Ehat_Ydstarm'
 
-	drop Ydm_r001_* Ydstarm_r001_* 
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (`cde')
+	matrix colnames `b' = "CDE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 		
 end simcdebs

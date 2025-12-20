@@ -1,14 +1,14 @@
 *!TITLE: MRMED - causal mediation analysis using parametric multiply robust methods
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define mr2med, rclass
+program define mr2med, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -26,6 +26,8 @@ program define mr2med, rclass
 	}
 			
 	gettoken yvar mvars : varlist
+	
+	local num_mvars = wordcount("`mvars'")	
 	
 	local inter
 	if ("`nointeraction'" == "") {
@@ -63,7 +65,7 @@ program define mr2med, rclass
 	
 	di ""
 	di "{bf:Model for `dvar' conditional on {cvars}:}"
-	logit `dvar' `cvars'  if `touse'
+	logit `dvar' `cvars' [`weight' `exp'] if `touse'
 	
 	tempvar phat_D1_C pi`d'_C pi`dstar'_C
 	qui predict `phat_D1_C' if `touse', pr
@@ -72,7 +74,7 @@ program define mr2med, rclass
 	
 	di ""
 	di "{bf:Model for `dvar' conditional on {cvars `mvars'}:}"
-	logit `dvar' `mvars' `cvars' `cxm_vars' if `touse'
+	logit `dvar' `mvars' `cvars' `cxm_vars' [`weight' `exp'] if `touse'
 	
 	tempvar phat_D1_CM pi`d'_CM pi`dstar'_CM
 	qui predict `phat_D1_CM' if `touse', pr
@@ -81,7 +83,7 @@ program define mr2med, rclass
 
 	di ""
 	di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvars'}:}"
-	reg `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' if `touse'
+	reg `yvar' `dvar' `mvars' `inter' `cvars' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse'
 	
 	qui replace `dvar' = `dstar' if `touse'
 	
@@ -133,7 +135,7 @@ program define mr2med, rclass
 
 	di ""
 	di "{bf:Model for mu`d'(C,M) conditional on {cvars `dvar'}:}"
-	reg `mu`d'_CM' `dvar' `cvars' `cxd_vars' if `touse'
+	reg `mu`d'_CM' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 	
 	qui replace `dvar' = `d' if `touse'
 	
@@ -167,7 +169,7 @@ program define mr2med, rclass
 
 	di ""
 	di "{bf:Model for mu`dstar'(C,M) conditional on {cvars `dvar'}}"
-	reg `mu`dstar'_CM' `dvar' `cvars' `cxd_vars' if `touse'
+	reg `mu`dstar'_CM' `dvar' `cvars' `cxd_vars' [`weight' `exp'] if `touse'
 
 	qui replace `dvar' = `dstar' if `touse'
 	
@@ -189,13 +191,13 @@ program define mr2med, rclass
 	
 	tempvar ipw`dstar'C ipw`d'C ipw`dstar'`d'CM
 	
-	qui gen `ipw`d'C' = 0 if `touse'
+	qui gen double `ipw`d'C' = 0 if `touse'
 	qui replace `ipw`d'C' = 1/`pi`d'_C' if `dvar'==`d' & `touse'
 		
-	qui gen `ipw`dstar'C' = 0 if `touse'
+	qui gen double `ipw`dstar'C' = 0 if `touse'
 	qui replace `ipw`dstar'C' = 1/`pi`dstar'_C' if `dvar'==`dstar' & `touse'
 	
-	qui gen `ipw`dstar'`d'CM' = 0 if `touse'
+	qui gen double `ipw`dstar'`d'CM' = 0 if `touse'
 	qui replace `ipw`dstar'`d'CM' = (1/`pi`dstar'_C')*(`pi`dstar'_CM'/`pi`d'_CM') if `dvar'==`d' & `touse'
 
 	if ("`censor'"!="") {
@@ -213,27 +215,45 @@ program define mr2med, rclass
 	}
 	
 	tempvar dr`d'`d'_summand
-	qui gen `dr`d'`d'_summand' = `ipw`d'C'*(`yvar' - `mu`d'_CM') ///
+	qui gen double `dr`d'`d'_summand' = `ipw`d'C'*(`yvar' - `mu`d'_CM') ///
 		+ `ipw`d'C'*(`mu`d'_CM' - `nu`d'Ofmu`d'_C') ///
 		+ `nu`d'Ofmu`d'_C' if `touse'
 		
 	tempvar dr`dstar'`dstar'_summand
-	qui gen `dr`dstar'`dstar'_summand' = `ipw`dstar'C'*(`yvar' - `mu`dstar'_CM') ///
+	qui gen double `dr`dstar'`dstar'_summand' = `ipw`dstar'C'*(`yvar' - `mu`dstar'_CM') ///
 		+ `ipw`dstar'C'*(`mu`dstar'_CM' - `nu`dstar'Ofmu`dstar'_C') ///
 		+ `nu`dstar'Ofmu`dstar'_C' if `touse'
 
 	tempvar dr`dstar'`d'_summand
-	qui gen `dr`dstar'`d'_summand' = `ipw`dstar'`d'CM'*(`yvar' - `mu`d'_CM') ///
+	qui gen double `dr`dstar'`d'_summand' = `ipw`dstar'`d'CM'*(`yvar' - `mu`d'_CM') ///
 		+ `ipw`dstar'C'*(`mu`d'_CM' - `nu`dstar'Ofmu`d'_C') ///
 		+ `nu`dstar'Ofmu`d'_C' if `touse'
 			
-	qui reg `dr`d'`d'_summand' if `touse'
-	return scalar psi`d'`d' = _b[_cons]
+	tempname psi`d'`d' psi`dstar'`dstar' psi`dstar'`d'
+	qui reg `dr`d'`d'_summand' [`weight' `exp'] if `touse'
+	scalar `psi`d'`d'' = _b[_cons]
 	
-	qui reg `dr`dstar'`dstar'_summand' if `touse'
-	return scalar psi`dstar'`dstar' = _b[_cons]
+	qui reg `dr`dstar'`dstar'_summand' [`weight' `exp'] if `touse'
+	scalar `psi`dstar'`dstar'' = _b[_cons]
 
-	qui reg `dr`dstar'`d'_summand' if `touse'
-	return scalar psi`dstar'`d' = _b[_cons]
+	qui reg `dr`dstar'`d'_summand' [`weight' `exp'] if `touse'
+	scalar `psi`dstar'`d'' = _b[_cons]
 
+	tempname ate nde nie
+	scalar `ate' = `psi`d'`d'' - `psi`dstar'`dstar''
+	scalar `nde' = `psi`dstar'`d'' - `psi`dstar'`dstar''
+	scalar `nie' = `psi`d'`d'' - `psi`dstar'`d''
+	
+	ereturn clear
+
+	tempname b 
+	
+	local nde_name = cond(`num_mvars'==1, "NDE",  "MNDE")
+	local nie_name = cond(`num_mvars'==1, "NIE",  "MNIE")
+	
+	matrix `b' = (`ate', `nde', `nie')
+	matrix colnames `b' = "ATE" `nde_name' `nie_name'	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
+	
 end mr2med

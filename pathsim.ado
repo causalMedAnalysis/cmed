@@ -1,15 +1,14 @@
 *!TITLE: PATHSIM - analysis of path-specific effects using a simulation approach
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
-
 
 program define pathsim, eclass
 
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		mvars(varlist numeric) ///
 		d(real) ///
@@ -22,6 +21,7 @@ program define pathsim, eclass
 		cxd ///
 		cxm ///
 		parallel ///
+		svy ///
 		detail * ]
 		
 	qui {
@@ -36,31 +36,37 @@ program define pathsim, eclass
 
 	if ("`detail'" != "") {		
 		
-		mnesimbs `varlist' [`weight' `exp'] if `touse' , ///
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+		
+		mnesimbs `varlist' [`svywgt' `wgtexp'] if `touse' , ///
 			dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 			d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') /// 
 			nsim(1) `nointeraction' `cxd' `cxm'
 			
 	}
 	
-	local effects ATE = r(ate)
-	if (`num_mvars' == 1) local effects `effects' NDE = r(nde) NIE = r(nie)
-	if (`num_mvars' > 1) {
-		local effects `effects' PSE_DY = r(pse_DY)
-		forv k=`num_mvars'(-1)1 {
-			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
-		}
-	}
-	
 	if ("`parallel'" == "") {		
 		
-		bootstrap `effects', `options' force noheader notable: ///
-			pathsimbs `yvar' if `touse' [`weight' `exp'], ///
+		bootstrap, `options' `svy' noheader notable : ///
+			pathsimbs `yvar' if `touse', ///
 				dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 				d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
 				nsim(`nsim') `nointeraction' `cxd' `cxm'	
 	
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 	
 	}
 
@@ -74,8 +80,8 @@ program define pathsim, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(`effects') `options' : ///
-			pathsimbs `yvar' if `touse' [`weight' `exp'], ///
+		qui parallel bs, `options' `svy' : ///
+			pathsimbs `yvar' if `touse', ///
 				dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 				d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
 				nsim(`nsim') `nointeraction' `cxd' `cxm'	

@@ -1,14 +1,14 @@
 *!TITLE: LINCDE - estimating controlled direct effects using linear models
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 program define lincde, eclass
 
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		d(real) ///
@@ -18,7 +18,8 @@ program define lincde, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
-		parallel ///						
+		parallel ///
+		svy ///
 		detail * ]
 
 	qui {
@@ -28,8 +29,18 @@ program define lincde, eclass
 	}
 
 	if ("`detail'" != "") {
-		
-		lincdebs `varlist' [`weight' `exp'] if `touse' , ///
+
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+
+		lincdebs `varlist' [`svywgt' `wgtexp'] if `touse' , ///
 			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
 			cvars(`cvars') `nointeraction' `cxd' `cxm'
 			
@@ -37,13 +48,18 @@ program define lincde, eclass
 	
 	if ("`parallel'" == "") {		
 	
-		bootstrap ///
-			CDE=r(cde), `options' force noheader notable: ///
-			lincdebs `varlist' [`weight' `exp'] if `touse', ///
+		bootstrap, `options' `svy' noheader notable : ///
+			lincdebs `varlist' if `touse', ///
 				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
 				cvars(`cvars') `nointeraction' `cxd' `cxm'
-			
-		estat bootstrap, p noheader
+		
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
+		
 		di as text "Note: CDE evaluated at m=`m'"
 	
 	}
@@ -58,8 +74,8 @@ program define lincde, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(CDE=r(cde)) `options' : ///
-			lincdebs `varlist' [`weight' `exp'] if `touse', ///
+		qui parallel bs, `options' `svy' : ///
+			lincdebs `varlist' if `touse', ///
 				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
 				cvars(`cvars') `nointeraction' `cxd' `cxm'
 	

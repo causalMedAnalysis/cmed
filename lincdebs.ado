@@ -1,14 +1,14 @@
 *!TITLE: LINCDE - estimating controlled direct effects using linear models
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.3 - added svy compatibility
 *!
 
-program define lincdebs, rclass
+program define lincdebs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		d(real) ///
@@ -69,7 +69,7 @@ program define lincdebs, rclass
 		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `dvar' `mvar' `cvars_r' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse' 
 		
-		return scalar cde = _b[`dvar']*(`d'-`dstar')
+		scalar cde = _b[`dvar']*(`d'-`dstar')
 	}
 		
 	if ("`nointeraction'"=="") {
@@ -77,9 +77,18 @@ program define lincdebs, rclass
 		di "{bf:Model for `yvar' conditional on {cvars `dvar' `mvar'}:}"
 		regress `yvar' `dvar' `mvar' __DxM__ `cvars_r' `cxd_vars' `cxm_vars' [`weight' `exp'] if `touse' 
 		
-		return scalar cde = (_b[`dvar'] + _b[__DxM__]*`m')*(`d'-`dstar')
+		scalar cde = (_b[`dvar'] + _b[__DxM__]*`m')*(`d'-`dstar')
 		
 		capture drop __DxM__
 	}
+	
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (cde)
+	matrix colnames `b' = "CDE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 
 end lincdebs

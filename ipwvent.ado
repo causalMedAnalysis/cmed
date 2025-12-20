@@ -1,7 +1,7 @@
 *!TITLE: IPWVENT - causal mediation analysis of interventional effects using inverse probability weighting	
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 program define ipwvent, eclass
@@ -19,9 +19,9 @@ program define ipwvent, eclass
 		[cvars(varlist numeric) ///
 		cxd ///
 		lxd ///
-		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
-		parallel ///				
+		parallel ///	
+		svy ///
 		detail * ]
 
 	qui {
@@ -78,10 +78,20 @@ program define ipwvent, eclass
 	}
 
 	if ("`detail'" != "") {
+
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
 		
-		ipwventbs `varlist' if `touse', ///
+		ipwventbs `varlist' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
-			d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') sampwts(`sampwts') ///
+			d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
 			`cxd' `lxd' censor(`censor') `detail'
 		
 		label var sw1_r001 "IPW for estimating E(Y(d*,Mtilde(d*|C)))"
@@ -92,17 +102,18 @@ program define ipwvent, eclass
 	
 	if ("`parallel'" == "") {		
 		
-		bootstrap ///
-			OE=r(oe) ///
-			IDE=r(ide) ///
-			IIE=r(iie), ///
-				force noheader notable `options' : ///
-					ipwventbs `varlist' if `touse', ///
-						dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
-						d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
-						sampwts(`sampwts') `cxd' `lxd' censor(`censor')
+		bootstrap, `options' `svy' noheader notable : ///
+			ipwventbs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
+				d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
+				`cxd' `lxd' censor(`censor')
 			
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 	
 	}
 
@@ -116,11 +127,11 @@ program define ipwvent, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(OE=r(oe) IDE=r(ide) IIE=r(iie)) `options' : ///
+		qui parallel bs, `options' `svy' : ///
 			ipwventbs `varlist' if `touse', ///
 				dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
 				d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
-				sampwts(`sampwts') `cxd' `lxd' censor(`censor')
+				`cxd' `lxd' censor(`censor')
 	
 		estat bootstrap, p noheader
 		

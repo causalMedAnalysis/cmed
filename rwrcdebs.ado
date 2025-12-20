@@ -1,15 +1,14 @@
 *!TITLE: RWRCDE - estimating controlled direct effects using regression-with-residuals
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.3 - added svy compatibility
 *!
 
-capture program drop rwrcdebs
-program define rwrcdebs, eclass
+program define rwrcdebs, eclass properties(svyb)
 	
 	version 14	
 
-	syntax varlist(min=1 numeric) [if][in] [pweight],		 	///
+	syntax varlist(min=1 numeric) [if][in] [pweight iweight], 	///
 		dvar(varname numeric)									/// 
 		mvar(varname numeric)									///
 		d(real) 												/// 
@@ -212,10 +211,19 @@ program define rwrcdebs, eclass
 				scalar interY = b[1,colnumb(matrix(b),"`yvar':`inter'")]
 				scalar consM =  b[1,colnumb(matrix(b),"`mvar':_cons")]
 				
-				ereturn scalar CDE = (treatO + interY * `m') * (`d'-`dstar')
+				scalar cde = (treatO + interY * `m') * (`d'-`dstar')
 							
 			} // end with interaction 
 		} // end mreg == regress
+		
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (cde)
+	matrix colnames `b' = "CDE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 
 end
 

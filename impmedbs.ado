@@ -1,14 +1,14 @@
 *!TITLE: IMPMED - causal mediation analysis using regression imputation
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define impmedbs, rclass
+program define impmedbs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in] [pweight], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -26,6 +26,8 @@ program define impmedbs, rclass
 	}
 			
 	gettoken yvar mvars : varlist
+	
+	local num_mvars = wordcount("`mvars'")
 
 	local yregtypes regress logit
 	local nyreg : list posof "`yreg'" in yregtypes
@@ -269,13 +271,26 @@ program define impmedbs, rclass
 	qui gen `NDEgivenC' = `yhat`d'M`dstar'' - `yhat`dstar'M`dstar'' if `touse'
 	qui gen `NIEgivenC' = `yhat`d'M`d'' - `yhat`d'M`dstar'' if `touse'
 		
+	tempname ate nde nie
 	qui reg `ATEgivenC' [`weight' `exp'] if `touse'
-	return scalar ate = _b[_cons]
+	scalar `ate' = _b[_cons]
 
 	qui reg `NDEgivenC' [`weight' `exp'] if `touse'
-	return scalar nde = _b[_cons]
+	scalar `nde' = _b[_cons]
 
 	qui reg `NIEgivenC' [`weight' `exp'] if `touse'
-	return scalar nie = _b[_cons]
+	scalar `nie' = _b[_cons]
+	
+	ereturn clear
+
+	tempname b 
+	
+	local nde_name = cond(`num_mvars'==1, "NDE",  "MNDE")
+	local nie_name = cond(`num_mvars'==1, "NIE",  "MNIE")
+	
+	matrix `b' = (`ate', `nde', `nie')
+	matrix colnames `b' = "ATE" `nde_name' `nie_name'	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 	
 end impmedbs

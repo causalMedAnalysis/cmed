@@ -1,7 +1,7 @@
 *!TITLE: PATHIMP - path-specific effects using pure regression imputation
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 
@@ -9,7 +9,7 @@ program define pathimp, eclass
 
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in] [pweight], ///
+	syntax varlist(min=2 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -19,6 +19,7 @@ program define pathimp, eclass
 		cxd ///
 		cxm ///
 		parallel ///	
+		svy ///
 		detail *]
 		
 	qui {
@@ -52,7 +53,17 @@ program define pathimp, eclass
 
 	/***PRINT MODELS***/
 	if ("`detail'" != "") {
-	
+
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+		
 		if ("`cxd'"!="") {	
 			foreach c in `cvars' {
 				tempvar dX`c'_dis
@@ -64,35 +75,31 @@ program define pathimp, eclass
 		di ""
 		di "{bf:Model for `yvar' given {cvars `dvar'}:}"
 		if ("`yreg'"=="regress") {
-			reg `yvar' `dvar' `cvars' `cxd_vars_dis' [`weight' `exp'] if `touse'
+			reg `yvar' `dvar' `cvars' `cxd_vars_dis' [`svywgt' `wgtexp'] if `touse'
 		}
 
 		if ("`yreg'"=="logit") {
-			glm `yvar' `dvar' `cvars' `cxd_vars_dis' [`weight' `exp'] if `touse', family(b) link(l)
+			glm `yvar' `dvar' `cvars' `cxd_vars_dis' [`svywgt' `wgtexp'] if `touse', family(b) link(l)
 		}
 		
-		pathimpbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
+		pathimpbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
 			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
 	}
 		
-	local effects ATE = r(ate)
-	if (`num_mvars' == 1) local effects `effects' NDE = r(nde) NIE = r(nie)
-	if (`num_mvars' > 1) {
-		local effects `effects' PSE_DY = r(pse_DY)
-		forv k=`num_mvars'(-1)1 {
-			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
-		}
-	}
-
 	if ("`parallel'" == "") {		
 		
-		bootstrap `effects', `options' force noheader notable: ///
-			pathimpbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
-				dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-				d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
+		bootstrap, `options' `svy' noheader notable : ///
+			pathimpbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction'
 	
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 	
 	}
 
@@ -106,10 +113,10 @@ program define pathimp, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(`effects') `options' : ///
+		qui parallel bs, `options' `svy' : ///
 			pathimpbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
-				dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-				d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction'
 	
 		estat bootstrap, p noheader
 		

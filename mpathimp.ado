@@ -1,14 +1,14 @@
 *!TITLE: PATHIMP - path-specific effects using pure regression imputation
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define mpathimp, rclass
+program define mpathimp, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in] [pweight], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -254,14 +254,24 @@ program define mpathimp, rclass
 	qui gen `ATEgivenC' = `yhat`d'M`d'' - `yhat`dstar'M`dstar'' if `touse'
 	qui gen `NDEgivenC' = `yhat`d'M`dstar'' - `yhat`dstar'M`dstar'' if `touse'
 	qui gen `NIEgivenC' = `yhat`d'M`d'' - `yhat`d'M`dstar'' if `touse'
-		
+	
+	tempname ate nde nie
 	qui reg `ATEgivenC' [`weight' `exp'] if `touse'
-	return scalar ate = _b[_cons]
+	scalar `ate' = _b[_cons]
 
 	qui reg `NDEgivenC' [`weight' `exp'] if `touse'
-	return scalar nde = _b[_cons]
+	scalar `nde' = _b[_cons]
 
 	qui reg `NIEgivenC' [`weight' `exp'] if `touse'
-	return scalar nie = _b[_cons]
+	scalar `nie' = _b[_cons]
+
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (`ate', `nde', `nie')
+	matrix colnames `b' = "ATE" "NDE" "NIE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 	
 end mpathimp

@@ -1,19 +1,18 @@
 *!TITLE: IPWPATH - analysis of path-specific effects using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define mipwpath, rclass
+program define mipwpath, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
 		[cvars(varlist numeric)] ///
-		[sampwts(varname numeric)] ///
 		[censor(numlist min=2 max=2)] 
 	
 	qui {
@@ -25,26 +24,29 @@ program define mipwpath, rclass
 			
 	gettoken yvar mvars : varlist
 
-	tempvar wts
-	qui gen `wts' = 1 if `touse'
+	tempvar sampwts
+	qui gen `sampwts' = 1 if `touse'
 	
-	if ("`sampwts'" != "") {
-		qui replace `wts' = `wts' * `sampwts'
-		qui sum `wts'
-		qui replace `wts' = `wts' / r(mean)
+	if ("`weight'" != "") {
+		tempvar wtvar
+		quietly {
+			gen double `wtvar' `exp'
+			sum `wtvar' if `touse' , meanonly
+			replace `sampwts' = `wtvar'/r(mean) if `touse'
+		}
 	}
 		
-	logit `dvar' `cvars' [pw=`wts'] if `touse'
+	logit `dvar' `cvars' [`weight' `exp'] if `touse'
 	tempvar phat_D1_C phat_D0_C
 	qui predict `phat_D1_C' if e(sample), pr
 	qui gen `phat_D0_C'=1-`phat_D1_C' if `touse'
 		
-	logit `dvar' `mvars' `cvars' [pw=`wts'] if `touse'
+	logit `dvar' `mvars' `cvars' [`weight' `exp'] if `touse'
 	tempvar phat_D1_CM phat_D0_CM
 	qui predict `phat_D1_CM' if e(sample), pr
 	qui gen `phat_D0_CM'=1-`phat_D1_CM' if `touse'
 
-	logit `dvar' [pw=`wts'] if `touse'
+	logit `dvar' [`weight' `exp'] if `touse'
 	tempvar phat_D1 phat_D0
 	qui predict `phat_D1' if e(sample), pr
 	qui gen `phat_D0'=1-`phat_D1' if `touse'
@@ -63,10 +65,8 @@ program define mipwpath, rclass
 	}
 	
 	foreach i of var `sw1' `sw2' `sw3' {
-		qui replace `i'=`i' * `wts' if `touse'
+		qui replace `i' = `i' * `sampwts' if `touse'
 	}
-			
-	preserve
 	
 	qui reg `yvar' [pw=`sw1'] if `dvar'==`dstar' & `touse'
 	local Ehat_Y0M0=_b[_cons]
@@ -76,11 +76,19 @@ program define mipwpath, rclass
 		
 	qui reg `yvar' [pw=`sw3'] if `dvar'==`d' & `touse'
 	local Ehat_Y1M0=_b[_cons]
+
+	tempname ate nde nie
+	scalar `ate'=`Ehat_Y1M1'-`Ehat_Y0M0'
+	scalar `nde'=`Ehat_Y1M0'-`Ehat_Y0M0'
+	scalar `nie'=`Ehat_Y1M1'-`Ehat_Y1M0'
 	
-	return scalar ate=`Ehat_Y1M1'-`Ehat_Y0M0'
-	return scalar mnde=`Ehat_Y1M0'-`Ehat_Y0M0'
-	return scalar mnie=`Ehat_Y1M1'-`Ehat_Y1M0'
-		
-	restore
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (`ate', `nde', `nie')
+	matrix colnames `b' = "ATE" "NDE" "NIE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 
 end mipwpath

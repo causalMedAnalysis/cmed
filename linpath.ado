@@ -1,14 +1,14 @@
 *!TITLE: LINPATH - path-specific effects using linear models
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 program define linpath, eclass
 
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in] [pweight], ///
+	syntax varlist(min=2 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -16,7 +16,8 @@ program define linpath, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
-		parallel ///				
+		parallel ///	
+		svy ///
 		detail * ]
 		
 	qui {
@@ -31,10 +32,20 @@ program define linpath, eclass
 	
 	/***PRINT MODELS***/
 	if ("`detail'" != "") {
+		
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
 	
 		foreach c in `cvars' {
 			tempvar `c'_dis_r001
-			qui regress `c' [`weight' `exp'] if `touse'
+			qui regress `c' [`svywgt' `wgtexp'] if `touse'
 			qui predict ``c'_dis_r001' if e(sample), resid
 			local cvars_dis_r `cvars_dis_r' ``c'_dis_r001'
 		}
@@ -50,33 +61,29 @@ program define linpath, eclass
 		foreach m in `mvars' {
 			di ""
 			di "{bf:Model for `m' given {cvars `dvar'}:}"
-			regress `m' `dvar' `cvars_dis_r' `cxd_vars_dis' [`weight' `exp'] if `touse' 
+			regress `m' `dvar' `cvars_dis_r' `cxd_vars_dis' [`svywgt' `wgtexp'] if `touse' 
 		}
 		
-		linpathbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
+		linpathbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
 			`cxd' `cxm' `nointeraction'
 			
 	}
 		
 	/***COMPUTE POINT AND INTERVAL ESTIMATES***/
-	local effects ATE = r(ate)
-	if (`num_mvars' == 1) local effects `effects' NDE = r(nde) NIE = r(nie)
-	if (`num_mvars' > 1) {
-		local effects `effects' PSE_DY = r(pse_DY)
-		forv k=`num_mvars'(-1)1 {
-			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
-		}
-	}
-
 	if ("`parallel'" == "") {		
 		
-		bootstrap `effects', `options' force noheader notable: ///
-			linpathbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
+		bootstrap, `options' `svy' noheader notable : ///
+			linpathbs `yvar' `mvars' if `touse', ///
 				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
 				`cxd' `cxm' `nointeraction'
 	
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 	
 	}
 
@@ -90,8 +97,8 @@ program define linpath, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(`effects') `options' : ///
-			linpathbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
+		qui parallel bs, `options' `svy' : ///
+			linpathbs `yvar' `mvars' if `touse', ///
 				dvar(`dvar') cvars(`cvars') d(`d') dstar(`dstar') ///
 				`cxd' `cxm' `nointeraction'
 	

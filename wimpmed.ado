@@ -1,7 +1,7 @@
 *!TITLE: WIMPMED - causal mediation analysis using an imputation-based weighting estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
 program define wimpmed, eclass
@@ -17,9 +17,9 @@ program define wimpmed, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
-		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
 		parallel ///	
+		svy ///
 		detail * ]
 
 	qui {
@@ -30,8 +30,6 @@ program define wimpmed, eclass
 	
 	gettoken yvar mvars : varlist
 	
-	local num_mvars = wordcount("`mvars'")
-
 	confirm variable `dvar'
 	qui levelsof `dvar', local(levels)
 	if "`levels'" != "0 1" & "`levels'" != "1 0" {
@@ -70,40 +68,35 @@ program define wimpmed, eclass
 	
 	if ("`detail'" != "") {
 		
-		wimpmedbs `yvar' `mvars' if `touse', ///
-			dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
-			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor') `detail'
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}		
+		
+		wimpmedbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
+			dvar(`dvar') cvars(`cvars') yreg(`yreg') d(`d') dstar(`dstar') ///
+			`cxd' `cxm' `nointeraction' censor(`censor') `detail'
 			
 	}
 	
 	if ("`parallel'" == "") {		
 		
-		if (`num_mvars'==1) {
-	
-			bootstrap ///
-				ATE = (r(YdMd) - r(YdstarMdstar)) ///
-				NDE = (r(YdMdstar) - r(YdstarMdstar)) ///
-				NIE = (r(YdMd) - r(YdMdstar)), ///
-					`options' noheader notable: ///
-						wimpmedbs `yvar' `mvars' if `touse', ///
-							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
-							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
+		bootstrap, `options' `svy' noheader notable : ///
+			wimpmedbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction' censor(`censor')
 
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
 		}
-	
-		if (`num_mvars'>1) {
-	
-			bootstrap ///
-				ATE = (r(YdMd) - r(YdstarMdstar)) ///
-				MNDE = (r(YdMdstar) - r(YdstarMdstar)) ///
-				MNIE = (r(YdMd) - r(YdMdstar)), ///
-					`options' noheader notable: ///
-						wimpmedbs `yvar' `mvars' if `touse', ///
-							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
-							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
-		}
-		
-		estat bootstrap, p noheader
 	
 	}
 
@@ -117,29 +110,11 @@ program define wimpmed, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		if (`num_mvars'==1) {
-	
-			qui parallel bs, ///
-				expr(ATE = (r(YdMd) - r(YdstarMdstar)) ///
-					NDE = (r(YdMdstar) - r(YdstarMdstar)) ///
-					NIE = (r(YdMd) - r(YdMdstar))) `options' : ///
-						wimpmedbs `yvar' `mvars' if `touse', ///
-							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
-							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
+		qui parallel bs, `options' `svy' : ///
+			wimpmedbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') d(`d') dstar(`dstar') ///
+				`cxd' `cxm' `nointeraction' censor(`censor')
 
-		}
-	
-		if (`num_mvars'>1) {
-	
-			qui parallel bs, ///
-				expr(ATE = (r(YdMd) - r(YdstarMdstar)) ///
-					MNDE = (r(YdMdstar) - r(YdstarMdstar)) ///
-					MNIE = (r(YdMd) - r(YdMdstar))) `options' : ///
-						wimpmedbs `yvar' `mvars' if `touse', ///
-							dvar(`dvar') cvars(`cvars') yreg(`yreg') sampwts(`sampwts') ///
-							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' censor(`censor')
-		}
-		
 		estat bootstrap, p noheader
 		
 		capture parallel clean, all

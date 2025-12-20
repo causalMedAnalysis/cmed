@@ -8,7 +8,7 @@ program define impmed, eclass
 
 	version 15	
 	
-	syntax varlist(min=2 numeric) [if][in] [pweight], ///
+	syntax varlist(min=2 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -18,6 +18,7 @@ program define impmed, eclass
 		cxd ///
 		cxm ///
 		parallel ///
+		svy ///
 		detail * ]
 
 	qui {
@@ -27,8 +28,6 @@ program define impmed, eclass
 	}
 	
 	gettoken yvar mvars : varlist
-	
-	local num_mvars = wordcount("`mvars'")
 	
 	if ("`yreg'"=="logit") {
 	
@@ -41,46 +40,38 @@ program define impmed, eclass
 	
 	}
 
-	/***REPORT MODELS IF REQUESTED***/
 	if ("`detail'" != "") {
+
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
 		
-		impmedbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
+		impmedbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
 			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
 	
 	}
 	
-	/***COMPUTE POINT AND INTERVAL ESTIMATES FOR NDE/NIE***/
-	
 	if ("`parallel'" == "") {		
 		
-		if (`num_mvars'==1) {
-	
-			bootstrap ///
-				ATE=r(ate) ///
-				NDE=r(nde) ///
-				NIE=r(nie), ///
-					`options' force noheader notable: ///
-						impmedbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
-							dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
+		bootstrap, `options' `svy' noheader notable : ///
+			impmedbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
+				d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
 
-		}
-	
-		if (`num_mvars'>1) {
-	
-			bootstrap ///
-				ATE=r(ate) ///
-				MNDE=r(nde) ///
-				MNIE=r(nie), ///
-					`options' force noheader notable: ///
-						impmedbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
-							dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-							d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
 		}
 		
-		estat bootstrap, p noheader
 	}
 
 	if ("`parallel'" != "") {		
@@ -93,24 +84,11 @@ program define impmed, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		if (`num_mvars'==1) {
-
-			qui parallel bs, expr(ATE=r(ate) NDE=r(nde) NIE=r(nie)) `options' : ///
-				impmedbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
-					dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-					d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
+		qui parallel bs, `options' `svy' : ///
+			impmedbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
+				d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
 							
-		}
-	
-		if (`num_mvars'>1) {
-	
-			qui parallel bs, expr(ATE=r(ate) MNDE=r(nde) MNIE=r(nie)) `options' : ///
-				impmedbs `yvar' `mvars' [`weight' `exp'] if `touse', ///
-					dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
-					d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction'
-
-		}
-		
 		estat bootstrap, p noheader
 		
 		capture parallel clean, all

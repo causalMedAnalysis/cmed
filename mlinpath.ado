@@ -1,14 +1,14 @@
 *!TITLE: LINPATH - path-specific effects using linear models
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define mlinpath, rclass
+program define mlinpath, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in] [pweight], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -69,9 +69,13 @@ program define mlinpath, rclass
 		}
 	}
 
+	tempname ate nde nie
+	
 	if ("`nointeraction'"!="") {
 		local k = 1
 		foreach m in `mvars' {
+			*di ""
+			*di "{bf:Model for `m' given {cvars `dvar'}:}"
 			qui regress `m' `dvar' `cvars_r' `cxd_vars' [`weight' `exp'] if `touse' 
 			scalar beta2`k' = _b[`dvar']
 			local ++k
@@ -92,14 +96,16 @@ program define mlinpath, rclass
 			scalar nie_summand = nie_summand + (beta2`k'*gamma3`k')
 		}
 				
-		return scalar nde = gamma2*(`d'-`dstar')
-		return scalar nie = nie_summand*(`d'-`dstar')
-		return scalar ate = (gamma2 + nie_summand)*(`d'-`dstar')
+		scalar `nde' = gamma2*(`d'-`dstar')
+		scalar `nie' = nie_summand*(`d'-`dstar')
+		scalar `ate' = (gamma2 + nie_summand)*(`d'-`dstar')
 	}
 
 	if ("`nointeraction'"=="") {
 		local k = 1
 		foreach m in `mvars' {
+			*di ""
+			*di "{bf:Model for `m' given {cvars `dvar'}:}"			
 			qui regress `m' `dvar' `cvars_r' `cxd_vars' [`weight' `exp'] if `touse'
 			scalar beta0`k' = _b[_cons]
 			scalar beta2`k' = _b[`dvar']
@@ -127,13 +133,22 @@ program define mlinpath, rclass
 			scalar nie_summand = nie_summand + (beta2`k'*(gamma3`k' + gamma4`k'*`d'))
 		}
 
-		return scalar nde = (gamma2 + nde_summand)*(`d'-`dstar')
-		return scalar nie = nie_summand*(`d'-`dstar')
-		return scalar ate = (gamma2 + nde_summand + nie_summand)*(`d'-`dstar')
+		scalar `nde' = (gamma2 + nde_summand)*(`d'-`dstar')
+		scalar `nie' = nie_summand*(`d'-`dstar')
+		scalar `ate' = (gamma2 + nde_summand + nie_summand)*(`d'-`dstar')
 		
 		foreach m in `mvars' {
 			capture drop Dx_`m'
 		}
 	}
 	
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (`ate', `nde', `nie')
+	matrix colnames `b' = "ATE" "NDE" "NIE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
+
 end mlinpath

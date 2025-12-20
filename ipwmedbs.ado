@@ -1,19 +1,18 @@
 *!TITLE: IPWMED - causal mediation analysis using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define ipwmedbs, rclass
+program define ipwmedbs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
 		[cvars(varlist numeric)] ///
-		[sampwts(varname numeric)] ///
 		[censor(numlist min=2 max=2)] ///
 		[detail]
 	
@@ -25,31 +24,36 @@ program define ipwmedbs, rclass
 	}
 			
 	gettoken yvar mvars : varlist
-
-	tempvar wts
-	qui gen `wts' = 1 if `touse'
 	
-	if ("`sampwts'" != "") {
-		qui replace `wts' = `wts' * `sampwts'
-		qui sum `wts'
-		qui replace `wts' = `wts' / r(mean)
+	local num_mvars = wordcount("`mvars'")
+	
+	tempvar sampwts
+	qui gen `sampwts' = 1 if `touse'
+	
+	if ("`weight'" != "") {
+		tempvar wtvar
+		quietly {
+			gen double `wtvar' `exp'
+			sum `wtvar' if `touse' , meanonly
+			replace `sampwts' = `wtvar'/r(mean) if `touse'
+		}
 	}
 	
 	di ""
 	di "{bf:Model for `dvar' conditional on cvars:}"
-	logit `dvar' `cvars' [pw=`wts'] if `touse'
+	logit `dvar' `cvars' [`weight' `exp'] if `touse'
 	tempvar phat_D1_C phat_D0_C
 	qui predict `phat_D1_C' if e(sample), pr
 	qui gen `phat_D0_C'=1-`phat_D1_C' if `touse'
 	
 	di ""
 	di "{bf:Model for `dvar' conditional on {cvars `mvars'}:}"
-	logit `dvar' `mvars' `cvars' [pw=`wts'] if `touse'
+	logit `dvar' `mvars' `cvars' [`weight' `exp'] if `touse'
 	tempvar phat_D1_CM phat_D0_CM
 	qui predict `phat_D1_CM' if e(sample), pr
 	qui gen `phat_D0_CM'=1-`phat_D1_CM' if `touse'
 
-	qui logit `dvar' [pw=`wts'] if `touse'
+	qui logit `dvar' [`weight' `exp'] if `touse'
 	tempvar phat_D1 phat_D0
 	qui predict `phat_D1' if e(sample), pr
 	qui gen `phat_D0'=1-`phat_D1' if `touse'
@@ -59,7 +63,7 @@ program define ipwmedbs, rclass
 	qui gen `sw2' = `phat_D`d'' / `phat_D`d'_C' if `dvar'==`d' & `touse'
 	qui gen `sw3' = (`phat_D`dstar'_CM'*`phat_D`d'') / (`phat_D`d'_CM'*`phat_D`dstar'_C') if `dvar'==`d' & `touse'
 	
-	if ("`censor'"!="") {
+	if ("`censor'" != "") {
 		foreach i of var `sw1' `sw2' `sw3' {
 			qui centile `i' if `i'!=. & `touse', c(`censor') 
 			qui replace `i'=r(c_1) if `i'<r(c_1) & `i'!=. & `touse'
@@ -68,18 +72,16 @@ program define ipwmedbs, rclass
 	}
 	
 	foreach i of var `sw1' `sw2' `sw3' {
-		qui replace `i'=`i' * `wts' if `touse'
+		qui replace `i' = `i' * `sampwts' if `touse'
 	}
 	
 	if ("`detail'"!="") {
-		qui gen sw1_r001 = `sw1'
-		qui gen sw2_r001 = `sw2'
-		qui gen sw3_r001 = `sw3'
+		qui gen sw1_r001 = `sw1' if `touse'
+		qui gen sw2_r001 = `sw2' if `touse'
+		qui gen sw3_r001 = `sw3' if `touse'
 	
 	}
 
-	preserve
-	
 	qui reg `yvar' [pw=`sw1'] if `dvar'==`dstar' & `touse'
 	local Ehat_Y0M0=_b[_cons]
 		
@@ -89,10 +91,21 @@ program define ipwmedbs, rclass
 	qui reg `yvar' [pw=`sw3'] if `dvar'==`d' & `touse'
 	local Ehat_Y1M0=_b[_cons]
 	
-	return scalar ate=`Ehat_Y1M1'-`Ehat_Y0M0'
-	return scalar nde=`Ehat_Y1M0'-`Ehat_Y0M0'
-	return scalar nie=`Ehat_Y1M1'-`Ehat_Y1M0'
-		
-	restore
+	tempname ate nde nie
+	scalar `ate'=`Ehat_Y1M1'-`Ehat_Y0M0'
+	scalar `nde'=`Ehat_Y1M0'-`Ehat_Y0M0'
+	scalar `nie'=`Ehat_Y1M1'-`Ehat_Y1M0'
+	
+	ereturn clear
 
+	tempname b 
+	
+	local nde_name = cond(`num_mvars'==1, "NDE",  "MNDE")
+	local nie_name = cond(`num_mvars'==1, "NIE",  "MNIE")
+	
+	matrix `b' = (`ate', `nde', `nie')
+	matrix colnames `b' = "ATE" `nde_name' `nie_name'	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
+		
 end ipwmedbs

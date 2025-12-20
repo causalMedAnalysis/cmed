@@ -1,14 +1,14 @@
 *!TITLE: IMPCDE - a module for estimating controlled direct effects using regression imputation
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization
+*! version 0.3 - added svy compatibility
 *!
 
 program define impcde, eclass
 
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		d(real) ///
@@ -20,6 +20,7 @@ program define impcde, eclass
 		cxd ///
 		cxm ///
 		parallel ///
+		svy ///
 		detail * ]
 
 	qui {
@@ -37,7 +38,17 @@ program define impcde, eclass
 
 	if ("`detail'" != "") {		
 	
-		impcdebs `varlist' if `touse' [`weight' `exp'], ///
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+		
+		impcdebs `varlist' if `touse' [`svywgt' `wgtexp'], ///
 			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') yreg(`yreg') ///
 			cvars(`cvars') `nointeraction' `cxd' `cxm'
 	
@@ -45,14 +56,18 @@ program define impcde, eclass
 
 	if ("`parallel'" == "") {		
 		
-		bootstrap ///
-			CDE=r(cde), ///
-				`options' force noheader notable: ///
-					impcdebs `varlist' if `touse' [`weight' `exp'], ///
-						dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') yreg(`yreg') ///
-						cvars(`cvars') `nointeraction' `cxd' `cxm'
+		bootstrap, `options' `svy' noheader notable : ///
+			impcdebs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
+				yreg(`yreg') cvars(`cvars') `nointeraction' `cxd' `cxm'
 			
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
+		
 		di as text "Note: CDE evaluated at m=`m'"
 		
 	}
@@ -67,10 +82,10 @@ program define impcde, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(CDE=r(cde)) `options' : ///
-			impcdebs `varlist' if `touse' [`weight' `exp'], ///
-					dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') yreg(`yreg') ///
-					cvars(`cvars') `nointeraction' `cxd' `cxm'
+		qui parallel bs, `options' `svy' : ///
+			impcdebs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
+				yreg(`yreg') cvars(`cvars') `nointeraction' `cxd' `cxm'
 	
 		estat bootstrap, p noheader
 		di as text "Note: CDE evaluated at m=`m'"

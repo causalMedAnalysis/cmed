@@ -1,15 +1,14 @@
 *!TITLE: RWRCDE - estimating controlled direct effects using regression-with-residuals
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
  
-
 program define rwrcde, eclass
 	
 	version 14	
 
-	syntax varlist(min=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 numeric) [if][in], ///
 		dvar(varname numeric) /// 
 		mvar(varname numeric) ///
 		d(real) /// 
@@ -21,7 +20,8 @@ program define rwrcde, eclass
 		cxm ///
 		lxm ///
 		NOINTERaction ///
-		parallel ///			
+		parallel ///
+		svy ///
 		detail * ]
 							
 	qui {
@@ -35,7 +35,17 @@ program define rwrcde, eclass
 
 	if ("`detail'" != "") {		
 		
-		rwrcdebs `varlist' if `touse' [`weight' `exp'], ///
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+		
+		rwrcdebs `varlist' if `touse' [`svywgt' `wgtexp'], ///
 			dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
 			cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
 			
@@ -43,14 +53,18 @@ program define rwrcde, eclass
 
 	if ("`parallel'" == "") {		
 		
-		bootstrap ///
-			CDE=e(CDE), ///
-				`options' force noheader notable: ///
-					rwrcdebs `varlist' if `touse' [`weight' `exp'], ///
-						dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
-						cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
+		bootstrap, `options' `svy' noheader notable : ///
+			rwrcdebs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
+				cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
 
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
+		
 		di as txt "CDE: controlled direct effect at m=`m'"
 
 	}
@@ -65,7 +79,7 @@ program define rwrcde, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(CDE=e(CDE)) `options' : ///
+		qui parallel bs, `options' `svy' : ///
 			rwrcdebs `varlist' if `touse' [`weight' `exp'], ///
 				dvar(`dvar') mvar(`mvar') d(`d') dstar(`dstar') m(`m') ///
 				cvar(`cvars') cat(`cat') `cxd' `cxm' `lxm' `nointeraction'
@@ -76,8 +90,6 @@ program define rwrcde, eclass
 		capture parallel clean, all
 
 	}	
-	
-	ereturn local cmdline `"rwrcde `0'"'
 	
 end
 

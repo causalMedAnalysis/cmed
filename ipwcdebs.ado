@@ -1,14 +1,14 @@
 *!TITLE: IPWCDE - analysis of controlled direct effects using inverse probability weighting	
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1 
+*! version 0.3 - added svy compatibility
 *!
 
-program define ipwcdebs, rclass
+program define ipwcdebs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in], ///
+	syntax varlist(min=1 max=1 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		mreg(string) ///
@@ -20,7 +20,6 @@ program define ipwcdebs, rclass
 		[NOINTERaction] ///
 		[cxd] ///
 		[lxd] ///
-		[sampwts(varname numeric)] ///
 		[censor(numlist min=2 max=2)] ///
 		[detail]
 	
@@ -50,13 +49,16 @@ program define ipwcdebs, rclass
 	/**********************************
 	GENERATE AND SCALE SAMPLING WEIGHTS
 	***********************************/	
-	tempvar wts
-	qui gen `wts' = 1 if `touse'
+	tempvar sampwts
+	qui gen `sampwts' = 1 if `touse'
 	
-	if ("`sampwts'" != "") {
-		qui replace `wts' = `wts' * `sampwts'
-		qui sum `wts'
-		qui replace `wts' = `wts' / r(mean)
+	if ("`weight'" != "") {
+		tempvar wtvar
+		quietly {
+			gen double `wtvar' `exp'
+			sum `wtvar' if `touse' , meanonly
+			replace `sampwts' = `wtvar'/r(mean) if `touse'
+		}
 	}
 
 	/*****************************
@@ -88,20 +90,20 @@ program define ipwcdebs, rclass
 	**********/	
 	/*****DVAR*****/
 	di ""
-	di "{bf:Model for `dvar' conditional on {`cvars'}:}"
-	logit `dvar' `cvars' [pw=`wts'] if `touse'
+	di "{bf:Model for `dvar' conditional on cvars:}"
+	logit `dvar' `cvars' [`weight' `exp'] if `touse'
 	qui est store Dmodel_given_C_r001
 		
-	qui logit `dvar' [pw=`wts'] if `touse'
+	qui logit `dvar' [`weight' `exp'] if `touse'
 	qui est store Dmodel_r001
 	
 	/*****MVAR*****/
 	di ""
-	di "{bf:Model for `mvar' conditional on {`cvars' `dvar' `lvars'}:}"
-	`mreg' `mvar' `dvar' `lvars' `cvars' `cxd_vars' `lxd_vars' [pw=`wts'] if `touse'
+	di "{bf:Model for `mvar' conditional on {cvars `dvar' `lvars'}:}"
+	`mreg' `mvar' `dvar' `lvars' `cvars' `cxd_vars' `lxd_vars' [`weight' `exp'] if `touse'
 	qui est store Mmodel_given_CDL_r001
 	
-	qui `mreg' `mvar' `dvar' [pw=`wts'] if `touse'
+	qui `mreg' `mvar' `dvar' [`weight' `exp'] if `touse'
 	qui est store Mmodel_given_D_r001
 	
 	/********************
@@ -172,13 +174,15 @@ program define ipwcdebs, rclass
 		qui replace `sw4' = r(c_2) if `sw4'>r(c_2) & `sw4'!=. & `touse'
 	}
 	
+	qui replace `sw4' = `sw4' * `sampwts' if `touse'
+	
 	/***********************
 	COMPUTE EFFECT ESTIMATES
 	************************/	
 	di ""
 	di "{bf:Model for Y(d,m) fit using IPWs:}"
 	reg `yvar' `dvar' `mvar' `inter' [pw=`sw4'] if `touse'		
-	return scalar cde=(_b[`dvar']+(_b[`inter']*`m'))*(`d'-`dstar')
+	scalar cde = (_b[`dvar'] + (_b[`inter'] * `m')) * (`d' - `dstar')
 		
 	if ("`detail'"!="") {
 		local ipw_var_names "sw4_r001"
@@ -199,5 +203,14 @@ program define ipwcdebs, rclass
 		Mmodel_given_CDL_r001 Mmodel_given_D_r001
 		
 	drop phat*_r001
+	
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (cde)
+	matrix colnames `b' = "CDE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 
 end ipwcdebs

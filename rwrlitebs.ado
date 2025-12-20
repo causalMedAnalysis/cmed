@@ -1,15 +1,14 @@
 *!TITLE: RWRLITE - causal mediation analysis using regression-with-residuals
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.3 - added svy compatibility
 *!
 
-capture program drop rwrlitebs
-program define rwrlitebs, eclass
+program define rwrlitebs, eclass properties(svyb)
 	
 	version 14	
 
-	syntax varlist(min=1 numeric) [if][in] [pweight],		 	///
+	syntax varlist(min=1 numeric) [if][in] [pweight iweight], 	///
 		dvar(varname numeric)									/// 
 		mvar(varname numeric)									///
 		d(real) 												/// 
@@ -20,7 +19,6 @@ program define rwrlitebs, eclass
 		cxm														/// interaction between cvar and mvar
 		lxm														/// interaction between lvar and mvar
 		NOINTERaction]										
-
 
 		qui {
 			marksample touse
@@ -192,14 +190,9 @@ program define rwrlitebs, eclass
 				scalar treatM = b[1,colnumb(matrix(b),"`mvar':`dvar'")]
 				scalar medO = b[1,colnumb(matrix(b),"`yvar':`mvar'")]
 
-				*type_text , mreg(`mreg')
-				*ereturn scalar `r(NDEtype)' = treatO * (`d'-`dstar')
-				*ereturn scalar `r(NIEtype)' = treatM * medO * (`d'-`dstar')
-				*ereturn scalar `r(ATEtype)' = (treatO * (`d'-`dstar')) + (treatM * medO * (`d'-`dstar'))
-				
-				ereturn scalar IDE = treatO * (`d'-`dstar')
-				ereturn scalar IIE = treatM * medO * (`d'-`dstar')
-				ereturn scalar OE = (treatO * (`d'-`dstar')) + (treatM * medO * (`d'-`dstar'))
+				scalar ide = treatO * (`d'-`dstar')
+				scalar iie = treatM * medO * (`d'-`dstar')
+				scalar oe = (treatO * (`d'-`dstar')) + (treatM * medO * (`d'-`dstar'))
 			
 			} // end no interaction
 			
@@ -219,53 +212,22 @@ program define rwrlitebs, eclass
 				scalar interY = b[1,colnumb(matrix(b),"`yvar':`inter'")]
 				scalar consM =  b[1,colnumb(matrix(b),"`mvar':_cons")]
 				
-				*type_text , mreg(`mreg')
-				*ereturn scalar `r(NDEtype)' = (treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')
-				*ereturn scalar `r(NIEtype)' = treatM * (medO + interY * `d') * (`d'-`dstar')
-				*ereturn scalar `r(ATEtype)' = ((treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')) + (treatM * (medO + interY * `d') * (`d'-`dstar'))
-				
-				ereturn scalar IDE = (treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')
-				ereturn scalar IIE = treatM * (medO + interY * `d') * (`d'-`dstar')
-				ereturn scalar OE = ((treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')) + (treatM * (medO + interY * `d') * (`d'-`dstar'))
+				scalar ide = (treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')
+				scalar iie = treatM * (medO + interY * `d') * (`d'-`dstar')
+				scalar oe = ((treatO + interY * (consM + treatM * `dstar')) * (`d'-`dstar')) + (treatM * (medO + interY * `d') * (`d'-`dstar'))
 							
 			} // end with interaction 
 		} // end mreg == regress
+		
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (oe, ide, iie)
+	matrix colnames `b' = "OE" "IDE" "IIE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 
 end
 
-/*
-capture program drop type_text
-program type_text, rclass
-    version 14
-    syntax [varlist(default=none)] [, mreg(string) lvar(string) cvar(string) ]
 
-		if substr("`mreg'", 1, 3) == "reg" {
-		
-			// text to accompany estimates
-			if "`lvar'"=="" {
-			    local NDEtype "NDE"
-				local NDEtext NDE: natural direct effect
-				local NIEtype "NIE"
-				local NIEtext NIE: natural indirect effect
-				local ATEtype "ATE"
-				local ATEtext ATE: average total effect
-			}
-			else {
-				local NDEtype "IDE"
-				local NDEtext IDE: interventional direct effect
-				local NIEtype "IIE"
-				local NIEtext IIE: interventional indirect effect
-				local ATEtype "OE"
-			    local ATEtext OE: overall effect
-			}
-		} // mregs = regress
-		
-		*return clear
-		return local NDEtype `NDEtype'
-		return local NDEtext `NDEtext'
-		return local NIEtype `NIEtype'
-		return local NIEtext `NIEtext'
-		return local ATEtype `ATEtype'
-		return local ATEtext `ATEtext'
-end
-*/

@@ -1,14 +1,14 @@
 *!TITLE: LINMED - causal mediation analysis using linear models
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.1
+*! version 0.3 - added svy compatibility
 *!
 
-program define linmedbs, rclass
+program define linmedbs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in] [pweight], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -94,9 +94,9 @@ program define linmedbs, rclass
 			scalar nie_summand = nie_summand + (beta2`k'*gamma3`k')
 		}
 				
-		return scalar nde = gamma2*(`d'-`dstar')
-		return scalar nie = nie_summand*(`d'-`dstar')
-		return scalar ate = (gamma2 + nie_summand)*(`d'-`dstar')
+		scalar nde = gamma2*(`d'-`dstar')
+		scalar nie = nie_summand*(`d'-`dstar')
+		scalar ate = (gamma2 + nie_summand)*(`d'-`dstar')
 	}
 
 	if ("`nointeraction'"=="") {
@@ -131,13 +131,25 @@ program define linmedbs, rclass
 			scalar nie_summand = nie_summand + (beta2`k'*(gamma3`k' + gamma4`k'*`d'))
 		}
 
-		return scalar nde = (gamma2 + nde_summand)*(`d'-`dstar')
-		return scalar nie = nie_summand*(`d'-`dstar')
-		return scalar ate = (gamma2 + nde_summand + nie_summand)*(`d'-`dstar')
+		scalar nde = (gamma2 + nde_summand)*(`d'-`dstar')
+		scalar nie = nie_summand*(`d'-`dstar')
+		scalar ate = (gamma2 + nde_summand + nie_summand)*(`d'-`dstar')
 		
 		foreach m in `mvars' {
 			capture drop Dx_`m'
 		}
 	}
+	
+	ereturn clear
+
+	tempname b 
+	
+	local nde_name = cond(`num_mvars'==1, "NDE",  "MNDE")
+	local nie_name = cond(`num_mvars'==1, "NIE",  "MNIE")
+	
+	matrix `b' = (ate, nde, nie)
+	matrix colnames `b' = "ATE" `nde_name' `nie_name'	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 	
 end linmedbs

@@ -1,7 +1,7 @@
 *!TITLE: MRMED - causal mediation analysis using parametric multiply robust methods
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 program define mrmed, eclass
@@ -19,6 +19,7 @@ program define mrmed, eclass
 		cxm ///
 		censor(numlist min=2 max=2) ///
 		parallel ///	
+		svy ///
 		detail * ]
 
 	qui {
@@ -76,8 +77,18 @@ program define mrmed, eclass
 		}
 
 		if ("`detail'"!="") {
-			
-			mr1med `yvar' if `touse', ///
+
+			if ("`svy'" == "svy") {
+				qui svyset
+				local svywgt = r(wtype)
+				local wgtexp = r(wexp)
+			}
+			else {
+				local svywgt
+				local wgtexp
+			}
+		
+			mr1med `yvar' [`svywgt' `wgtexp'] if `touse', ///
 				dvar(`dvar') mvar(`mvars') cvars(`cvars') ///
 				d(`d') dstar(`dstar') `nointeraction' `cxd' `cxm'
 				
@@ -85,16 +96,18 @@ program define mrmed, eclass
 			
 		if ("`parallel'" == "") {		
 			
-			bootstrap ///
-				ATE=(r(psi`d'`d')-r(psi`dstar'`dstar')) ///
-				NDE=(r(psi`dstar'`d')-r(psi`dstar'`dstar')) ///
-				NIE=(r(psi`d'`d')-r(psi`dstar'`d')), ///
-					`options' noheader notable: ///
-						mr1med `yvar' if `touse', ///
-							dvar(`dvar') mvar(`mvars') d(`d') dstar(`dstar') ///
-							cvars(`cvars') `nointeraction' `cxd' `cxm' censor(`censor')
+			bootstrap, `options' `svy' noheader notable: ///
+				mr1med `yvar' if `touse', ///
+					dvar(`dvar') mvar(`mvars') d(`d') dstar(`dstar') ///
+					cvars(`cvars') `nointeraction' `cxd' `cxm' censor(`censor')
 			
-			estat bootstrap, p noheader
+			if (e(prefix) == "svy") {
+				bstat, noheader
+			} 
+			else {
+				estat bootstrap, p noheader
+			}
+		
 		}
 		
 		if ("`parallel'" != "") {		
@@ -107,13 +120,10 @@ program define mrmed, eclass
 			di "{it:Waiting for the child processes to finish...}"
 			di ""
 		
-			qui parallel bs, ///
-				expr(ATE=(r(psi`d'`d')-r(psi`dstar'`dstar')) ///
-					NDE=(r(psi`dstar'`d')-r(psi`dstar'`dstar')) ///
-					NIE=(r(psi`d'`d')-r(psi`dstar'`d'))) `options' : ///
-						mr1med `yvar' if `touse', ///
-							dvar(`dvar') mvar(`mvars') d(`d') dstar(`dstar') ///
-							cvars(`cvars') `nointeraction' `cxd' `cxm' censor(`censor')
+			qui parallel bs, `options' `svy' : ///
+				mr1med `yvar' if `touse', ///
+					dvar(`dvar') mvar(`mvars') d(`d') dstar(`dstar') ///
+					cvars(`cvars') `nointeraction' `cxd' `cxm' censor(`censor')
 	
 			estat bootstrap, p noheader
 		
@@ -133,38 +143,35 @@ program define mrmed, eclass
 		}
 
 		if ("`detail'"!="") {
-			mr2med `yvar' `mvars' if `touse', ///
+			
+			if ("`svy'" == "svy") {
+				qui svyset
+				local svywgt = r(wtype)
+				local wgtexp = r(wexp)
+			}
+			else {
+				local svywgt
+				local wgtexp
+			}
+			
+			mr2med `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
 				dvar(`dvar') d(`d') dstar(`dstar') ///
 				cvars(`cvars') `nointeraction' `cxd' `cxm'
 		}	
 
 		if ("`parallel'" == "") {		
 			
-			if (`num_mvars'==1) {
-		
-				bootstrap ///
-					ATE=(r(psi`d'`d')-r(psi`dstar'`dstar')) ///
-					NDE=(r(psi`dstar'`d')-r(psi`dstar'`dstar')) ///
-					NIE=(r(psi`d'`d')-r(psi`dstar'`d')), ///
-						`options' noheader notable: ///
-							mr2med `yvar' `mvars' if `touse', ///
-								dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
-								`nointeraction' `cxd' `cxm' censor(`censor')
-			}
+			bootstrap, `options' `svy' noheader notable: ///
+				mr2med `yvar' `mvars' if `touse', ///
+					dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
+					`nointeraction' `cxd' `cxm' censor(`censor')
 
-			if (`num_mvars'>=2) {
-		
-				bootstrap ///
-					ATE=(r(psi`d'`d')-r(psi`dstar'`dstar')) ///
-					MNDE=(r(psi`dstar'`d')-r(psi`dstar'`dstar')) ///
-					MNIE=(r(psi`d'`d')-r(psi`dstar'`d')), ///
-						`options' noheader notable: ///
-							mr2med `yvar' `mvars' if `touse', ///
-								dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
-								`nointeraction' `cxd' `cxm' censor(`censor')
+			if (e(prefix) == "svy") {
+				bstat, noheader
+			} 
+			else {
+				estat bootstrap, p noheader
 			}
-		
-			estat bootstrap, p noheader
 		
 		}
 
@@ -178,27 +185,10 @@ program define mrmed, eclass
 			di "{it:Waiting for the child processes to finish...}"
 			di ""
 		
-			if (`num_mvars'==1) {
-		
-				qui parallel bs, ///
-					expr(ATE=(r(psi`d'`d')-r(psi`dstar'`dstar')) ///
-						NDE=(r(psi`dstar'`d')-r(psi`dstar'`dstar')) ///
-						NIE=(r(psi`d'`d')-r(psi`dstar'`d'))) `options' : ///
-							mr2med `yvar' `mvars' if `touse', ///
-								dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
-								`nointeraction' `cxd' `cxm' censor(`censor')
-			}
-
-			if (`num_mvars'>=2) {
-		
-				qui parallel bs, ///
-					expr(ATE=(r(psi`d'`d')-r(psi`dstar'`dstar')) ///
-						MNDE=(r(psi`dstar'`d')-r(psi`dstar'`dstar')) ///
-						MNIE=(r(psi`d'`d')-r(psi`dstar'`d'))) `options' : ///
-							mr2med `yvar' `mvars' if `touse', ///
-								dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
-								`nointeraction' `cxd' `cxm' censor(`censor')
-			}
+			qui parallel bs, `options' `svy' : ///
+				mr2med `yvar' `mvars' if `touse', ///
+					dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
+					`nointeraction' `cxd' `cxm' censor(`censor')
 		
 			estat bootstrap, p noheader
 			

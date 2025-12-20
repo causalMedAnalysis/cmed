@@ -1,14 +1,14 @@
 *!TITLE: SIMCDE - estimate controlled direct effects using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.3 - added support for parallelization
+*! version 0.3 - added svy compatibility
 *!
 
 program define simcde, eclass
 
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		lvars(varlist numeric) ///
@@ -24,6 +24,7 @@ program define simcde, eclass
 		cxm ///
 		lxm ///
 		parallel ///	
+		svy ///
 		detail * ]
 		
 	qui {
@@ -34,26 +35,38 @@ program define simcde, eclass
 	
 	if ("`detail'" != "") {		
 		
-		simcdebs `varlist' [`weight' `exp'] if `touse' , ///
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+		
+		simcdebs `varlist' [`svywgt' `wgtexp'] if `touse' , ///
 			dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
-			d(`d') dstar(`dstar') m(`m') ///
-			yreg(`yreg') lregs(`lregs') /// 
+			d(`d') dstar(`dstar') m(`m') yreg(`yreg') lregs(`lregs') /// 
 			nsim(1) `nointeraction' `cxd' `cxm' `lxm'
 			
 	}
 
 	if ("`parallel'" == "") {		
 		
-		bootstrap ///
-			CDE=r(cde), ///
-				`options' force noheader notable: ///
-					simcdebs `varlist' if `touse' [`weight' `exp'], ///
-						dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
-						d(`d') dstar(`dstar') m(`m') ///
-						yreg(`yreg') lregs(`lregs') ///
-						nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'
+		bootstrap, `options' `svy' noheader notable : ///
+			simcdebs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
+				d(`d') dstar(`dstar') m(`m') yreg(`yreg') lregs(`lregs') ///
+				nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'
 
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
+		
 		di as txt "CDE: controlled direct effect at m=`m'"
 	
 	}
@@ -68,8 +81,8 @@ program define simcde, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(CDE=r(cde)) `options' : ///
-			simcdebs `varlist' if `touse' [`weight' `exp'], ///
+		qui parallel bs, `options' `svy' : ///
+			simcdebs `varlist' if `touse', ///
 				dvar(`dvar') mvar(`mvar') lvars(`lvars') cvars(`cvars') ///
 				d(`d') dstar(`dstar') m(`m') yreg(`yreg') lregs(`lregs') ///
 				nsim(`nsim') `nointeraction' `cxd' `cxm' `lxm'

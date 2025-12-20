@@ -1,14 +1,14 @@
 *!TITLE: VENTSIM - analysis of interventional effects using a simulation estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 -- added support for ologit models
+*! version 0.3 - added svy compatibility
 *!
 
-program define ventsimbs, rclass
+program define ventsimbs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		mvar(varname numeric) ///
 		lvars(varlist numeric) ///
@@ -687,14 +687,14 @@ program define ventsimbs, rclass
 		qui replace `l' = ``l'_orig' if `touse'
 	}
 	
-	tempvar YdMd_r001
-	tempvar YdstarMdstar_r001
-	tempvar YdMdstar_r001
+	tempvar YdMd_r001 YdstarMdstar_r001 YdMdstar_r001
 	
 	qui egen `YdMd_r001'=rowmean(YdMd_r001_*) if `touse'
 	qui egen `YdstarMdstar_r001'=rowmean(YdstarMdstar_r001_*) if `touse'
 	qui egen `YdMdstar_r001'=rowmean(YdMdstar_r001_*) if `touse'
-	
+
+	drop YdMd_r001_* YdstarMdstar_r001_* YdMdstar_r001_* 
+		
 	qui reg `YdMd_r001' [`weight' `exp'] if `touse'
 	local Ehat_YdMd=_b[_cons]
 
@@ -704,10 +704,18 @@ program define ventsimbs, rclass
 	qui reg `YdMdstar_r001' [`weight' `exp'] if `touse'
 	local Ehat_YdMdstar=_b[_cons]
 
-	return scalar ide=`Ehat_YdMdstar'-`Ehat_YdstarMdstar'
-	return scalar iie=`Ehat_YdMd'-`Ehat_YdMdstar'	
-	return scalar oe=`Ehat_YdMd'-`Ehat_YdstarMdstar'
+	tempname oe ide iie
+	scalar `ide' = `Ehat_YdMdstar' - `Ehat_YdstarMdstar'
+	scalar `iie' = `Ehat_YdMd' - `Ehat_YdMdstar'	
+	scalar `oe' = `Ehat_YdMd' - `Ehat_YdstarMdstar'
 
-	drop YdMd_r001_* YdstarMdstar_r001_* YdMdstar_r001_* 
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (`oe', `ide', `iie')
+	matrix colnames `b' = "OE" "IDE" "IIE"	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 		
 end ventsimbs

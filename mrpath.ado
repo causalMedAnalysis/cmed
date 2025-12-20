@@ -1,7 +1,7 @@
 *!TITLE: MRPATH - path-specific effects using parametric multiply robust methods
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 
@@ -18,7 +18,9 @@ program define mrpath, eclass
 		cxd ///
 		cxm ///
 		parallel ///	
-		censor(numlist min=2 max=2) * ] 
+		svy ///
+		censor(numlist min=2 max=2) ///
+		detail * ] 
 		
 	qui {
 		marksample touse
@@ -57,23 +59,41 @@ program define mrpath, eclass
 		}
 	}
 
-	local effects ATE = r(ate)
-	if (`num_mvars' == 1) local effects `effects' NDE = r(nde) NIE = r(nie)
-	if (`num_mvars' > 1) {
-		local effects `effects' PSE_DY = r(pse_DY)
-		forv k=`num_mvars'(-1)1 {
-			local effects `effects' PSE_DM`k'Y = r(pse_DM`k'Y)
-		}
-	}
+	if ("`detail'"!="") {
 
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+
+	di ""
+	di "{bf:Model for `dvar' conditional on {cvars}:}"			
+	logit `dvar' `cvars' [`svywgt' `wgtexp'] if `touse'
+			
+	mrpathbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
+		dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
+		`cxd' `cxm' `nointeraction' censor(`censor')
+			
+	}
+	
 	if ("`parallel'" == "") {		
 		
-		bootstrap `effects', `options' force noheader notable: ///
+		bootstrap, `options' `svy' noheader notable: ///
 			mrpathbs `yvar' `mvars' if `touse', ///
 				dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
 				`cxd' `cxm' `nointeraction' censor(`censor')
 	
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 	
 	}
 
@@ -87,7 +107,7 @@ program define mrpath, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(`effects') `options' : ///
+		qui parallel bs, `options' `svy' : ///
 			mrpathbs `yvar' `mvars' if `touse', ///
 				dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
 				`cxd' `cxm' `nointeraction' censor(`censor')

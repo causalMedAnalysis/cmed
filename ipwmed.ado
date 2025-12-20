@@ -1,7 +1,7 @@
 *!TITLE: IPWMED - causal mediation analysis using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 program define ipwmed, eclass
@@ -13,8 +13,8 @@ program define ipwmed, eclass
 		d(real) ///
 		dstar(real) ///
 		[cvars(varlist numeric) ///
-		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
+		svy ///
 		parallel ///				
 		detail * ]
 
@@ -26,14 +26,14 @@ program define ipwmed, eclass
 	
 	gettoken yvar mvars : varlist
 
+	local num_mvars = wordcount("`mvars'")
+	
 	confirm variable `dvar'
 	qui levelsof `dvar', local(levels)
 	if "`levels'" != "0 1" & "`levels'" != "1 0" {
 		display as error "The variable `i' is not binary and coded 0/1"
 		error 198
 	}
-	
-	local num_mvars = wordcount("`mvars'")
 	
 	if ("`censor'" != "") {
 		local censor1: word 1 of `censor'
@@ -67,9 +67,20 @@ program define ipwmed, eclass
 				error 110
 			}
 		}
-			
-		ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-			cvars(`cvars') sampwts(`sampwts') `detail' censor(`censor')
+		
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+		
+		ipwmedbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
+			dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
+			censor(`censor') `detail' 
 	
 		label var sw1_r001 "IPW for estimating E(Y(d*,M(d*)))"
 		label var sw2_r001 "IPW for estimating E(Y(d,M(d)))"
@@ -78,29 +89,17 @@ program define ipwmed, eclass
 	
 	if ("`parallel'" == "") {		
 		
-		if (`num_mvars'==1) {
-	
-			bootstrap ///
-				ATE=r(ate) ///
-				NDE=r(nde) ///
-				NIE=r(nie), ///
-					`options' force noheader notable: ///
-						ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-							cvars(`cvars') sampwts(`sampwts') censor(`censor')
-		}
+		bootstrap, `options' `svy' noheader notable : ///
+			ipwmedbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
+				censor(`censor')
 
-		if (`num_mvars'>=2) {
-	
-			bootstrap ///
-				ATE=r(ate) ///
-				MNDE=r(nde) ///
-				MNIE=r(nie), ///
-					`options' force noheader notable: ///
-						ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-							cvars(`cvars') sampwts(`sampwts') censor(`censor')
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
 		}
-	
-		estat bootstrap, p noheader
 		
 	}
 	
@@ -114,22 +113,11 @@ program define ipwmed, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		if (`num_mvars'==1) {
-
-			qui parallel bs, expr(ATE=r(ate) NDE=r(nde) NIE=r(nie)) `options' : ///
-					ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-						cvars(`cvars') sampwts(`sampwts') censor(`censor')
+		qui parallel bs, `options' `svy' : ///
+			ipwmedbs `yvar' `mvars' if `touse', ///
+				dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
+				censor(`censor')
 							
-		}
-	
-		if (`num_mvars'>=2) {
-	
-			qui parallel bs, expr(ATE=r(ate) MNDE=r(nde) MNIE=r(nie)) `options' : ///
-					ipwmedbs `yvar' `mvars' if `touse', dvar(`dvar') d(`d') dstar(`dstar') ///
-						cvars(`cvars') sampwts(`sampwts') censor(`censor')
-
-		}
-		
 		estat bootstrap, p noheader
 		
 		capture parallel clean, all

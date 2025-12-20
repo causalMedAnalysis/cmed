@@ -1,14 +1,14 @@
 *!TITLE: PATHWIMP - path-specific effects using an imputation-based weighting estimator
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2  - support for unlimited num of mediators
+*! version 0.3 - added svy compatibility
 *!
 
-program define pathwimpbs, rclass
+program define pathwimpbs, eclass properties(svyb)
 	
 	version 15	
 
-	syntax varlist(min=2 numeric) [if][in], ///
+	syntax varlist(min=2 numeric) [if][in] [pweight iweight], ///
 		dvar(varname numeric) ///
 		d(real) ///
 		dstar(real) ///
@@ -17,7 +17,6 @@ program define pathwimpbs, rclass
 		[NOINTERaction] ///
 		[cxd] ///
 		[cxm] ///
-		[sampwts(varname numeric)] ///
 		[censor(numlist min=2 max=2)] ///
 		[detail]
 		
@@ -42,37 +41,67 @@ program define pathwimpbs, rclass
 		}
 		
 		* estimate natural effects
-		mpathwimp `yvar' `mvars_include' if `touse', ///
+		mpathwimp `yvar' `mvars_include' [`weight' `exp'] if `touse', ///
 			dvar(`dvar') cvars(`cvars') yreg(`yreg') ///
 			d(`d') dstar(`dstar') `cxd' `cxm' `nointeraction' ///
-			sampwts(`sampwts') censor(`censor') `detail'
+			censor(`censor') `detail'
 			
 		* special case: only one total mediator
 		if `num_mvars'==1 {
-			return scalar nde = r(nde)
-			return scalar nie = r(nie)
-			return scalar ate = r(ate)
+			scalar nde = _b[NDE]
+			scalar nie = _b[NIE]
+			scalar ate = _b[ATE]
 		}
 		
 		* 2+ total mediators: last mediator
 		if `num_mvars'>1 & `k'==`num_mvars' {
-			return scalar pse_DY = r(nde)
-			scalar prev_mnde = r(nde)
+			scalar pse_DY = _b[NDE]
+			scalar prev_mnde = _b[NDE]
 		}
 		
 		* 2+ total mediators: first mediator
 		if `num_mvars'>1 & `k'==1 {
-			return scalar pse_DM`=`k'+1'Y = r(nde) - prev_mnde
-			return scalar pse_DM1Y = r(nie)
-			return scalar ate = r(ate)
+			scalar pse_DM`=`k'+1'Y = _b[NDE] - prev_mnde
+			scalar pse_DM1Y = _b[NIE]
+			scalar ate = _b[ATE]
 		}
 		
 		* 2+ total mediators: all other mediators
 		if `num_mvars'>1 & !inlist(`k',1,`num_mvars') {
-			return scalar pse_DM`=`k'+1'Y = r(nde) - prev_mnde
-			scalar prev_mnde = r(nde)
+			scalar pse_DM`=`k'+1'Y = _b[NDE] - prev_mnde
+			scalar prev_mnde = _b[NDE]
 		}
 			
-	}	
+	}
+	
+	local effects 
+	local lbls "ATE"
+	
+	if (`num_mvars' == 1) {
+		local effects `effects' nde nie
+		local lbls `lbls' "NDE" "NIE"
+	}
+	
+	if (`num_mvars' > 1) {
+		local effects `effects' pse_DY
+		local lbls `lbls' "PSE_DY" 
+		forv k=`num_mvars'(-1)1 {
+			local effects `effects' pse_DM`k'Y
+			local lbls `lbls' "PSE_DM`k'Y"
+		}
+	}
+	
+	ereturn clear
+
+	tempname b 
+	
+	matrix `b' = (ate)
+	foreach e of local effects {
+		matrix `b' = `b', (`e')
+	}
+	
+	matrix colnames `b' = `lbls'	
+	
+	ereturn post `b' , esample(`touse') obs(`N')
 
 end pathwimpbs

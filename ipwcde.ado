@@ -1,7 +1,7 @@
 *!TITLE: IPWCDE - analysis of controlled direct effects using inverse probability weighting	
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 program define ipwcde, eclass
@@ -20,9 +20,9 @@ program define ipwcde, eclass
 		NOINTERaction ///
 		cxd ///
 		lxd ///		
-		sampwts(varname numeric) ///
 		censor(numlist min=2 max=2) ///
 		parallel ///		
+		svy ///
 		detail * ]
 
 	qui {
@@ -73,20 +73,40 @@ program define ipwcde, eclass
 	}
 			
 	if ("`detail'" != "") {
+
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
 		
-		ipwcdebs `varlist' if `touse', dvar(`dvar') mvar(`mvar') mreg(`mreg') d(`d') dstar(`dstar') m(`m') ///
-			cvars(`cvars') lvars(`lvars') sampwts(`sampwts') censor(`censor') `nointeraction' `cxd' `lxd' `detail'
+		ipwcdebs `varlist' [`svywgt' `wgtexp'] if `touse', ///
+			dvar(`dvar') mvar(`mvar') mreg(`mreg') d(`d') dstar(`dstar') ///
+			m(`m') cvars(`cvars') lvars(`lvars') censor(`censor') ///
+			`nointeraction' `cxd' `lxd' `detail'
 	
 		label var sw4_r001 "IPW for estimating E(Y(d,m))"
 	}
 
 	if ("`parallel'" == "") {		
 		
-		bootstrap CDE=r(cde), `options' force noheader notable: ///
-			ipwcdebs `varlist' if `touse', dvar(`dvar') mvar(`mvar') mreg(`mreg') cvars(`cvars') lvars(`lvars') ///
-				d(`d') dstar(`dstar') m(`m') sampwts(`sampwts') censor(`censor') `nointeraction' `cxd' `lxd'
+		bootstrap, `options' `svy' noheader notable : ///
+			ipwcdebs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') mreg(`mreg') cvars(`cvars') ///
+				lvars(`lvars') d(`d') dstar(`dstar') m(`m') censor(`censor') ///
+				`nointeraction' `cxd' `lxd'
 			
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
+		
 		di as text "Note: CDE evaluated at m=`m'"
 	
 	}
@@ -101,9 +121,11 @@ program define ipwcde, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 
-		qui parallel bs, expr(CDE=r(cde)) `options' : ///
-			ipwcdebs `varlist' if `touse', dvar(`dvar') mvar(`mvar') mreg(`mreg') cvars(`cvars') lvars(`lvars') ///
-				d(`d') dstar(`dstar') m(`m') sampwts(`sampwts') censor(`censor') `nointeraction' `cxd' `lxd'
+		qui parallel bs, `options' `svy' : ///
+			ipwcdebs `varlist' if `touse', ///
+				dvar(`dvar') mvar(`mvar') mreg(`mreg') cvars(`cvars') ///
+				lvars(`lvars') d(`d') dstar(`dstar') m(`m') censor(`censor') ///
+				`nointeraction' `cxd' `lxd'
 	
 		estat bootstrap, p noheader
 		di as text "Note: CDE evaluated at m=`m'"

@@ -1,14 +1,14 @@
 *!TITLE: MNESIM - analysis of multivariate natural effects using a simulation approach
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.2 - added parallelization 
+*! version 0.3 - added svy compatibility
 *!
 
 program define mnesim, eclass
 
 	version 15	
 
-	syntax varlist(min=1 max=1 numeric) [if][in] [pweight], ///
+	syntax varlist(min=1 max=1 numeric) [if][in], ///
 		dvar(varname numeric) ///
 		mvars(varlist numeric) ///
 		d(real) ///
@@ -20,7 +20,8 @@ program define mnesim, eclass
 		NOINTERaction ///
 		cxd ///
 		cxm ///
-		parallel ///			
+		parallel ///		
+		svy ///
 		detail * ]
 		
 	qui {
@@ -30,25 +31,38 @@ program define mnesim, eclass
 	}
 	
 	if ("`detail'" != "") {		
-		mnesimbs `varlist' [`weight' `exp'] if `touse' , ///
+
+		if ("`svy'" == "svy") {
+			qui svyset
+			local svywgt = r(wtype)
+			local wgtexp = r(wexp)
+		}
+		else {
+			local svywgt
+			local wgtexp
+		}
+		
+		mnesimbs `varlist' [`svywgt' `wgtexp'] if `touse' , ///
 			dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 			d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') /// 
 			nsim(1) `nointeraction' `cxd' `cxm'
+			
 	}
 
 	if ("`parallel'" == "") {		
 		
-		bootstrap ///
-			ATE=r(ate) ///
-			MNDE=r(mnde) ///
-			MNIE=r(mnie), ///
-				`options' force noheader notable: ///
-					mnesimbs `varlist' if `touse' [`weight' `exp'], ///
-						dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
-						d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
-						nsim(`nsim') `nointeraction' `cxd' `cxm'
+		bootstrap, `options' `svy' noheader notable: ///
+			mnesimbs `varlist' if `touse', ///
+				dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
+				d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
+				nsim(`nsim') `nointeraction' `cxd' `cxm'
 
-		estat bootstrap, p noheader
+		if (e(prefix) == "svy") {
+			bstat, noheader
+		} 
+		else {
+			estat bootstrap, p noheader
+		}
 		
 	}
 
@@ -62,8 +76,8 @@ program define mnesim, eclass
 		di "{it:Waiting for the child processes to finish...}"
 		di ""
 		
-		qui parallel bs, expr(ATE=r(ate) MNDE=r(mnde) MNIE=r(mnie)) `options' : ///
-			mnesimbs `varlist' if `touse' [`weight' `exp'], ///
+		qui parallel bs, `options' `svy' : ///
+			mnesimbs `varlist' if `touse', ///
 				dvar(`dvar') mvars(`mvars') cvars(`cvars') ///
 				d(`d') dstar(`dstar') mregs(`mregs') yreg(`yreg') ///
 				nsim(`nsim') `nointeraction' `cxd' `cxm'
