@@ -428,6 +428,12 @@ program define simcdebs, eclass properties(svyb)
 			}
 		}			
 			
+		if ("`lxm'"!="") {	
+			foreach l in `lvars' {
+				replace `mvarX`l'' = `mvar' * `l' if `touse'
+			}
+		}
+		
 		if ("`yreg'"=="regress") {
 			qui predict yhat_Ydstarm_r001 if `touse'
 			qui gen Ydstarm_r001_`i'=rnormal(yhat_Ydstarm_r001,e(rmse)) if `touse'
