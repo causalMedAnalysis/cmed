@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.5.0  18dec2025}{...}
+{* *! version 0.5.1  04jan2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -21,12 +21,12 @@ Basic syntax
 
 {p 8 16 2}
 {cmd:cmed} 
-{it:subcommand}
-{it:depvar}
-{it:mvar}
-[{it:lvar}]
-{it:dvar}
-[{cmd:=} {it:cvars}]
+{it:{help cmed##subcommands:subcommand}}
+{it:{help cmed##vars:depvar}}
+{it:{help cmed##vars:mvar}}
+[{it:{help cmed##vars:lvar}}]
+{it:{help cmed##vars:dvar}}
+[{cmd:=} {it:{help cmed##vars:cvars}}]
 {ifin}
 [{cmd:,} {it:options}]
 
@@ -35,17 +35,18 @@ Full syntax
 
 {p 8 16 2}
 {cmd:cmed} 
-{it:subcommand}
-{cmd:(}{it:yspec}{cmd:)}
-{cmd:(}{it:mspec}{cmd:)}
-[{cmd:(}{it:lspec}{cmd:)}]
-{cmd:(}{it:dspec}{cmd:)}
-[{cmd:=} {it:cvars}]
+{it:{help cmed##subcommands:subcommand}}
+{cmd:(}{it:{help cmed##varspec:yspec}}{cmd:)}
+{cmd:(}{it:{help cmed##varspec:mspec}}{cmd:)}
+[{cmd:(}{it:{help cmed##varspec:lspec}}{cmd:)}]
+{cmd:(}{it:{help cmed##varspec:dspec}}{cmd:)}
+[{cmd:=} {it:{help varlist:cvars}}]
 {ifin}
 [{cmd:,} {it:options}]
 
 
 {...}
+{marker subcommands}{...}
 {synoptset 16}{...}
 {synopthdr:subcommand}
 {synoptline}
@@ -73,36 +74,40 @@ models, effects estimated via simulation
 {synoptline}
 
 {...}
+{marker vars}{...}
 {phang}
-{it:depvar} is the outcome of interest.
+{it:{help depvar}} is the outcome of interest.
 {p_end}
 {phang}
-{it:mvar} is a mediator of interest. 
+{it:{help varname:mvar}} is a mediator of interest. 
 Multiple mediators must be enclosed in parentheses.
 {p_end}
 {phang}
-{it:lvar} is a post-treatment confounder (exposure-induced confounder).
+{it:{help varname:lvar}} is a post-treatment confounder (exposure-induced confounder).
 Multiple post-treatment confounders must be enclosed in parentheses.
 {p_end}
 {phang}
-{it:dvar} is the treatment (exposure).
+{it:{help varname:dvar}} is the treatment (exposure).
 {p_end}
 {phang}
-{it:cvars} are baseline confounders (pre-treatment confounders).
+{it:{help varlist:cvars}} are baseline confounders (pre-treatment confounders).
 {p_end}
 
 {...}
+{marker varspec}{...}
 {phang}
-{it:yspec} is [{cmd:(}{it:ymodel}{cmd:)}] {depvar}
+{it:yspec} is [{cmd:(}{it:ymodel}{cmd:)}] {it:{help depvar}}
 {p_end}
 {phang}
-{it:mspec} is [{cmd:(}{it:mmodel}{cmd:)}] {varlist} [{cmd:(}{it:mmodel}{cmd:)} {varlist} {it:...}]
+{it:mspec} is [{cmd:(}{it:mmodel}{cmd:)}] {it:{help varlist:mvars}} 
+[{cmd:(}{it:mmodel}{cmd:)} {it:{help varlist:mvars}} {it:...}]
 {p_end}
 {phang}
-{it:lspec} is [{cmd:(}{it:lmodel}{cmd:)}] {varlist} [{cmd:(}{it:lmodel}{cmd:)} {varlist} {it:...}]
+{it:lspec} is [{cmd:(}{it:lmodel}{cmd:)}] {it:{help varlist:lvars}} 
+[{cmd:(}{it:lmodel}{cmd:)} {it:{help varlist:lvars}} {it:...}]
 {p_end}
 {phang}
-{it:dspec} is [{cmd:(}{cmd:logit}{cmd:)}] {varname}
+{it:dspec} is [{cmd:(}{cmd:logit}{cmd:)}] {it:{help varname:dvar}}
 {p_end}
 
 {...}
@@ -114,7 +119,7 @@ and one of
 {cmd:logit}, 
 {cmd:poission}, 
 or
-{cmd:ologit}
+{cmd:ologit}.
 {p_end}
 
 

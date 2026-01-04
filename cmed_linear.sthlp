@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.7.0  18dec2025}{...}
+{* *! version 0.8.0  04jan2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -111,7 +111,7 @@ is the outcome of interest.
 {phang}
 {it:mvar} 
 is a mediator of interest.
-Only one mediator is allowed for estimating interventional and 
+Only one mediator is allowed when estimating interventional and 
 controlled direct effects. 
 {p_end}
 {...}
@@ -186,6 +186,12 @@ when {opt parallel} is specified, supply one seed per processor
 requires community-contributed {cmd:parallel} 
 from {browse "https://github.com/gvegayon/parallel":GitHub} 
 {p_end}
+{...}
+{synopt:{opt svy}}perform nonparametric bootstrap 
+using adjusted bootstrap replicate weights; 
+see {helpb svy_bootstrap:[SVY] svy bootstrap}
+{p_end}
+{...}
 {synopt:{it:{help bootstrap##options:bootstrap_options}}}options are passed through 
 to {helpb bootstrap}
 {p_end}
@@ -225,7 +231,7 @@ Standard errors and confidence intervals are obtained
 using the nonparametric bootstrap; see {manlink R bootstrap}. 
 
 {pstd}
-In the simplest case with one mediator and no post-treatement confounders, 
+In the simplest case with one mediator and no post-treatment confounders, 
 {cmd:cmed linear} estimates natural direct and indirect effects,
 along with the total effect, by fitting two models:
 
@@ -253,7 +259,7 @@ are correctly specified and the following assumptions hold:
 ({bf:A3}) There are no unobserved treatment-mediator confounders.
 {p_end}
 {phang2}
-({bf:A4}) There are no post-treatement confounders of the mediator-outcome
+({bf:A4}) There are no post-treatment confounders of the mediator-outcome
 relationship.
 {p_end}
 
@@ -348,14 +354,15 @@ evaluated for all estimated effects.
 {phang}
 {opt nointeraction}
 excludes any two-way interaction(s) between the mediator(s) and treatment 
-in the outcome model. 
+from the outcome model. 
 By default, all interactions between the mediator(s) and treatment are included.
 
 {phang}
 {opt cxd}
 includes all two-way interactions between the baseline confounders 
 (if specified) and treatment in models for the mediator(s), outcome, and 
-post-treatment confounders (if specified). These interactions are constructed 
+post-treatment confounders (if specified). 
+Interactions are constructed 
 after mean-centering the baseline confounders.
 
 {phang}
@@ -395,7 +402,7 @@ When option {opt parallel} is specified,
 option {opt seed(numlist)} is required for reproducibility. 
 Specify as many seeds as there are processors. 
 Using the command {cmd:set seed} alone is insufficient 
-to reproduce results obtained with {opt parallel}.
+to reproduce results obtained with {opt parallel}. 
 
 {phang}
 {opt parallel}
@@ -405,6 +412,15 @@ This option requires community-contributed {cmd:parallel}
 from {browse "https://github.com/gvegayon/parallel":GitHub}. 
 Parallelization decreases the wall time needed to obtain inferential statistics 
 when using a multicore system. 
+{opt parallel} may not be combined with {opt svy}.
+
+{phang}
+{opt svy}
+performs nonparametric bootstrap estimation 
+using adjusted bootstrap replicate weights. 
+This option requires that the data are {help svyset}  
+with option {opt bsrweight()}; see {manlink SVY svy bootstrap}.
+{opt svy} may not be combined with {opt parallel}.
 
 {phang}
 {it:{help bootstrap##options:bootstrap_options}} 
@@ -438,7 +454,7 @@ Setup
 {pstd}
 Estimate natural direct and indirect effects
 of {cmd:att22} on {cmd:cesd_age40} through {cmd:ever_unemp_age3539},
-adjusting for pre-treament confounders 
+adjusting for pre-treatment confounders 
 {p_end}
 {phang2}
 {cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize}
@@ -450,6 +466,13 @@ to explicitly group the outcome, mediator, and treatment variables.
 {p_end}
 {phang2}
 {cmd:. cmed linear (cesd_age40) (ever_unemp_age3539) (att22) = female black hispan famsize}
+{p_end}
+
+{pstd}
+Same as above
+{p_end}
+{phang2}
+{cmd:. cmed linear ((regress) cesd_age40) ((regress) ever_unemp_age3539) (att22) = female black hispan famsize}
 {p_end}
 
 {pstd}
@@ -480,15 +503,15 @@ treating {cmd:ever_unemp_age3539} as a post-treatment confounder
 
 {pstd}
 Estimate interventional effects through {cmd:log_faminc_adj_age3539}, 
-treating {cmd:cesd_1994} and {cmd:ever_unemp_age3539} as post-treatment confounders;
+treating {cmd:ever_unemp_age3539} and {cmd:cesd_1994} as post-treatment confounders;
 parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed linear cesd_age40 log_faminc_adj_age3539 (cesd_1994 ever_unemp_age3539) att22 = female black hispan famsize}
+{cmd:. cmed linear cesd_age40 log_faminc_adj_age3539 (ever_unemp_age3539 cesd_1994) att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate controlled direct effects of {cmd:att22}, controlling for {cmd:ever_unemp_age3539}
+Estimate controlled direct effects of {cmd:att22}, controlling {cmd:ever_unemp_age3539}
 {p_end}
 {phang2}
 {cmd:. cmed linear cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, mvalue(1)}

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.2.0  6dec2025}{...}
+{* *! version 0.3.0  04jan2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -85,13 +85,16 @@ Multiple mediators are allowed.
 {...}
 {phang}
 {it:dvar} 
-is a binary treatement (exposure). 
+is a binary treatment (exposure). 
 {p_end}
 {...}
 {phang}
 {it:cvars}
 are baseline confounders (pre-treatment confounders).
 {p_end}
+
+{...}
+{marker method}{...}
 {phang}
 {it:method}
 is one of {opt rforest} or {opt lasso}
@@ -102,7 +105,7 @@ is one of {opt rforest} or {opt lasso}
 {*  ___________________________________________________  Options short }{...}
 {...}
 {...}
-{synoptset 23 tabbed}{...}
+{synoptset 36 tabbed}{...}
 {synopthdr:options}
 {synoptline}
 {...}
@@ -110,34 +113,33 @@ is one of {opt rforest} or {opt lasso}
 {synopt:{opt paths:pecific}}estimate path-specific effects
 {p_end}
 {...}
-{synopt:{opt d(#)}}specify reference level of treatment; default is 1
+{synopt:{opt d(#)}}specify alternative level of {it:dvar}; 
+default is 1
 {p_end}
 {...}
-{synopt:{opt dstar(#)}}specify alternative level of treatment; default is 0
+{synopt:{opt dstar(#)}}specify reference level of {it:dvar}; 
+default is 0
 {p_end}
 
 {syntab:Models}
-{synopt:{opt method(method)}}use machine learning algorithm {it:method} 
-to estimate the nuisance terms
+{synopt:{cmd:method(}{it:method}[{cmd:,} {it:method_options}]{cmd:)}}use 
+machine learning method {it:method} to estimate the nuisance terms
 {p_end}
 {...}
-{synopt:{opt rmpw}}use an estimator that involves 
-ratio-of-mediator-probability weighting
+{synopt:{cmd:censor(}{it:#1} {it:#2}{cmd:)}}censor the inverse probability 
+and/or ratio-of-mediator-probability weights at the {it:#1}th and {it:#2}th percentiles
 {p_end}
 {...}
-{synopt:{opt censor(numlist)}}censor the inverse probability and/or 
-ratio-of-mediator-probability weights at the percentiles supplied in numlist
+{synopt:{opt rmpw}}use an estimator that involves ratio-of-mediator-probability weighting
 {p_end}
 {...}
 {synopt:{opt xfits(#)}}specify the number of folds for repeated cross-fitting;
 default is 5.
 {p_end}
 {...}
-{synopt:{opt seed(#)}}specify a seed to ensure reprodicibility.
+{synopt:{opt seed(#)}}set random number seed to {it:#}
 {p_end}
-
 {synoptline}
-
 
 
 {...}
@@ -149,9 +151,10 @@ default is 5.
 
 {pstd}
 {cmd:cmed dml} estimates the natural direct and indirect effects
-of a binary treatment (exposure) on an outcome using de-biased machine
-learning with either random forests or least absolute shrinkage and selection
-operator (LASSO) models. The command is based on the same multiply robust 
+of a binary treatment (exposure) on an outcome 
+using de-biased machine learning with either random forests 
+or least absolute shrinkage and selection operator (LASSO) models. 
+The command is based on the same multiply robust 
 estimators employed by {helpb cmed mr}, but rather than predict the 
 nuisance terms in these estimators from parametric models, like linear and 
 logistic regressions, it predicts them using machine learning models instead.
@@ -222,8 +225,7 @@ The identification assumptions stipulate that the following conditions hold:
 ({bf:A3}) There are no unobserved treatment–mediator confounders.
 {p_end}
 {phang2}
-({bf:A4}) There are no exposure-induced confounders of the mediator–outcome
-relationship.
+({bf:A4}) There are no post-treatment confounders of the mediator-outcome relationship.
 {p_end}
 
 {pstd}
@@ -270,12 +272,12 @@ this case have a causal interpretation provided that assumptions
 at a rate faster than {it:n} to the one-fourth power.
 
 {pstd}
-See {help cmed_dml##references:Wodtke and Zhou (2026)} for a detailed
-discussion.
-
-{pstd}
 {cmd:cmed dml} does not support post-treatment confounders or estimation
 of interventional or controlled direct effects at this time.
+
+{pstd}
+See {help cmed_dml##references:Wodtke and Zhou (2026)} for a detailed
+discussion.
 
 
 {...}
@@ -290,53 +292,67 @@ of interventional or controlled direct effects at this time.
 {marker pathspecific}{...}
 {phang}
 {opt pathspecific}
-estimates path-specific effects. When using this option, the mediators must be 
-specified in their causal order, where the first mediator listed in the command 
-syntax causally precedes the second mediator, which in turn precedes the third, 
-and so on for all the mediators supplied. The path-specific effects will then 
-capture the unique explanatory role of each mediator, net of the other 
-mediators that precede it in causal order. 
+estimates path-specific effects of multiple mediators. 
+The mediators must be specified in their causal order, 
+where the first mediator causally precedes the second mediator, 
+which in turn precedes the third, and so on 
+for all mediators. 
+The path-specific effects will then capture the unique explanatory role 
+of each mediator, net of the other mediators that precede it in causal order. 
 
 {phang}
 {opt d(#)}
-allows the user to specify the reference level of treatment. The default is 1.
+specifies the alternative level of {it:dvar}. 
+The default alternative level is 1.
+The difference, {opt d()} - {opt dstar()} defines the treatment contrast 
+evaluated for all estimated effects.
 
 {phang}
 {opt dstar(#)}
-allows the user to specify the alternative level of treatment. The default 
-is 0. d - dstar defines the treatment contrast evaluated for all estimated 
-effects. Only binary treatments are allowed with {cmd:cmed dml}.
+specifies the reference or control level of {it:dvar}. 
+The default reference level is 0.
+The difference, {opt d()} - {opt dstar()} defines the treatment contrast 
+evaluated for all estimated effects.
 
 {dlgtab:Models}
 
 {phang}
-{opt method(method)}
-specifies the type of machine learning model used to estimate the 
-nuisance terms; {opt method(rforest)} implements random forests 
-trained with the {helpb rforest} module, while {opt method(lasso)} uses 
-LASSO models trained with the {helpb lassopack} module. The random forests
-are autmatically trained with the default settings of {cmd:rforest}, but any 
-options for this command can be passed through. The LASSO models 
-automatically include all two-way interactions and their regularization 
-parameter is optimized using a grid search to find the value that minimizes 
-the Akaike information criterion. Any options for the {cmd:lasso2} command
-can be passed through.
+{cmd:method(}{it:method}[{cmd:,} {it:method_options}]{cmd:)}
+specifies the type of machine learning model 
+used to estimate the nuisance terms. 
+The following {it:method}s are supported:
+
+{p2colset 12 24 24 4}{...}
+{p2col:{cmd:rforest}}uses random forest algorithms; 
+requires {helpb rforest} from {help ssc:SSC}
+{p_end}
+{p2col:{cmd:lasso}}uses lasso-based algorithms; 
+requires {helpb lasso2} from the {cmd:lassopack} package from {help ssc:SSC}
+
+{phang2}
+The lasso models include all two-way interactions 
+and their regularization parameter is optimized using a grid search 
+to find the value that minimizes the Akaike information criterion. 
+
+{phang2}
+Both {cmd:rforest} and {cmd:lasso} use the default settings 
+of their respective underlying commands, 
+but any options may be passed through as {it:method_options}. 
+
+{phang}
+{cmd:censor(}{it:#1} {it:#2}{cmd:)}
+censors the inverse probability and/or ratio-of-mediator probability weights 
+at the {it:#1}th and {it:#2}th percentiles, 
+bottom-coding weights lower than the {it:#1}th percentile 
+and top-coding weights larger than {it:#2}th percentile. 
 
 {phang}
 {opt rmpw}
-is only allowed with a single binary treatment. This option implements an 
-alternative estimator that involves ratio-of-mediator-probability weighting 
-and a machine learning model for the mediator.
-
-{phang}
-{opt censor(numlist)}
-censors the inverse probability and/or ratio-of-mediator probability weights
-required for de-biased machine learning estimation of mediation effects at the 
-percentiles supplied in numlist. For example, {opt censor(1 99)} censors 
-the weights at their 1st and 99th percentiles -- that is, it bottom codes 
-very small weights at the 1st percentile and top codes very large weights at 
-the 99th percentile. Censoring the weights a tiny amount often improves the 
-stability of estimates without compromising their accuracy.
+implements an estimator that involves 
+ratio-of-mediator-probability weighting 
+and a machine learning model for the mediator. 
+{opt rmpw}
+is only allowed with a single binary mediator. 
 
 {phang}
 {opt xfits(#)}
@@ -345,14 +361,11 @@ The default is 5.
 
 {phang}
 {opt seed(#)}
-specifies a seed to ensure reprodicibility. The default is 
+specifies a seed to ensure reproducibility. The default is 
 12345. This seed is passed to both the cross-fitting algorithm to ensure 
 reproducibility of the folds and to the random forest algorithm, 
 if {opt method(rforest)} is specified, to ensure the reproducibility of 
 its estimates as well.
-
-
-{synoptline}
 
 
 {...}
@@ -366,43 +379,53 @@ Setup
 {cmd:. use nlsy79.dta} 
 {p_end}
 
-{phang2}
-{cmd:. global cvars female black hispan paredu parprof parinc_prank famsize afqt3} 
+{pstd}
+Estimate natural direct and indirect effects
+of {cmd:att22} on {cmd:cesd_age40} through {cmd:ever_unemp_age3539},
+adjusting for pre-treatment confounders 
+using random forest
 {p_end}
 {phang2}
-{cmd:. global dvar att22} 
-{p_end}
-{phang2}
-{cmd:. global mvar1 ever_unemp_age3539} 
-{p_end}
-{phang2}
-{cmd:. global mvar2 log_faminc_adj_age3539}
-{p_end}
-{phang2}
-{cmd:. global depvar cesd_age40} 
+{cmd:. cmed dml cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, method(rforest)}
 {p_end}
 
 {pstd}
-Estimate natural direct and indirect effects through mvar1, using the LASSO
-with default settings
+Same as above
 {p_end}
 {phang2}
-{cmd:. cmed dml $depvar $mvar1 $dvar = $cvars, method(lasso)}
+{cmd:. cmed dml (cesd_age40) (ever_unemp_age3539) (att22) = female black hispan famsize, method(rforest)}
 {p_end}
 
 {pstd}
-Estimate natural effects, using random forests with default settings
+Estimate natural direct and indirect effects using lasso
 {p_end}
 {phang2}
-{cmd:. cmed dml $depvar $mvar1 $dvar = $cvars, method(rforest)}
+{cmd:. cmed dml cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, method(lasso)}
 {p_end}
 
 {pstd}
-Estimate natural effects, using random forests with 200 trees and a minimum 
-leaf size of 10
+Estimate multivariate natural effects through 
+{cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539} together;
+parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed dml $depvar $mvar1 $dvar = $cvars, method(rforest, iter(200) lsize(10))}
+{cmd:. cmed dml cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize, method(rforest)}
+{p_end}
+
+{pstd}
+Estimate path-specific effects through 
+{cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539};
+parentheses required
+{p_end}
+{phang2}
+{cmd:. cmed dml cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize, method(rforest) pathspecific}
+{p_end}
+
+{pstd}
+Estimate natural effects, using a robust estimator with ratio-of-mediator-probability weights
+{p_end}
+{phang2}
+{cmd:. cmed dml cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, method(lasso) rmpw}
 {p_end}
 
 {pstd}
@@ -410,28 +433,15 @@ Estimate natural effects, censoring the inverse probability weights in the
 multiply robust estimator
 {p_end}
 {phang2}
-{cmd:. cmed dml $depvar $mvar1 $dvar = $cvars, method(lasso) censor(1 99)}
+{cmd:. cmed dml cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, method(lasso) censor(1 99)}
 {p_end}
 
 {pstd}
-Estimate natural effects, using a robust estimator with ratio-of-mediator-probability weights
+Estimate natural effects, using random forest with 200 trees and a minimum 
+leaf size of 10
 {p_end}
 {phang2}
-{cmd:. cmed dml $depvar $mvar1 $dvar = $cvars, method(lasso) rmpw}
-{p_end}
-
-{pstd}
-Estimate multivariate natural effects through mvar1 and mvar2 together
-{p_end}
-{phang2}
-{cmd:. cmed dml $depvar ($mvar1 $mvar2) $dvar = $cvars, method(lasso)}
-{p_end}
-
-{pstd}
-Estimate path-specific effects through mvar1 and mvar2
-{p_end}
-{phang2}
-{cmd:. cmed dml $depvar ($mvar1 $mvar2) $dvar = $cvars, method(lasso) paths}
+{cmd:. cmed dml cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, method(rforest, iterations(200) lsize(10))}
 {p_end}
 
 
@@ -470,5 +480,6 @@ Email: wodtke@uchicago.edu
 
 {pstd}
 Daniel Klein{break}
-YOUR AFFILIATION{break}
-Email: YOUR INSTITUTIONAL EMAIL
+German Centre for Higher Education Research and Science Studies{break}
+Email: klein@dzhw.eu
+

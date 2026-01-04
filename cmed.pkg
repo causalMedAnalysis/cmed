@@ -12,12 +12,12 @@ d KW: confounding
 d
 d Requires: Stata version 16.1
 d
-d Distribution-Date: 20251123
+d Distribution-Date: 20260104
 d
 d Author: Geoff Wodtke, University of Chicago
 d Support: email wodtke@@uchicago.edu
 d Author: Daniel Klein
-d Support: email klein.daniel.81@@gmail.com
+d Support: email klein@@dzhw.eu
 d
 f cmed.ado
 f cmed.sthlp
@@ -66,6 +66,7 @@ f mrmed.ado
 f mrmne.ado
 f mrpath.ado
 f mrpathbs.ado
+F nlsy79
 f pathimp.ado
 f pathimpbs.ado
 f pathsim.ado

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.5.0  04dec2025}{...}
+{* *! version 0.6.0  04jan2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -110,20 +110,20 @@ is the outcome of interest.
 {...}
 {phang}
 {it:mvar} 
-is a mediator of interest. Only one mediator is allowed for estimating 
+is a mediator of interest. Only one mediator is allowed when estimating 
 interventional and controlled direct effects. 
 {p_end}
 {...}
 {phang}
 {it:lvar}
 is a post-treatment confounder (exposure-induced confounder).  
-Only one binary or ordinal {it:lvar} is allowed for estimating 
+Only one binary or ordinal {it:lvar} is allowed when estimating 
 interventional effects.
 {p_end}
 {...}
 {phang}
 {it:dvar} 
-is a binary treatement (exposure).
+is a binary treatment (exposure).
 {p_end}
 {...}
 {phang}
@@ -145,34 +145,26 @@ are baseline confounders (pre-treatment confounders).
 {*  ___________________________________________________  Options short }{...}
 {...}
 {...}
-{synoptset 23 tabbed}{...}
+{synoptset 24 tabbed}{...}
 {synopthdr:options}
 {synoptline}
 {...}
 {syntab:Effects}
-{synopt:{opt paths:pecific}}
-estimate path-specific effects
+{synopt:{opt paths:pecific}}estimate path-specific effects
 {p_end}
 {...}
-{synopt:{opt m:value(#)}}
-estimate controlled direct effects at {it:mvar}={it:#}
+{synopt:{opt m:value(#)}}estimate controlled direct effect at {it:mvar}={it:#}
 {p_end}
 {...}
-{synopt:{opt d(#)}}
-specify reference level of treatment; 
-default is 1
+{synopt:{opt d(#)}}specify alternative level of {it:dvar}; 
+default is 1.
 {p_end}
 {...}
-{synopt:{opt dstar(#)}}
-specify alternative level of treatment; 
-default is 0
+{synopt:{opt dstar(#)}}specify reference level of {it:dvar}; 
+default is 0.
 {p_end}
 
 {syntab:Models}
-{synopt:{opt censor(numlist)}}
-censor the inverse probability weights at the percentiles supplied in numlist
-{p_end}
-{...}
 {synopt:{opt nointer:action}}
 do not include interaction between mediator and treatment 
 when estimating controlled direct effects
@@ -189,21 +181,42 @@ and treatment in mediator model when estimating interventional or
 controlled direct effects
 {p_end}
 {...}
-{synopt:{opt detail}}
-print the fitted models used to construct the inverse probability weights 
+{synopt:{cmd:censor(}{it:#1} {it:#2}{cmd:)}}censor inverse probability weights 
+at the {it:#1}th and {it:#2}th percentiles
 {p_end}
 
 {syntab:Bootstrap}
-{synopt:{it:...}}
-any options are passed through
+{synopt:{opt r:eps(#)}}perform {it:#} bootstrap replications; 
+default is {cmd:reps(50)}
 {p_end}
 {...}
-{synopt:{opt parallel}}
-parallelize the bootstrap using {help parallel bs} 
-(requires the {cmd:parallel} module)
+{synopt:{cmd:seed(}{it:#}{c |}{it:{help numlist}}{cmd:)}}set random number seed to {it:#}; 
+when {opt parallel} is specified, supply one seed per processor 
+{p_end}
+{...}
+{synopt:{opt parallel}}parallelize the bootstrap using {helpb parallel bs};
+requires community-contributed {cmd:parallel} 
+from {browse "https://github.com/gvegayon/parallel":GitHub} 
+{p_end}
+{...}
+{synopt:{opt svy}}perform nonparametric bootstrap 
+using adjusted bootstrap replicate weights; 
+see {helpb svy_bootstrap:[SVY] svy bootstrap}
+{p_end}
+{...}
+{synopt:{it:{help bootstrap##options:bootstrap_options}}}options are passed through 
+to {helpb bootstrap}
 {p_end}
 
+{syntab:Reporting}
+{synopt:{opt l:evel(#)}}set confidence level; 
+default is {cmd:level(}{cmd:{ccl level})}
+{p_end}
+{...}
+{synopt:{opt detail}}print fitted models used to construct inverse probability weights 
+{p_end}
 {synoptline}
+{pstd}
 
 
 {...}
@@ -228,7 +241,7 @@ direct effects with a single mediator. Standard errors and confidence intervals
 are obtained using the nonparametric {help bootstrap}. 
 
 {pstd}
-In the simplest case with one mediator and no post-treatement confounders, 
+In the simplest case with one mediator and no post-treatment confounders, 
 {cmd:cmed ipw} estimates the natural direct and indirect effects,
 along with the total effect, of a binary treatment by fitting two models:
 
@@ -302,7 +315,7 @@ models are correctly specified and assumptions {bf:A1}-{bf:A3} hold.
 
 {pstd}
 With a single mediator, option {helpb cmed_linear##mvalue:mvalue} can 
-be used for estimating controlled direct effects. The weights used to estimate
+be used to estimate controlled direct effects. The weights used to estimate
 these effects are constructed from Models 1b and 3b above. Analyses of
 controlled direct effects may include any number and type of post-treatment 
 confounders, all of which are included as predictors in the model for the 
@@ -330,40 +343,36 @@ discussion.
 {marker pathspecific}{...}
 {phang}
 {opt pathspecific}
-estimates path-specific effects. When using this option, the mediators must be 
-specified in their causal order, where the first mediator listed in the command 
-syntax causally precedes the second mediator, which in turn precedes the third, 
-and so on for all the mediators supplied. The path-specific effects will then 
-capture the unique explanatory role of each mediator, net of the other mediators 
-that precede it in causal order. 
+estimates path-specific effects of multiple mediators. 
+The mediators must be specified in their causal order, 
+where the first mediator causally precedes the second mediator, 
+which in turn precedes the third, and so on 
+for all mediators. 
+The path-specific effects will then capture the unique explanatory role 
+of each mediator, net of the other mediators that precede it in causal order. 
 
 {phang}
 {opt mvalue(#)}
-estimates controlled direct effects at {it:mvar}={it:#}. This option may only 
-be specified with a single mediator. Controlled direct effects capture the 
-influence of the treatment on the outcome if the mediator for each observation 
-were set at a single specific value.
+estimates controlled direct effects at {it:mvar}={it:#}. 
+Controlled direct effects capture the influence of the treatment on the outcome 
+if the mediator for each observation were set at a single specific value. 
+This option may only be specified with a single mediator. 
 
 {phang}
 {opt d(#)}
-allows the user to specify the reference level of treatment. The default is 1.
+specifies the alternative level of {it:dvar}. 
+The default alternative level is 1.
+The difference, {opt d()} - {opt dstar()}, defines the treatment contrast 
+evaluated for all estimated effects.
 
 {phang}
 {opt dstar(#)}
-allows the user to specify the alternative level of treatment. The default is 0.
-d - dstar defines the treatment contrast evaluated for all estimated effects.
-Only binary treatments are allowed with {cmd:cmed ipw}.
+specifies the reference or control level of {it:dvar}. 
+The default reference level is 0.
+The difference, {opt d()} - {opt dstar()}, defines the treatment contrast 
+evaluated for all estimated effects.
 
 {dlgtab:Models}
-
-{phang}
-{opt censor(numlist)}
-censors the inverse probability weights at the percentiles supplied in numlist. 
-For example, {opt censor(1 99)} censors the weights at their 1st and 99th 
-percentiles -- that is, it bottom codes very small weights at the 1st percentile 
-and top codes very large weights at the 99th percentile. Censoring the weights
-a tiny amount often improves the stability of estimates without compromising
-their accuracy.
 
 {phang}
 {opt nointeraction}
@@ -388,26 +397,67 @@ and treatment in the model for the mediator when estimating interventional
 or controlled direct effects.
 
 {phang}
-{opt detail}
-prints output from each fitted model used to construct the inverse probability
-weights. When this option is omitted, only the estimated causal effects are 
-reported.
+{cmd:censor(}{it:#1} {it:#2}{cmd:)}
+censors the inverse probability weights 
+at the {it:#1}th and {it:#2}th percentiles, 
+bottom-coding weights lower than the {it:#1}th percentile 
+and top-coding weights larger than {it:#2}th percentile. 
 
 {dlgtab:Bootstrap}
 
 {phang}
-all {help bootstrap} options are available and passed through.
+{opt reps(#)}
+specifies the number of bootstrap replications to be performed.  
+The default is 50.  
+See {helpb bootstrap##options:bootstrap}. 
+
+{phang}
+{cmd:seed(}{it:#}{c |}{it:{help numlist}}{cmd:)}
+sets the random-number seed(s).  
+
+{phang2}
+{bf:Note}:
+When option {opt parallel} is specified, 
+option {opt seed(numlist)} is required for reproducibility. 
+Specify as many seeds as there are processors. 
+Using the command {cmd:set seed} alone is insufficient 
+to reproduce results obtained with {opt parallel}. 
 
 {phang}
 {opt parallel}
 implements a parallelized version of the bootstrap procedure using 
-{help parallel bs} with default settings. This option requires the 
-{cmd:parallel} module. Parallelization can be used to decrease the wall time 
-needed to obtain inferential statistics when using a multicore system. 
-The bootstrap procedure will not be parallelized when this option 
-is omitted. 
+{helpb parallel bs} with default settings. 
+This option requires community-contributed {cmd:parallel} 
+from {browse "https://github.com/gvegayon/parallel":GitHub}. 
+Parallelization decreases the wall time needed to obtain inferential statistics 
+when using a multicore system. 
+{opt parallel} may not be combined with {opt svy}.
 
-{synoptline}
+{phang}
+{opt svy}
+performs nonparametric bootstrap estimation 
+using adjusted bootstrap replicate weights. 
+This option requires that the data are {help svyset}  
+with option {opt bsrweight()}; see {manlink SVY svy bootstrap}.
+{opt svy} may not be combined with {opt parallel}.
+
+{phang}
+{it:{help bootstrap##options:bootstrap_options}} 
+are any additional options; 
+these options are passed through to {helpb bootstrap}.
+
+{dlgtab:Reporting}
+
+{phang}
+{opt level(#)}
+specifies the confidence level, as a percentage, for confidence intervals.  
+The default is {cmd:level(}{cmd:{ccl level})} or as set by {helpb set level}.
+
+{phang}
+{opt detail}
+prints output from each fitted model 
+used to construct the inverse probability weights.
+By default, only the estimated causal effects are reported.
 
 
 {...}
@@ -421,98 +471,90 @@ Setup
 {cmd:. use nlsy79.dta} 
 {p_end}
 
-{phang2}
-{cmd:. global cvars female black hispan paredu parprof parinc_prank famsize afqt3} 
+{pstd}
+Estimate natural direct and indirect effects
+of {cmd:att22} on {cmd:cesd_age40} through {cmd:ever_unemp_age3539},
+adjusting for pre-treatment confounders 
 {p_end}
 {phang2}
-{cmd:. global dvar att22} 
-{p_end}
-{phang2}
-{cmd:. global mvar1 ever_unemp_age3539} 
-{p_end}
-{phang2}
-{cmd:. global mvar2 log_faminc_adj_age3539}
-{p_end}
-{phang2}
-{cmd:. global depvar cesd_age40} 
+{cmd:. cmed ipw cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate natural direct and indirect effects through mvar1
+Same as above
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar $mvar1 $dvar = $cvars}
+{cmd:. cmed ipw (cesd_age40) (ever_unemp_age3539) (att22) = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate natural direct and indirect effects through mvar1, censoring the 
-weights
+Same as above
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar $mvar1 $dvar = $cvars, censor(1 99)}
+{cmd:. cmed ipw (cesd_age40) (ever_unemp_age3539) ((logit) att22) = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate controlled direct effects, controlling mvar1
+Same as above, but censor inverse probability weights 
+at the 1st and 99th percentile
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar ((logit) $mvar1) $dvar = $cvars, censor(1 99) m(1)}
-{p_end}
-{phang2}
-{cmd:. cmed ipw $depvar ((logit) $mvar1) $dvar = $cvars, censor(1 99) m(0)}
+{cmd:. cmed ipw cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, censor(1 99)}
 {p_end}
 
 {pstd}
-Estimate interventional effects through mvar2, adjusting for mvar1 as a 
-post-treatment confounder
+Estimate multivariate natural effects through 
+{cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539} together;
+parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar ((regress) $mvar2) ((logit) $mvar1) $dvar = $cvars, 
-censor(1 99)}
+{cmd:. cmed ipw cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate controlled direct effects, controlling mvar2 and adjusting for mvar1 
-as a post-treatment confounder
+Estimate path-specific effects through 
+{cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539};
+parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar ((regress) $mvar2) ($mvar1) $dvar = $cvars, censor(1 99) m(10.0)}
-{p_end}
-{phang2}
-{cmd:. cmed ipw $depvar ((regress) $mvar2) ($mvar1) $dvar = $cvars, censor(1 99) m(10.5)}
-{p_end}
-{phang2}
-{cmd:. cmed ipw $depvar ((regress) $mvar2) ($mvar1) $dvar = $cvars, censor(1 99) m(11.0)}
+{cmd:. cmed ipw cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize, pathspecific}
 {p_end}
 
 {pstd}
-Estimate multivariate natural effects through mvar1 and mvar2 together
+Estimate interventional effects through {cmd:log_faminc_adj_age3539}, 
+treating {cmd:ever_unemp_age3539} as a post-treatment confounder
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar ($mvar1 $mvar2) $dvar = $cvars, censor(1 99)}
+{cmd:. cmed ipw cesd_age40 ((regress) log_faminc_adj_age3539) ((logit) ever_unemp_age3539) att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
-Estimate path-specific effects through mvar1 and mvar2
+Estimate controlled direct effects of {cmd:att22}, controlling {cmd:ever_unemp_age3539}
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar ($mvar1 $mvar2) $dvar = $cvars, censor(1 99) paths}
+{cmd:. cmed ipw cesd_age40 ((logit) ever_unemp_age3539) att22 = female black hispan famsize, mvalue(1)}
+{p_end}
+{phang2}
+{cmd:. cmed ipw cesd_age40 ((logit) ever_unemp_age3539) att22 = female black hispan famsize, mvalue(0)}
 {p_end}
 
 {pstd}
-Specify the number of bootstrap replications
+Estimate controlled direct effects of {cmd:att22}, controlling {cmd:log_faminc_adj_age3539} 
+and adjusting for {cmd:ever_unemp_age3539} as a post-treatment confounder
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar ($mvar1 $mvar2) $dvar = $cvars, censor(1 99) paths reps(1000)}
+{cmd:. cmed ipw cesd_age40 ((regress) log_faminc_adj_age3539) (ever_unemp_age3539) att22 = female black hispan famsize, mvalue(10.5)}
+{p_end}
+{phang2}
+{cmd:. cmed ipw cesd_age40 ((regress) log_faminc_adj_age3539) (ever_unemp_age3539) att22 = female black hispan famsize, mvalue(11.0)}
 {p_end}
 
 {pstd}
-Parallelize the bootstrap replications
+Parallelize the bootstrap and increase default number of replications
 {p_end}
 {phang2}
-{cmd:. cmed ipw $depvar ($mvar1 $mvar2) $dvar = $cvars, censor(1 99) paths reps(1000) parallel}
+{cmd:. cmed ipw cesd_age40 ever_unemp_age3539 att22 = female black hispan famsize, reps(1000) parallel}
 {p_end}
-
 
 
 {...}
@@ -545,5 +587,6 @@ Email: wodtke@uchicago.edu
 
 {pstd}
 Daniel Klein{break}
-YOUR AFFILIATION{break}
-Email: YOUR INSTITUTIONAL EMAIL
+German Centre for Higher Education Research and Science Studies{break}
+Email: klein@dzhw.eu
+
