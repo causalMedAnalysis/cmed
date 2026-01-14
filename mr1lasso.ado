@@ -15,7 +15,7 @@ program define mr1lasso, rclass
 		dstar(real) ///
 		[ cvars(varlist numeric) ///
 		xfits(integer 5) ///
-		seed(integer 12345) ///
+		seed(numlist integer max=1) ///
 		censor(numlist min=2 max=2) * ] 
 	
 	qui {
@@ -31,7 +31,10 @@ program define mr1lasso, rclass
 	qui gen `dvar_orig' = `dvar' if `touse'
 	qui gen `mvar_orig' = `mvar' if `touse'
 
-	qui set seed `seed'
+	if ("`seed'" != "") {
+		qui set seed `seed'	
+	}
+	
 	tempvar u kpart
 	qui gen `u' = uniform() if `touse'
 	qui sort `u'
@@ -68,12 +71,19 @@ program define mr1lasso, rclass
 
 	forval k=1/`xfits' {
 		
-		*di "xfit = `k' ..."
-		*di "   Training LASSO logit model for `dvar' given C "
-		qui lassologit `dvar' `cvars' if `kpart'!=`k' & `touse', lic(aic) postres 
-		
 		tempvar	phat_D1_C
-		qui predict `phat_D1_C' if `kpart'==`k' & `touse', pr
+		
+		if ("`cvars'" != "") {
+			*di "xfit = `k' ..."
+			*di "   Training LASSO logit model for `dvar' given C "
+			qui lassologit `dvar' `cvars' if `kpart'!=`k' & `touse', lic(aic) postres 
+			qui predict `phat_D1_C' if `kpart'==`k' & `touse', pr
+		}
+		else {
+			qui sum `dvar' if `kpart'!=`k' & `touse', meanonly
+			qui gen `phat_D1_C' = r(mean) if `kpart'==`k' & `touse'
+		}
+		
 		qui replace `pi`d'_C' = `phat_D1_C'*`d' + (1-`phat_D1_C')*(1-`d') if `kpart'==`k' & `touse'
 		qui replace `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `kpart'==`k' & `touse'
 		

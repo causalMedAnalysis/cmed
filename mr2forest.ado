@@ -4,7 +4,6 @@
 *! version 0.1 
 *!
 
-
 program define mr2forest, rclass
 	
 	version 15	
@@ -15,7 +14,7 @@ program define mr2forest, rclass
 		dstar(real) ///
 		[ cvars(varlist numeric) ///
 		xfits(integer 5) ///
-		seed(integer 12345) ///
+		seed(numlist integer max=1) ///
 		censor(numlist min=2 max=2) * ] 
 	
 	qui {
@@ -30,7 +29,10 @@ program define mr2forest, rclass
 	tempvar dvar_orig 
 	qui gen `dvar_orig' = `dvar'
 	
-	qui set seed `seed'
+	if ("`seed'" != "") {
+		qui set seed `seed'	
+	}
+	
 	tempvar u kpart
 	qui gen `u' = uniform() if `touse'
 	qui sort `u'
@@ -52,19 +54,28 @@ program define mr2forest, rclass
 		
 	forval k=1/`xfits' {
 		
-		*di "xfit = `k' ..."
-		*di "   Training random forest for `dvar' given C"
-		qui rforest `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-			type(class) seed(`seed') `options'
-		
 		tempvar	phat_D0_C phat_D1_C
-		qui predict `phat_D0_C' `phat_D1_C' if `kpart'==`k' & `touse', pr
+		
+		if ("`cvars'" != "") {
+			*di "xfit = `k' ..."
+			*di "   Training random forest for `dvar' given C"
+			qui rforest `dvar' `cvars' if `kpart'!=`k' & `touse', ///
+				type(class) `options'
+		
+			qui predict `phat_D0_C' `phat_D1_C' if `kpart'==`k' & `touse', pr
+		}
+		else {
+			qui sum `dvar' if `kpart'!=`k' & `touse', meanonly
+			qui gen `phat_D1_C' = r(mean) if `kpart'==`k' & `touse'
+			qui gen `phat_D0_C' = 1 - `phat_D1_C' if `kpart'==`k' & `touse'	
+		}
+		
 		qui replace `pi`d'_C' = `phat_D1_C'*`d' + (1-`phat_D1_C')*(1-`d') if `kpart'==`k' & `touse'
 		qui replace `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `kpart'==`k' & `touse'
 		
 		*di "   Training random forest for `dvar' given {C,M}"
 		qui rforest `dvar' `mvars' `cvars' if `kpart'!=`k' & `touse', ///
-			type(class) seed(`seed') `options'
+			type(class) `options'
 		
 		tempvar	phat_D0_CM phat_D1_CM
 		qui predict `phat_D0_CM' `phat_D1_CM' if `kpart'==`k' & `touse', pr
@@ -73,7 +84,7 @@ program define mr2forest, rclass
 		
 		*di "   Training random forest for `yvar' given {C,D,M}"
 		qui rforest `yvar' `dvar' `mvars' `cvars' if `kpart'!=`k' & `touse', ///
-			type(reg) seed(`seed') `options'
+			type(reg) `options'
 
 		qui replace `dvar' = `dstar' if `touse'
 		tempvar xxmu`dstar'_CM
@@ -89,7 +100,7 @@ program define mr2forest, rclass
 		
 		*di "   Training random forest for mu`d'(C,M) given {C,D}"
 		qui rforest `xxmu`d'_CM' `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-			type(reg) seed(`seed') `options'
+			type(reg) `options'
 			
 		qui replace `dvar' = `d' if `touse'
 		tempvar xxnu`d'Ofmu`d'_C
@@ -105,7 +116,7 @@ program define mr2forest, rclass
 
 		*di "   Training random forest for mu`dstar'(C,M) given {C,D}"
 		qui rforest `xxmu`dstar'_CM' `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-			type(reg) seed(`seed') `options'
+			type(reg) `options'
 	
 		qui replace `dvar' = `dstar' if `touse'
 		tempvar xxnu`dstar'Ofmu`dstar'_C

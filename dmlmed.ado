@@ -4,7 +4,6 @@
 *! version 0.2 - added ereturn of for est and std errors
 *!
 
-
 program define dmlmed, eclass
 
 	version 15	
@@ -17,7 +16,7 @@ program define dmlmed, eclass
 		dstar(real) ///
 		[ cvars(varlist numeric) ///
 		xfits(integer 5) ///
-		seed(integer 12345) ///
+		seed(numlist integer max=1) ///
 		censor(numlist min=2 max=2) * ] 
 
 	qui {
@@ -189,25 +188,6 @@ program define dmlmed, eclass
 				
 	}
 
-/*	
-	matrix results = ///
-		(r(ate), r(se_ate), r(pval_ate), r(ll95_ate), r(ul95_ate) \ ///
-		r(nde), r(se_nde), r(pval_nde), r(ll95_nde), r(ul95_nde) \ ///
-		r(nie), r(se_nie), r(pval_nie), r(ll95_nie), r(ul95_nie))
-	
-	if (`num_mvars'==1) {
-		matrix rownames results = "ATE" "NDE" "NIE"
-	}
-
-	if (`num_mvars'>=2) {
-		matrix rownames results = "ATE" "MNDE" "MNIE"
-	}
-	
-	matrix colnames results = "Est." "Std. Err." "P>|z|" "[95% Conf." "Interval]"
-
-	matrix list results
-*/
-
 	tempname b se results
 
 	local nde_name = cond(`num_mvars'==1, "NDE",  "MNDE")
@@ -231,8 +211,7 @@ program define dmlmed, eclass
 	
 	ereturn clear
 	
-	ereturn scalar N = `N'
-	ereturn matrix est = `b' 
+	ereturn post `b' , obs(`N')
 	ereturn matrix se = `se'
 	
 end dmlmed

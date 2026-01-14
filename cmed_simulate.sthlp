@@ -303,7 +303,7 @@ the command fits the following models:
 
 {phang2}
 (1b) a GLM for each mediator in the order they are specified, with treatment, 
-the baseline confounders, and all preceding mediators included as predictors
+the baseline confounders, and all subsequent mediators included as predictors
 {p_end}
 {phang2}
 (2b) a GLM for the outcome with treatment, all the mediators, and the baseline 
@@ -317,7 +317,9 @@ estimate multivariate natural effects. The estimated effects
 in this case have a causal interpretation if every model is correctly 
 specified, assumption {bf:A1} holds, and assumptions {bf:A2}-{bf:A4} 
 hold with respect to all the mediators under consideration. 
-If the mediators are specified in causal order, option 
+If the mediators are specified in reverse causal order, such that 
+the first mediator supplied is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on, then option 
 {helpb cmed_simulate##pathspecific:pathspecific} can be used to estimate 
 path-specific effects. To have a causal interpretation, these estimates 
 additionally require that there are no unobserved or exposure-induced 
@@ -335,7 +337,7 @@ predictors
 {p_end}
 {phang2}
 (2c) a GLM for each post-treatment confounder in the order they are specified, 
-with treatment, the baseline confounders, and all preceding post-treatment 
+with treatment, the baseline confounders, and all subsequent post-treatment 
 confounders included as predictors
 {p_end}
 {phang2}
@@ -382,11 +384,11 @@ See {help cmed_simulate##references:Wodtke and Zhou (2026)} for a detailed discu
 {marker pathspecific}{...}
 {phang}
 {opt pathspecific}
-estimates path-specific effects of multiple mediators. 
-The mediators must be specified in their causal order, 
-where the first mediator causally precedes the second mediator, 
-which in turn precedes the third, and so on 
-for all mediators. 
+estimates path-specific effects of multiple mediators.
+Mediators must be specified in reverse causal order, where
+the first mediator listed is the last mediator in the causal sequence,
+followed by the next-to-last mediator, and so on,
+with the final mediator listed being the first in causal order.
 The path-specific effects will then capture the unique explanatory role 
 of each mediator, net of the other mediators that precede it in causal order. 
 
@@ -519,7 +521,7 @@ By default, only the estimated causal effects are reported.
 Setup
 {p_end}
 {phang2}
-{cmd:. use nlsy79.dta} 
+{cmd:. sysuse nlsy79.dta} 
 {p_end}
 
 {pstd}
@@ -558,7 +560,7 @@ Estimate multivariate natural effects through
 {cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539} together
 {p_end}
 {phang2}
-{cmd:. cmed simulate cesd_age40 ((logit) ever_unemp_age3539 (regress) log_faminc_adj_age3539) att22 = female black hispan famsize}
+{cmd:. cmed simulate cesd_age40 ((regress) log_faminc_adj_age3539 (logit) ever_unemp_age3539) att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
@@ -566,7 +568,7 @@ Estimate path-specific effects through
 {cmd:ever_unemp_age3539} and {cmd:log_faminc_adj_age3539}
 {p_end}
 {phang2}
-{cmd:. cmed simulate cesd_age40 ((logit) ever_unemp_age3539 (regress) log_faminc_adj_age3539) att22 = female black hispan famsize, pathspecific}
+{cmd:. cmed simulate cesd_age40 ((regress) log_faminc_adj_age3539 (logit) ever_unemp_age3539) att22 = female black hispan famsize, pathspecific}
 {p_end}
 
 {pstd}

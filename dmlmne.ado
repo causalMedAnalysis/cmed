@@ -15,7 +15,7 @@ program define dmlmne, rclass
 		dstar(real) ///
 		[ cvars(varlist numeric) ///
 		xfits(integer 5) ///
-		seed(integer 12345) ///
+		seed(numlist integer max=1) ///
 		censor(numlist min=2 max=2) * ] 
 	
 	qui {
@@ -42,8 +42,11 @@ program define dmlmne, rclass
 		
 	tempvar dvar_orig 
 	qui gen `dvar_orig' = `dvar'
+
+	if ("`seed'" != "") {
+		qui set seed `seed'	
+	}
 	
-	qui set seed `seed'
 	tempvar u kpart
 	qui gen `u' = uniform() if `touse'
 	qui sort `u'
@@ -92,16 +95,25 @@ program define dmlmne, rclass
 	
 		forval k=1/`xfits' {
 		
-			qui rforest `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-				type(class) seed(`seed') `options'
-		
 			tempvar	phat_D0_C phat_D1_C
-			qui predict `phat_D0_C' `phat_D1_C' if `kpart'==`k' & `touse', pr
+			
+			if ("`cvars'" != "") {
+				qui rforest `dvar' `cvars' if `kpart'!=`k' & `touse', ///
+					type(class) `options'
+
+				qui predict `phat_D0_C' `phat_D1_C' if `kpart'==`k' & `touse', pr
+			}
+			else {
+				qui sum `dvar' if `kpart'!=`k' & `touse', meanonly
+				qui gen `phat_D1_C' = r(mean) if `kpart'==`k' & `touse'
+				qui gen `phat_D0_C' = 1 - `phat_D1_C' if `kpart'==`k' & `touse'	
+			}
+			
 			qui replace `pi`d'_C' = `phat_D1_C'*`d' + (1-`phat_D1_C')*(1-`d') if `kpart'==`k' & `touse'
 			qui replace `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `kpart'==`k' & `touse'
 		
 			qui rforest `dvar' `mvars' `cvars' if `kpart'!=`k' & `touse', ///
-				type(class) seed(`seed') `options'
+				type(class) `options'
 		
 			tempvar	phat_D0_CM phat_D1_CM
 			qui predict `phat_D0_CM' `phat_D1_CM' if `kpart'==`k' & `touse', pr
@@ -109,7 +121,7 @@ program define dmlmne, rclass
 			qui replace `pi`dstar'_CM' = `phat_D1_CM'*`dstar' + (1-`phat_D1_CM')*(1-`dstar') if `kpart'==`k' & `touse'
 		
 			qui rforest `yvar' `dvar' `mvars' `cvars' if `kpart'!=`k' & `touse', ///
-				type(reg) seed(`seed') `options'
+				type(reg) `options'
 
 			qui replace `dvar' = `dstar' if `touse'
 			tempvar xxmu`dstar'_CM
@@ -124,7 +136,7 @@ program define dmlmne, rclass
 			qui replace `dvar' = `dvar_orig' if `touse'
 		
 			qui rforest `xxmu`d'_CM' `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-				type(reg) seed(`seed') `options'
+				type(reg) `options'
 			
 			qui replace `dvar' = `d' if `touse'
 			tempvar xxnu`d'Ofmu`d'_C
@@ -139,7 +151,7 @@ program define dmlmne, rclass
 			qui replace `dvar' = `dvar_orig' if `touse'
 
 			qui rforest `xxmu`dstar'_CM' `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-				type(reg) seed(`seed') `options'
+				type(reg) `options'
 	
 			qui replace `dvar' = `dstar' if `touse'
 			tempvar xxnu`dstar'Ofmu`dstar'_C
@@ -160,10 +172,17 @@ program define dmlmne, rclass
 	
 		forval k=1/`xfits' {
 		
-			qui lassologit `dvar' `cvars' if `kpart'!=`k' & `touse', lic(aic) postres 
-		
 			tempvar	phat_D1_C
-			qui predict `phat_D1_C' if `kpart'==`k' & `touse', pr
+			
+			if ("`cvars'" != "") {
+				qui lassologit `dvar' `cvars' if `kpart'!=`k' & `touse', lic(aic) postres 
+				qui predict `phat_D1_C' if `kpart'==`k' & `touse', pr
+			}
+			else {
+				qui sum `dvar' if `kpart'!=`k' & `touse', meanonly
+				qui gen `phat_D1_C' = r(mean) if `kpart'==`k' & `touse'
+			}
+			
 			qui replace `pi`d'_C' = `phat_D1_C'*`d' + (1-`phat_D1_C')*(1-`d') if `kpart'==`k' & `touse'
 			qui replace `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `kpart'==`k' & `touse'
 		

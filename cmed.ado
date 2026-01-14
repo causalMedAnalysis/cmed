@@ -1,4 +1,4 @@
-*! version 0.8.0  18dec2025
+*! version 0.9.1  13jan2026
 program cmed
     
     version 16.1
@@ -39,7 +39,7 @@ program Cmed
     
     Parse_modelspecifications `modelspecifications'
     
-    // !! fixme: do we need -svymarkout-?
+    // !! do we need -svymarkout-?
     
     marksample touse
     Markout `touse'
@@ -214,6 +214,8 @@ program Parse_modelspecification
         Error_syntax_diagram
         // NotReached
     
+    Reverse_modelspecification `letter'
+    
 end
 
 
@@ -251,6 +253,42 @@ program Parse_model
         `logit'                         ///
         `poisson'                       ///
         `ologit'
+    
+end
+
+
+        /*  _________________________________________________________________
+                                             reverse model specifications  */
+
+program Reverse_modelspecification
+    
+    args letter
+    
+    local r : copy global Cmed__`letter'_n_specs
+    
+    forvalues i = 1/${Cmed__`letter'_n_specs} {
+        
+        local Model`r' : copy global Cmed__`letter'model`i'
+        
+        foreach var of global Cmed__`letter'vars`i' {
+            
+            local Vars`r' `var' `Vars`r''
+            local Vars `var' `Vars' 
+            
+        }
+        
+        local --r
+        
+    }
+    
+    forvalues r = 1/${Cmed__`letter'_n_specs} {
+        
+        global Cmed__`letter'model`r'   : copy local Model`r'
+        global Cmed__`letter'vars`r'    : copy local Vars`r'
+        
+    }
+    
+    global Cmed__`letter'vars : copy local Vars
     
 end
 
@@ -296,9 +334,9 @@ program Parse_options
         *                       ///
     ]
     
-    // !! fixme reduce pass-thru options
-    
     global Cmed__showcmedcmdline : copy local showcmedcmdline
+    
+    global Cmed__pathspecific : copy local pathspecific
     
     if ("`mvalue'" != "") {
         
@@ -444,7 +482,7 @@ end
 
 
 
-program Estimate
+program Estimate , eclass
     
     syntax
     
@@ -454,8 +492,8 @@ program Estimate
     
     quietly keep if ${Cmed__touse} 
     
-    // !! fixme     can we keep only the required variables?
-    // !!           Caution: the data might be -svyset-
+    // !! can we keep only the required variables?
+    // !! Caution: the data might be -svyset-
     
     if ("${Cmed__showcmedcmdline}" == "showcmedcmdline") ///
         mata : printf("{txt}. %s\n",st_global("Cmed__cmdline"))
@@ -463,6 +501,11 @@ program Estimate
     ${Cmed__caller_version} ${Cmed__cmdline}
     
     restore
+    
+    ereturn repost , esample(${Cmed__touse})
+    
+    if ("${Cmed__pathspecific}" == "pathspecific") ///
+        PSE_legend
     
 end
 
@@ -977,6 +1020,42 @@ program Build_cmdline_cmed_mr_or_dml
 end
 
 
+
+
+/*  _________________________________________________________________________
+                                                                utilities  */
+
+
+
+
+    /*  _____________________________________________________________________
+                                                                   Legend  */
+
+program PSE_legend
+    
+    if (${Cmed__m_n_vars} < 2) ///
+        exit
+    
+    display
+    Legend_line "ATE" "Average total effect"
+    Legend_line "PSE_DY" "Direct effect of {bf:${Cmed__dvars}}"
+    forvalues m = ${Cmed__m_n_vars}(-1)1 {
+        
+        local varname : word `m' of ${Cmed__mvars}
+        Legend_line "PSE_DM`m'Y" "Path-specific effect through {bf:`varname'}"
+        
+    }
+    
+end
+
+
+program Legend_line
+    
+    args name label
+    
+    display as txt %13s "`name':" _col(16) "`label'"
+    
+end
 
 
     /*  _____________________________________________________________________

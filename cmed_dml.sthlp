@@ -233,12 +233,13 @@ When more than one mediator is specified, {cmd:cmed dml} estimates
 multivariate natural direct and indirect effects. The estimated effects in this
 case have a causal interpretation under the same modeling conditions outlined
 above, provided that assumption {bf:A1} holds and that assumptions
-{bf:A2}–{bf:A4} hold for all mediators under consideration. If the mediators
-are specified in causal order, option
-{helpb cmed_dml##pathspecific:pathspecific} can be used to estimate
-path-specific effects as well. To have a causal interpretation, these
-estimates additionally require that there are no unobserved or
-exposure-induced confounders for any of the mediator–mediator
+{bf:A2}–{bf:A4} hold for all mediators under consideration. If the mediators 
+are specified in reverse causal order, such that the first mediator listed 
+is the final mediator in the causal sequence, followed by the next-to-last 
+mediator, and so on, then option {helpb cmed_dml##pathspecific:pathspecific} 
+can be used to estimate path-specific effects as well. To have a causal 
+interpretation, these estimates additionally require that there are no 
+unobserved or exposure-induced confounders for any of the mediator–mediator
 relationships.
 
 {pstd}
@@ -292,11 +293,11 @@ discussion.
 {marker pathspecific}{...}
 {phang}
 {opt pathspecific}
-estimates path-specific effects of multiple mediators. 
-The mediators must be specified in their causal order, 
-where the first mediator causally precedes the second mediator, 
-which in turn precedes the third, and so on 
-for all mediators. 
+estimates path-specific effects of multiple mediators.
+Mediators must be specified in reverse causal order, where
+the first mediator listed is the last mediator in the causal sequence,
+followed by the next-to-last mediator, and so on,
+with the final mediator listed being the first in causal order.
 The path-specific effects will then capture the unique explanatory role 
 of each mediator, net of the other mediators that precede it in causal order. 
 
@@ -361,11 +362,8 @@ The default is 5.
 
 {phang}
 {opt seed(#)}
-specifies a seed to ensure reproducibility. The default is 
-12345. This seed is passed to both the cross-fitting algorithm to ensure 
-reproducibility of the folds and to the random forest algorithm, 
-if {opt method(rforest)} is specified, to ensure the reproducibility of 
-its estimates as well.
+specifies a seed to ensure reproducibility. This seed is passed to the 
+cross-fitting algorithm to ensure reproducibility of the folds.
 
 
 {...}
@@ -376,7 +374,7 @@ its estimates as well.
 Setup
 {p_end}
 {phang2}
-{cmd:. use nlsy79.dta} 
+{cmd:. sysuse nlsy79.dta} 
 {p_end}
 
 {pstd}
@@ -409,7 +407,7 @@ Estimate multivariate natural effects through
 parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed dml cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize, method(rforest)}
+{cmd:. cmed dml cesd_age40 (log_faminc_adj_age3539 ever_unemp_age3539) att22 = female black hispan famsize, method(rforest)}
 {p_end}
 
 {pstd}
@@ -418,7 +416,7 @@ Estimate path-specific effects through
 parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed dml cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize, method(rforest) pathspecific}
+{cmd:. cmed dml cesd_age40 (log_faminc_adj_age3539 ever_unemp_age3539) att22 = female black hispan famsize, method(rforest) pathspecific}
 {p_end}
 
 {pstd}
@@ -454,7 +452,7 @@ leaf size of 10
 {cmd:cmed dml} stores the following in {cmd:e()}:
 
 {synoptset 20 tabbed}{...}
-{synopt:{cmd:e(est)}}row vector of point estimates{p_end}
+{synopt:{cmd:e(b)}}row vector of point estimates{p_end}
 {synopt:{cmd:e(se)}}row vector of standard errors{p_end}
 {synopt:{cmd:e(N)}}sample size{p_end}
 

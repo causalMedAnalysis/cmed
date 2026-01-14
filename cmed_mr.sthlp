@@ -254,11 +254,14 @@ multivariate natural direct and indirect effects by including all mediators
 as predictors in Models 2 and 3 above. The estimated effects in this case have
 a causal interpretation under the same modeling conditions outlined previously,
 provided that assumption {bf:A1} holds and that assumptions {bf:A2}–{bf:A4}
-hold with respect to all mediators under consideration. If the mediators
-are specified in causal order, option {helpb cmed_mr##pathspecific:pathspecific}
-can be used to estimate path-specific effects as well. To have a causal
-interpretation, these estimates additionally require that there are no
-unobserved or exposure-induced confounders for any of the mediator–mediator
+hold with respect to all mediators under consideration. 
+If the mediators are specified in reverse causal order, such that 
+the first mediator supplied is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on, then option 
+{helpb cmed_mr##pathspecific:pathspecific} can be used to estimate 
+path-specific effects as well. To have a causal interpretation, 
+these estimates additionally require that there are no unobserved or 
+exposure-induced confounders for any of the mediator–mediator
 relationships.
 
 {pstd}
@@ -315,11 +318,11 @@ discussion.
 {marker pathspecific}{...}
 {phang}
 {opt pathspecific}
-estimates path-specific effects of multiple mediators. 
-The mediators must be specified in their causal order, 
-where the first mediator causally precedes the second mediator, 
-which in turn precedes the third, and so on 
-for all mediators. 
+estimates path-specific effects of multiple mediators.
+Mediators must be specified in reverse causal order, where
+the first mediator listed is the last mediator in the causal sequence,
+followed by the next-to-last mediator, and so on,
+with the final mediator listed being the first in causal order.
 The path-specific effects will then capture the unique explanatory role 
 of each mediator, net of the other mediators that precede it in causal order. 
 
@@ -439,7 +442,7 @@ By default, only the estimated causal effects are reported.
 Setup
 {p_end}
 {phang2}
-{cmd:. use nlsy79.dta} 
+{cmd:. sysuse nlsy79.dta} 
 {p_end}
 
 {pstd}
@@ -493,7 +496,7 @@ Estimate multivariate natural effects through
 parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed mr cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize}
+{cmd:. cmed mr cesd_age40 (log_faminc_adj_age3539 ever_unemp_age3539) att22 = female black hispan famsize}
 {p_end}
 
 {pstd}
@@ -502,7 +505,7 @@ Estimate path-specific effects through
 parentheses required
 {p_end}
 {phang2}
-{cmd:. cmed mr cesd_age40 (ever_unemp_age3539 log_faminc_adj_age3539) att22 = female black hispan famsize, pathspecific}
+{cmd:. cmed mr cesd_age40 (log_faminc_adj_age3539 ever_unemp_age3539) att22 = female black hispan famsize, pathspecific}
 {p_end}
 
 {pstd}

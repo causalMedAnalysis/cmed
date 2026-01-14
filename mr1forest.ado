@@ -15,7 +15,7 @@ program define mr1forest, rclass
 		dstar(real) ///
 		[ cvars(varlist numeric) ///
 		xfits(integer 5) ///
-		seed(integer 12345) ///
+		seed(numlist integer max=1) ///
 		censor(numlist min=2 max=2) * ] 
 	
 	qui {
@@ -30,8 +30,11 @@ program define mr1forest, rclass
 	tempvar dvar_orig mvar_orig
 	qui gen `dvar_orig' = `dvar' if `touse'
 	qui gen `mvar_orig' = `mvar' if `touse'
-
-	qui set seed `seed'
+	
+	if ("`seed'" != "") {
+		qui set seed `seed'	
+	}
+	
 	tempvar u kpart
 	qui gen `u' = uniform() if `touse'
 	qui sort `u'
@@ -53,19 +56,28 @@ program define mr1forest, rclass
 	
 	forval k=1/`xfits' {
 		
-		*di "xfit = `k' ..."
-		*di "   Training random forest for `dvar' given C "
-		qui rforest `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-			type(class) seed(`seed') `options'
-		
 		tempvar	phat_D0_C phat_D1_C
-		qui predict `phat_D0_C' `phat_D1_C' if `kpart'==`k' & `touse', pr
+		
+		if ("`cvars'" != "") {
+			*di "xfit = `k' ..."
+			*di "   Training random forest for `dvar' given C "
+			qui rforest `dvar' `cvars' if `kpart'!=`k' & `touse', ///
+				type(class) `options'
+				
+			qui predict `phat_D0_C' `phat_D1_C' if `kpart'==`k' & `touse', pr
+		}
+		else {
+			qui sum `dvar' if `kpart'!=`k' & `touse', meanonly
+			qui gen `phat_D1_C' = r(mean) if `kpart'==`k' & `touse'
+			qui gen `phat_D0_C' = 1 - `phat_D1_C' if `kpart'==`k' & `touse'	
+		}
+		
 		qui replace `pi`d'_C' = `phat_D1_C'*`d' + (1-`phat_D1_C')*(1-`d') if `kpart'==`k' & `touse'
 		qui replace `pi`dstar'_C' = `phat_D1_C'*`dstar' + (1-`phat_D1_C')*(1-`dstar') if `kpart'==`k' & `touse'
-		
+			
 		*di "   Training random forest for `mvar' given {C,D}"
 		qui rforest `mvar' `dvar' `cvars' if `kpart'!=`k' & `touse', ///
-			type(class) seed(`seed') `options'
+			type(class) `options'
 		
 		qui replace `dvar' = `dstar' if `touse'
 		
@@ -87,7 +99,7 @@ program define mr1forest, rclass
 		
 		*di "   Training random forest for `yvar' given {C,D,M}"
 		qui rforest `yvar' `dvar' `mvar' `cvars' if `kpart'!=`k' & `touse', ///
-			type(reg) seed(`seed') `options'
+			type(reg) `options'
 		
 		qui replace `dvar' = `dstar' if `touse'
 		

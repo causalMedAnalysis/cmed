@@ -15,7 +15,7 @@ program define dmlpath, eclass
 		dstar(real) ///
 		[ cvars(varlist numeric) ///
 		xfits(integer 5) ///
-		seed(integer 12345) ///
+		seed(numlist integer max=1) ///
 		censor(numlist min=2 max=2) * ] 
 		
 	qui {
@@ -518,9 +518,7 @@ program define dmlpath, eclass
 	
 	ereturn clear
 	
-	ereturn scalar N = `N'
-	ereturn matrix est = `b' 
-	ereturn matrix se = `se'		
-	
+	ereturn post `b' , obs(`N')
+	ereturn matrix se = `se'
 
 end dmlpath
