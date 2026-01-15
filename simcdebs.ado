@@ -198,6 +198,11 @@ program define simcdebs, eclass properties(svyb)
 	/**************************
 	SIMULATE POTENTIAL OUTCOMES
 	***************************/
+	tempvar Ydm_r001 Ydstarm_r001
+	
+	qui gen `Ydm_r001' = 0 if `touse'
+	qui gen `Ydstarm_r001' = 0 if `touse'
+
 	qui forval i=1/`nsim' {
 	
 		/*****LVARS*****/
@@ -472,7 +477,10 @@ program define simcdebs, eclass properties(svyb)
 			drop `sum_of_p' `unif'
 		}	
 		
-		drop yhat_*r001* L*d_r001_`i' L*dstar_r001_`i' 
+		replace `Ydm_r001' = `Ydm_r001' + Ydm_r001_`i' * (1/`nsim') if `touse'
+		replace `Ydstarm_r001' = `Ydstarm_r001' + Ydstarm_r001_`i' * (1/`nsim') if `touse'
+	
+		drop yhat_*r001* L*d_r001_`i' L*dstar_r001_`i' Ydm_r001_`i' Ydstarm_r001_`i'
 	
 	}
 	
@@ -484,13 +492,6 @@ program define simcdebs, eclass properties(svyb)
 	foreach l in `lvars' {
 		qui replace `l' = ``l'_orig' if `touse'
 	}
-	
-	tempvar Ydm_r001 Ydstarm_r001
-	
-	qui egen `Ydm_r001'=rowmean(Ydm_r001_*) if `touse'
-	qui egen `Ydstarm_r001'=rowmean(Ydstarm_r001_*) if `touse'
-
-	drop Ydm_r001_* Ydstarm_r001_* 
 	
 	qui reg `Ydm_r001' [`weight' `exp'] if `touse'
 	local Ehat_Ydm=_b[_cons]

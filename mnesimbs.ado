@@ -197,6 +197,12 @@ program define mnesimbs, eclass properties(svyb)
 	/**************************
 	SIMULATE POTENTIAL OUTCOMES
 	***************************/
+	tempvar YdMd_r001 YdstarMdstar_r001 YdMdstar_r001
+	
+	qui gen `YdMd_r001' = 0 if `touse'
+	qui gen `YdstarMdstar_r001' = 0 if `touse'
+	qui gen `YdMdstar_r001' = 0 if `touse'
+	
 	qui forval i=1/`nsim' {
 	
 		/*****MVARS*****/
@@ -543,8 +549,13 @@ program define mnesimbs, eclass properties(svyb)
 			drop `sum_of_p' `unif'
 		}	
 		
-		drop yhat_*r001* M*d_r001_`i' M*dstar_r001_`i' 
-	
+		replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
+		replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
+		replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+
+		drop yhat_*r001* M*d_r001_`i' M*dstar_r001_`i' ///
+			YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i' 
+
 	}
 	
 	est drop Ymodel_r001 M*model_r001
@@ -554,14 +565,6 @@ program define mnesimbs, eclass properties(svyb)
 	foreach m in `mvars' {
 		qui replace `m' = ``m'_orig' if `touse'
 	}
-	
-	tempvar YdMd_r001 YdstarMdstar_r001 YdMdstar_r001
-	
-	qui egen `YdMd_r001'=rowmean(YdMd_r001_*) if `touse'
-	qui egen `YdstarMdstar_r001'=rowmean(YdstarMdstar_r001_*) if `touse'
-	qui egen `YdMdstar_r001'=rowmean(YdMdstar_r001_*) if `touse'
-
-	drop YdMd_r001_* YdstarMdstar_r001_* YdMdstar_r001_* 
 	
 	qui reg `YdMd_r001' [`weight' `exp'] if `touse'
 	local Ehat_YdMd=_b[_cons]
