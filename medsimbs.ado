@@ -221,9 +221,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -332,9 +332,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -477,9 +477,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -589,9 +589,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rnormal(yhat_YdMdstar_r001,e(rmse)) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -701,9 +701,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -813,9 +813,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -958,9 +958,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -1070,9 +1070,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rbinomial(1,yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -1230,9 +1230,9 @@ program define medsimbs, eclass properties(svyb)
 			
 			drop `sum_of_p' `unif'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001* Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -1390,9 +1390,9 @@ program define medsimbs, eclass properties(svyb)
 			
 			drop `sum_of_p' `unif'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001* Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -1583,9 +1583,9 @@ program define medsimbs, eclass properties(svyb)
 			
 			drop `sum_of_p' `unif'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001* yhat_*r001* Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -1743,9 +1743,9 @@ program define medsimbs, eclass properties(svyb)
 			
 			drop `sum_of_p' `unif'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001* Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -1855,9 +1855,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -1967,9 +1967,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -2112,9 +2112,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001* yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -2224,9 +2224,9 @@ program define medsimbs, eclass properties(svyb)
 			qui predict yhat_YdMdstar_r001 if `touse'
 			qui gen YdMdstar_r001_`i'=rpoisson(yhat_YdMdstar_r001) if `touse'
 					
-			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' * (1/`nsim') if `touse'
-			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' * (1/`nsim') if `touse'
-			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' * (1/`nsim') if `touse'
+			replace `YdMd_r001' = `YdMd_r001' + YdMd_r001_`i' if `touse'
+			replace `YdstarMdstar_r001' = `YdstarMdstar_r001' + YdstarMdstar_r001_`i' if `touse'
+			replace `YdMdstar_r001' = `YdMdstar_r001' + YdMdstar_r001_`i' if `touse'
 			
 			drop mhat_*r001 yhat_*r001 Md_r001_`i' Mdstar_r001_`i' ///
 				YdMd_r001_`i' YdstarMdstar_r001_`i' YdMdstar_r001_`i'
@@ -2240,6 +2240,10 @@ program define medsimbs, eclass properties(svyb)
 	qui replace `dvar' = ``dvar'_orig_r001' if `touse'
 	qui replace `mvar' = ``mvar'_orig_r001' if `touse'
 
+	qui replace `YdMd_r001' = `YdMd_r001' / `nsim'  if `touse'
+	qui replace `YdstarMdstar_r001' = `YdstarMdstar_r001' / `nsim'  if `touse'
+	qui replace `YdMdstar_r001' = `YdMdstar_r001' / `nsim'  if `touse'
+	
 	qui reg `YdMd_r001' [`weight' `exp'] if `touse'
 	local Ehat_YdMd=_b[_cons]
 

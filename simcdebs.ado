@@ -477,8 +477,8 @@ program define simcdebs, eclass properties(svyb)
 			drop `sum_of_p' `unif'
 		}	
 		
-		replace `Ydm_r001' = `Ydm_r001' + Ydm_r001_`i' * (1/`nsim') if `touse'
-		replace `Ydstarm_r001' = `Ydstarm_r001' + Ydstarm_r001_`i' * (1/`nsim') if `touse'
+		replace `Ydm_r001' = `Ydm_r001' + Ydm_r001_`i' if `touse'
+		replace `Ydstarm_r001' = `Ydstarm_r001' + Ydstarm_r001_`i' if `touse'
 	
 		drop yhat_*r001* L*d_r001_`i' L*dstar_r001_`i' Ydm_r001_`i' Ydstarm_r001_`i'
 	
@@ -492,6 +492,9 @@ program define simcdebs, eclass properties(svyb)
 	foreach l in `lvars' {
 		qui replace `l' = ``l'_orig' if `touse'
 	}
+	
+	qui replace `Ydm_r001' = `Ydm_r001' / `nsim'  if `touse'
+	qui replace `Ydstarm_r001' = `Ydstarm_r001' / `nsim'  if `touse'
 	
 	qui reg `Ydm_r001' [`weight' `exp'] if `touse'
 	local Ehat_Ydm=_b[_cons]
