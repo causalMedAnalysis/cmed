@@ -23,6 +23,7 @@ program define ipwcde, eclass
 		censor(numlist min=2 max=2) ///
 		parallel ///		
 		svy ///
+		keepweights ///		
 		detail * ]
 
 	qui {
@@ -72,8 +73,14 @@ program define ipwcde, eclass
 		di as error "Warning: dvar by lvar interactions were requested but no lvars were specified"
 	}
 			
-	if ("`detail'" != "") {
+	if ("`keepweights'" != "" & "`detail'" == "") {
+	    local quietly quietly
+	}
+		
+	if ("`detail'" != "" | "`keepweights'" != "") {
 
+		local detail detail
+	
 		if ("`svy'" == "svy") {
 			qui svyset
 			local svywgt = r(wtype)
@@ -84,7 +91,7 @@ program define ipwcde, eclass
 			local wgtexp
 		}
 		
-		ipwcdebs `varlist' [`svywgt' `wgtexp'] if `touse', ///
+		`quietly' ipwcdebs `varlist' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') mvar(`mvar') mreg(`mreg') d(`d') dstar(`dstar') ///
 			m(`m') cvars(`cvars') lvars(`lvars') censor(`censor') ///
 			`nointeraction' `cxd' `lxd' `detail'

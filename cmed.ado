@@ -1,4 +1,4 @@
-*! version 0.9.1  13jan2026
+*! version 0.11.0  02mar2026
 program cmed
     
     version 16.1
@@ -329,12 +329,11 @@ program Parse_options
         dstar(numlist max=1)    ///
         parallel                ///
         svy                     ///
+        keepweights             ///
         ///
         SHOWCMEDCMDLINE         /// debugging; not documented
         *                       ///
     ]
-    
-    global Cmed__showcmedcmdline : copy local showcmedcmdline
     
     global Cmed__pathspecific : copy local pathspecific
     
@@ -392,6 +391,18 @@ program Parse_options
         
     }
     
+    if ("`keepweights'" != "") {
+        
+        if ("${Cmed__subcommand}" != "ipw") ///
+            Option_not_allowed "keepweights" "" "{bf:cmed ${Cmed__subcommand}}"
+            // NotReached
+        
+        global Cmed__keepweights : copy local keepweights
+        
+    }
+    
+    global Cmed__showcmedcmdline : copy local showcmedcmdline
+    
     global Cmed__options        ///
         dvar(${Cmed__dvars})    ///
         d(`d')                  ///
@@ -401,6 +412,7 @@ program Parse_options
         mvalue(`mvalue')        ///
         `parallel'              ///
         `svy'                   ///
+        `keepweights'           ///
         `options'
     
 end
@@ -488,24 +500,42 @@ program Estimate , eclass
     
     Build_cmdline_cmed_${Cmed__subcommand} , ${Cmed__options}
     
-    preserve
-    
-    quietly keep if ${Cmed__touse} 
-    
-    // !! can we keep only the required variables?
-    // !! Caution: the data might be -svyset-
-    
     if ("${Cmed__showcmedcmdline}" == "showcmedcmdline") ///
         mata : printf("{txt}. %s\n",st_global("Cmed__cmdline"))
     
-    ${Cmed__caller_version} ${Cmed__cmdline}
+    if ("${Cmed__keepweights}" == "keepweights") {
+        
+        tempvar id
+        quietly generate `c(obs_t)' `id' = _n
+        
+        Unab sw_star_r001_before : sw*_r001 
+        
+    }
     
-    restore
+    tempname estimation_frame
+    frame put if ${Cmed__touse} , into(`estimation_frame')
+    
+    frame `estimation_frame' : ${Cmed__caller_version} ${Cmed__cmdline}
     
     ereturn repost , esample(${Cmed__touse})
     
     if ("${Cmed__pathspecific}" == "pathspecific") ///
         PSE_legend
+    
+    if ("${Cmed__keepweights}" == "keepweights") {
+        
+        quietly {
+            
+            frame `estimation_frame' : Unab sw_star_r001_after : sw*_r001
+            
+            local sw_star_r001 : list sw_star_r001_after - sw_star_r001_before
+            
+            frlink m:1 `id' , frame(`estimation_frame')
+            frget `sw_star_r001' , from(`estimation_frame')
+            
+        }
+        
+    }
     
 end
 
@@ -1026,6 +1056,24 @@ end
                                                                 utilities  */
 
 
+
+
+    /*  _____________________________________________________________________
+                                                                     unab  */
+
+
+program Unab
+    
+    gettoken lmname 0 : 0 , parse(" :")
+    gettoken colon  0 : 0 , parse(" :")
+    if (`"`colon'"' != ":") ///
+        error 198
+    
+    capture syntax [ varlist(default=none) ]
+    
+    c_local `lmname' : copy local varlist
+    
+end
 
 
     /*  _____________________________________________________________________

@@ -22,6 +22,7 @@ program define ipwvent, eclass
 		censor(numlist min=2 max=2) ///
 		parallel ///	
 		svy ///
+		keepweights ///
 		detail * ]
 
 	qui {
@@ -77,7 +78,13 @@ program define ipwvent, eclass
 		}
 	}
 
-	if ("`detail'" != "") {
+	if ("`keepweights'" != "" & "`detail'" == "") {
+	    local quietly quietly
+	}
+		
+	if ("`detail'" != "" | "`keepweights'" != "") {
+		
+		local detail detail
 
 		if ("`svy'" == "svy") {
 			qui svyset
@@ -89,7 +96,7 @@ program define ipwvent, eclass
 			local wgtexp
 		}
 		
-		ipwventbs `varlist' [`svywgt' `wgtexp'] if `touse', ///
+		`quietly' ipwventbs `varlist' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') mvar(`mvar') lvar(`lvar') cvars(`cvars') ///
 			d(`d') dstar(`dstar') mreg(`mreg') lreg(`lreg') ///
 			`cxd' `lxd' censor(`censor') `detail'

@@ -1,7 +1,7 @@
 *!TITLE: IPWPATH - analysis of path-specific effects using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.3 - added svy compatibility
+*! version 0.4 - added keepweights option
 *!
 
 program define mipwpath, eclass properties(svyb)
@@ -13,6 +13,7 @@ program define mipwpath, eclass properties(svyb)
 		d(real) ///
 		dstar(real) ///
 		[cvars(varlist numeric)] ///
+		[keepweights] ///		
 		[censor(numlist min=2 max=2)] 
 	
 	qui {
@@ -81,6 +82,25 @@ program define mipwpath, eclass properties(svyb)
 	scalar `ate'=`Ehat_Y1M1'-`Ehat_Y0M0'
 	scalar `nde'=`Ehat_Y1M0'-`Ehat_Y0M0'
 	scalar `nie'=`Ehat_Y1M1'-`Ehat_Y1M0'
+
+	if ("`keepweights'" != "") {
+		
+		local ipw_var_names "sw1_r001 sw2_r001 sw3_r001"
+		foreach name of local ipw_var_names {
+			capture confirm new variable `name'
+			if _rc {
+				display as error "{p 0 0 5 0}The command needs to create weight variables"
+				display as error "with the following names: `ipw_var_names', "
+				display as error "but these variables have already been defined.{p_end}"
+				error 110
+			}
+		}
+		
+		qui gen sw1_r001 = `sw1' if `touse'
+		qui gen sw2_r001 = `sw2' if `touse'
+		qui gen sw3_r001 = `sw3' if `touse'
+	
+	}
 	
 	ereturn clear
 

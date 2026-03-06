@@ -185,6 +185,7 @@ program define ipwcdebs, eclass properties(svyb)
 	scalar cde = (_b[`dvar'] + (_b[`inter'] * `m')) * (`d' - `dstar')
 		
 	if ("`detail'"!="") {
+		
 		local ipw_var_names "sw4_r001"
 		foreach name of local ipw_var_names {
 			capture confirm new variable `name'
@@ -195,6 +196,7 @@ program define ipwcdebs, eclass properties(svyb)
 				error 110
 			}
 		}
+		
 		qui gen sw4_r001 = `sw4'
 	}
 	

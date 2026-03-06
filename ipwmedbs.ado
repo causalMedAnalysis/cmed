@@ -76,6 +76,18 @@ program define ipwmedbs, eclass properties(svyb)
 	}
 	
 	if ("`detail'"!="") {
+		
+		local ipw_var_names "sw1_r001 sw2_r001 sw3_r001"
+		foreach name of local ipw_var_names {
+			capture confirm new variable `name'
+			if _rc {
+				display as error "{p 0 0 5 0}The command needs to create weight variables"
+				display as error "with the following names: `ipw_var_names', "
+				display as error "but these variables have already been defined.{p_end}"
+				error 110
+			}
+		}
+		
 		qui gen sw1_r001 = `sw1' if `touse'
 		qui gen sw2_r001 = `sw2' if `touse'
 		qui gen sw3_r001 = `sw3' if `touse'

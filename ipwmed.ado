@@ -15,7 +15,8 @@ program define ipwmed, eclass
 		[cvars(varlist numeric) ///
 		censor(numlist min=2 max=2) ///
 		svy ///
-		parallel ///				
+		parallel ///
+		keepweights ///		
 		detail * ]
 
 	qui {
@@ -55,18 +56,13 @@ program define ipwmed, eclass
 		}
 	}
 
-	if ("`detail'" != "") {
+	if ("`keepweights'" != "" & "`detail'" == "") {
+	    local quietly quietly
+	}
 		
-		local ipw_var_names "sw1_r001 sw2_r001 sw3_r001"
-		foreach name of local ipw_var_names {
-			capture confirm new variable `name'
-			if _rc {
-				display as error "{p 0 0 5 0}The command needs to create weight variables"
-				display as error "with the following names: `ipw_var_names', "
-				display as error "but these variables have already been defined.{p_end}"
-				error 110
-			}
-		}
+	if ("`detail'" != "" | "`keepweights'" != "") {
+		
+		local detail detail
 		
 		if ("`svy'" == "svy") {
 			qui svyset
@@ -78,7 +74,7 @@ program define ipwmed, eclass
 			local wgtexp
 		}
 		
-		ipwmedbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
+		`quietly' ipwmedbs `yvar' `mvars' [`svywgt' `wgtexp'] if `touse', ///
 			dvar(`dvar') d(`d') dstar(`dstar') cvars(`cvars') ///
 			censor(`censor') `detail' 
 	

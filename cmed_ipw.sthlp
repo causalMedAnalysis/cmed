@@ -215,6 +215,10 @@ default is {cmd:level(}{cmd:{ccl level})}
 {...}
 {synopt:{opt detail}}print fitted models used to construct inverse probability weights 
 {p_end}
+{...}
+{synopt:{opt keepweights}}save the inverse probability weights used to construct
+the estimated effects
+{p_end}
 {synoptline}
 {pstd}
 
@@ -461,6 +465,12 @@ prints output from each fitted model
 used to construct the inverse probability weights.
 By default, only the estimated causal effects are reported.
 
+{phang}
+{opt keepweights}
+saves the inverse probability weights used to construct the 
+effect estimates in a set of new variables, allowing users to 
+inspect their distribution and perform other diagnostics.
+By default, the weights are not saved.
 
 {...}
 {marker examples}{...}
