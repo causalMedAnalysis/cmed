@@ -12,7 +12,7 @@ d KW: confounding
 d
 d Requires: Stata version 16.1
 d
-d Distribution-Date: 20260104
+d Distribution-Date: 20260305
 d
 d Author: Geoff Wodtke, University of Chicago
 d Support: email wodtke@@uchicago.edu
@@ -83,4 +83,5 @@ f ventsim.ado
 f ventsimbs.ado
 f wimpmed.ado
 f wimpmedbs.ado
+
 
