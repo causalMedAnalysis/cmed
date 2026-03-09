@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.8.0  04jan2026}{...}
+{* *! version 0.8.1  09mar2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -232,22 +232,23 @@ using the nonparametric bootstrap; see {manlink R bootstrap}.
 
 {pstd}
 In the simplest case with one mediator and no post-treatment confounders, 
-{cmd:cmed linear} estimates natural direct and indirect effects,
-along with the total effect, by fitting two models:
+{cmd:cmed linear} estimates the natural direct, indirect, and total effects
+of a treatment by fitting two models:
 
 {phang2}
-(1) a linear model for the mediator with the treatment and baseline 
-confounders as predictors
+(1) a linear model for the mediator 
+with treatment and baseline confounders as predictors
 {p_end}
 {phang2}
-(2) a linear model for the outcome with the treatment, baseline confounders, 
-and mediator as predictors
+(2) a linear model for the outcome 
+with treatment, baseline confounders, and mediator as predictors
 {p_end}
 
 {pstd}
 All baseline confounders are first centered around their sample means. 
-The estimated effects have a causal interpretation provided that these models
-are correctly specified and the following assumptions hold:
+The estimated effects have a causal interpretation 
+provided that these models are correctly specified 
+and the following assumptions hold:
 
 {phang2}
 ({bf:A1}) There are no unobserved treatment-outcome confounders.
@@ -266,28 +267,32 @@ relationship.
 {pstd}
 When more than one mediator is specified, 
 {cmd:cmed linear} estimates multivariate natural direct and indirect effects 
-using a separate linear model for each mediator 
+by fitting a separate linear model for each mediator 
 and a linear model for the outcome that includes all mediators as predictors, 
 in addition to the treatment and baseline confounders. 
-The estimated effects in this case have a causal interpretation provided that 
-every model is correctly specified, assumption {bf:A1} holds, 
+The estimated effects in this case have a causal interpretation 
+provided that every model is correctly specified, 
+assumption {bf:A1} holds, 
 and assumptions {bf:A2}-{bf:A4} hold with respect to all the mediators 
 under consideration. 
+
+{pstd}
 When option {helpb cmed_linear##pathspecific:pathspecific} is specified, 
 {cmd:cmed linear} estimates path-specific effects of multiple mediators 
 using linear models. 
 To have a causal interpretation, these estimates additionally require 
-that the mediators are specified in reverse causal order, such that 
-the first mediator listed is the final mediator in the causal sequence,
-followed by the next-to-last mediator, and so on. It also requires that 
-there are no unobserved or post-treatment confounders for any of the 
-mediator-mediator relationships.
+that the mediators are specified in reverse causal order, 
+such that the first mediator listed is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on. 
+In addition, there must be no unobserved or post-treatment confounders 
+for any of the mediator-mediator relationships.
 
 {pstd}
 When post-treatment (i.e., exposure-induced) confounders are specified, 
 {cmd:cmed linear} uses a regression-with-residuals approach 
 to estimate interventional direct and indirect effects, also known as 
-randomized intervention analogues to natural direct and indirect effects. 
+randomized intervention analogues to natural direct and indirect effects,
+operating through a single, focal mediator.
 For each post-treatment confounder, {cmd:cmed linear} fits a model 
 with the treatment and baseline confounders as predictors, 
 computes the residuals, and then includes these residuals 

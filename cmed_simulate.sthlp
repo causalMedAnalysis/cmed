@@ -1,10 +1,12 @@
 {smcl}
-{* *! version 0.8.0  04jan2026}{...}
+{* *! version 0.8.1  09mar2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[SEM] sem" "help sem command"}{...}
+{vieweralsosee "" "--"}{...}
+{vieweralsosee "[COMMUNITY-CONTRIBUTED] cmed" "help cmed"}{...}
 {viewerjumpto "Syntax" "cmed_simulate##syntax"}{...}
 {viewerjumpto "Description" "cmed_simulate##description"}{...}
 {viewerjumpto "Options" "cmed_simulate##options"}{...}
@@ -233,7 +235,6 @@ default is {cmd:level(}{cmd:{ccl level})}
 {...}
 {synopt:{opt detail}}print fitted models used to generate simulations
 {p_end}
-
 {synoptline}
 {pstd}
 * {opt d()} and {opt dstar()} are required with continuous treatments.
@@ -249,36 +250,39 @@ default is {cmd:level(}{cmd:{ccl level})}
 {pstd}
 {cmd:cmed simulate} estimates the natural direct and indirect effects 
 of a treatment (exposure) on an outcome by simulating variables from
-generalized linear models (GLMs) for the mediator and outcome. When multiple 
-mediators are specified, the command estimates multivariate natural effects by
-simulating variables from a series of GLMs for each mediator and the outcome.
-If post-treatment confounders are specified, the command estimates 
-interventional direct and indirect effects by simulating variables from GLMs 
-for the mediator, outcome, and each post-treatment confounder. Optionally, 
-the command estimates path-specific effects through a set of causally ordered 
-mediators as well as controlled direct effects with a single mediator.
-Standard errors and confidence intervals are obtained using the 
-nonparametric {help bootstrap}. 
+generalized linear models (GLMs) for the mediator and outcome. 
+When multiple mediators are specified, 
+the command estimates multivariate natural effects 
+by simulating variables from a series of GLMs for each mediator and the outcome.
+If post-treatment confounders are specified, 
+the command estimates interventional direct and indirect effects 
+by simulating variables from GLMs for the mediator, outcome, and each post-treatment confounder. 
+Optionally, the command estimates path-specific effects 
+through a set of causally ordered mediators 
+as well as controlled direct effects with a single mediator.
+Standard errors and confidence intervals are obtained 
+using the nonparametric bootstrap; see {manlink R bootstrap}. 
 
 {pstd}
 In the simplest case with one mediator and no post-treatment confounders, 
-{cmd:cmed simulate} estimates the natural direct and indirect effects,
-as well as the total effect, of a treatment by fitting two models:
+{cmd:cmed simulate} estimates the natural direct, indirect, and total effects
+of a treatment by fitting two models:
 
 {phang2}
-(1) a GLM for the mediator with treatment and the baseline confounders as 
-predictors
+(1) a GLM for the mediator 
+with treatment and baseline confounders as predictors
 {p_end}
 {phang2}
-(2) a GLM for the outcome with treatment, the mediator, and the baseline 
-confounders as predictors
+(2) a GLM for the outcome 
+with treatment, mediator, and baseline confounders as predictors
 {p_end}
 
 {pstd}
-The models are used to generate simulated values for the mediator and outcome 
-under different counterfactual scenarios. These simulated values are then 
-averaged together and compared to estimate the natural direct and indirect 
-effects of interest. The estimated effects have a causal interpretation 
+These models are used to generate simulated values of the mediator and outcome 
+under different counterfactual scenarios. 
+The simulated values are then averaged and compared 
+to estimate the natural direct and indirect effects.
+The estimated effects have a causal interpretation 
 provided that the GLMs for the mediator and outcome are correctly specified 
 and the following assumptions hold:
 
@@ -292,53 +296,59 @@ and the following assumptions hold:
 ({bf:A3}) There are no unobserved treatment-mediator confounders.
 {p_end}
 {phang2}
-({bf:A4}) There are no exposure-induced confounders of the mediator-outcome
+({bf:A4}) There are no post-treatment confounders of the mediator-outcome
 relationship.
 {p_end}
 
 {pstd}
-When more than one mediator is specified, {cmd:cmed simulate} estimates 
-multivariate natural direct and indirect effects. To estimate these effects,
-the command fits the following models:
+When more than one mediator is specified, 
+{cmd:cmed simulate} estimates multivariate natural direct and indirect effects 
+by fitting the following models:
 
 {phang2}
-(1b) a GLM for each mediator in the order they are specified, with treatment, 
-the baseline confounders, and all subsequent mediators included as predictors
+(1b) a GLM for each mediator in the order they are specified, 
+with treatment, baseline confounders, and all subsequent mediators as predictors
 {p_end}
 {phang2}
-(2b) a GLM for the outcome with treatment, all the mediators, and the baseline 
-confounders as predictors
+(2b) a GLM for the outcome 
+with treatment, all mediators, and baseline confounders as predictors
 {p_end}
 
 {pstd}
-With these models, simulated values for each mediator and the outcome are 
-generated under different counterfactual scenarios, which are then used to 
-estimate multivariate natural effects. The estimated effects 
-in this case have a causal interpretation if every model is correctly 
-specified, assumption {bf:A1} holds, and assumptions {bf:A2}-{bf:A4} 
-hold with respect to all the mediators under consideration. 
-If the mediators are specified in reverse causal order, such that 
-the first mediator supplied is the final mediator in the causal sequence,
-followed by the next-to-last mediator, and so on, then option 
-{helpb cmed_simulate##pathspecific:pathspecific} can be used to estimate 
-path-specific effects. To have a causal interpretation, these estimates 
-additionally require that there are no unobserved or exposure-induced 
-confounders for any of the mediator-mediator relationships.
+These models are used to generate simulated values of each mediator and outcome 
+under different counterfactual scenarios. 
+The simulated values are then averaged and compared 
+to estimate the natural direct and indirect effects.
+The estimated effects in this case have a causal interpretation 
+provided that all models are correctly specified, 
+assumption {bf:A1} holds, 
+and assumptions {bf:A2}-{bf:A4} hold with respect to all the mediators 
+under consideration. 
+
+{pstd}
+When option {helpb cmed_simulate##pathspecific:pathspecific} is specified, 
+{cmd:cmed simulate} estimates path-specific effects of multiple mediators. 
+To have a causal interpretation, these estimates additionally require 
+that the mediators are specified in reverse causal order, 
+such that the first mediator listed is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on. 
+In addition, there must be no unobserved or post-treatment confounders 
+of any mediator–mediator relationship.
 
 {pstd}
 When post-treatment (i.e., exposure-induced) confounders are specified, 
 {cmd:cmed simulate} estimates interventional direct and indirect effects 
-operating through a single, focal mediator. To construct these estimates,
-the command fits the following models:
+operating through a single, focal mediator 
+by fitting the following models:
 
 {phang2}
-(1c) a GLM for the focal mediator with treatment and the baseline confounders as 
-predictors
+(1c) a GLM for the mediator 
+with treatment and baseline confounders as predictors
 {p_end}
 {phang2}
 (2c) a GLM for each post-treatment confounder in the order they are specified, 
-with treatment, the baseline confounders, and all subsequent post-treatment 
-confounders included as predictors
+with treatment, baseline confounders, and all subsequent post-treatment confounders 
+as predictors
 {p_end}
 {phang2}
 (3c) a GLM for the outcome with treatment, the mediator, the baseline 
@@ -346,27 +356,22 @@ confounders, and the post-treatment confounders as predictors
 {p_end}
 
 {pstd}
-The models are used to generate simulated values for each post-treatment 
-confounder, the focal mediator, and the outcome under different 
-counterfactual scenarios. These simulated values are then averaged together 
-and compared to estimate the interventional effects of interest. The estimated 
-effects have a causal interpretation if all the models used to generate the
-simulations are correctly specified and assumptions {bf:A1}-{bf:A3} hold.
+These models are used to generate simulated values of each post-treatment confounder, 
+the mediator, and the outcome under different counterfactual scenarios. 
+The simulated values are then averaged and compared 
+to estimate the interventional effects. 
+The estimated effects have a causal interpretation 
+provided that all models used to generate the simulations are correctly specified 
+and assumptions {bf:A1}-{bf:A3} hold.
 
 {pstd}
-With a single mediator, and when post-treatment confounders are specified, 
-option {helpb cmed_simulate##mvalue:mvalue} can be used to estimate 
-controlled direct effects. The simulated values used to estimate these effects 
-are generated from Models 2c and 3c above. Estimates of controlled direct 
-effects have a causal interpretation provided that the models used to generate
-the simulations are correctly specified and assumptions {bf:A1}-{bf:A2} hold.
-Users attempting to estimate controlled direct effects with {cmd:cmed simulate} 
-when there are no post-treatment confounders should use {cmd:cmed impute} 
-instead. In the absence of post-treatment confounders, {cmd:cmed impute} 
-implements an estimator for controlled direct effects that is essentially 
-identical to {cmd:cmed simulate} but does not suffer from any simulation error 
-and thus will yield more stable estimates. It is also more computationally 
-efficient.
+When option {opt mvalue()} is specified
+with a single mediator and post-treatment confounders,
+{cmd:cmed simulate} estimates controlled direct effects
+using simlulated values from Models (2c) and (3c) above.
+These effects have a causal interpretation 
+provided that the models used to generate the simulations are correctly specified 
+and assumptions {bf:A1}-{bf:A2} hold.
 
 {pstd}
 See {help cmed_simulate##references:Wodtke and Zhou (2026)} for a detailed discussion.
@@ -399,6 +404,14 @@ Controlled direct effects capture the influence of the treatment on the outcome
 if the mediator for each observation were set at a single specific value. 
 This option may only be specified with a single mediator
 and at least one post-treatment confounder. 
+
+{phang2}
+When no post-treatment confounders are specified, 
+controlled direct effects should be estimated with 
+{helpb cmed_impute:cmed impute} rather than {cmd:cmed simulate}. 
+The estimator implemented by {cmd:cmed impute} is essentially identical 
+but avoids simulation error and is therefore more stable 
+and computationally efficient.
 
 {phang}
 {opt d(#)}
@@ -452,10 +465,11 @@ with respect to treatment and the baseline confounders.
 {opt nsim(#)}
 specifies the number of simulated values to generate. 
 The default is 200. 
-A larger number of simulated values improves the precision of the effect 
-estimates but increases the wall time needed to compute them. 
-For most applications, {help cmed##references:Wodtke and Zhou (2026)} recommend 
-using at least 1000 simulations.
+A larger number of simulated values improves the precision of the effect estimates 
+but increases computation time. 
+For most applications, 
+{help cmed##references:Wodtke and Zhou (2026)} 
+recommend at least 1,000 simulations.
 
 {dlgtab:Bootstrap}
 

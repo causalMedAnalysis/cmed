@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.6.0  04jan2026}{...}
+{* *! version 0.6.1  09mar2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -230,38 +230,52 @@ default is {cmd:level(}{cmd:{ccl level})}
 {pstd}
 {cmd:cmed impute} estimates the natural direct and indirect effects 
 of a treatment (exposure) on an outcome using regression imputation. 
-When multiple mediators are specified, the command estimates multivariate 
-natural effects. Optionally, the command estimates path-specific 
-effects through a set of causally ordered mediators as well as controlled 
-direct effects with a single mediator. Standard errors and confidence intervals 
-are obtained using the nonparametric {help bootstrap}. 
+When multiple mediators are specified, 
+the command estimates multivariate natural effects. 
+Optionally, the command estimates path-specific effects 
+through a set of causally ordered mediators 
+as well as controlled direct effects with a single mediator. 
+Standard errors and confidence intervals are obtained 
+using the nonparametric bootstrap; see {manlink R bootstrap}.
 
 {pstd}
 In the simplest case with one mediator and no post-treatment confounders, 
-{cmd:cmed impute} constructs pure regression imputation estimates for 
-natural direct and indirect effects, as well as the total effect, by 
-fitting the following models:
+{cmd:cmed impute} estimates the natural direct, indirect, and total effects 
+using pure regression imputation by fitting the following models:
 
 {phang2}
-(1) a linear or logit model for the outcome with the treatment and 
-baseline confounders as predictors 
+(1) a linear or logit model for the outcome 
+with the treatment and baseline confounders as predictors 
 {p_end}
 {phang2}
-(2) a linear or logit model for the outcome with the treatment, 
-baseline confounders, and mediator as predictors
+(2) a linear or logit model for the outcome 
+with the treatment, baseline confounders, and mediator as predictors
 {p_end}
 {phang2}
-(3) a linear or logit model for a set of predicted values from the 
-previous model, conditional on the treatment and baseline confounders.
+(3) a linear or logit model for a set of predicted values from the Model (2)
+with the treatment and baseline confounders as predictors
 {p_end}
 
 {pstd}
-The models are used to impute the outcome under different counterfactual 
-scenarios. These imputed outcomes are then averaged together and compared 
-to estimate the natural direct and indirect effects of interest. The 
-estimated effects have a causal interpretation provided that all the models 
-used to construct the imputations are correctly specified and the following 
-assumptions hold:
+These models are used to impute the outcome 
+under different counterfactual scenarios. 
+The imputed outcomes are then averaged and compared 
+to estimate the natural direct and indirect effects. 
+
+{pstd}
+For a binary treatment, 
+{cmd:cmed impute} optionally estimates the natural direct, indirect and total effects
+using an imputation-based weighting by fitting Models (1) and (2) above. 
+Addtionally, {cmd:cmed impute} fits a logit model for the treatment 
+with baseline confounders as predictors. 
+This model is used to construct inverse probability weights, 
+which are then used with Model (2) to average its imputed outcomes 
+and estimate the effects of interest.
+
+{pstd}
+The estimated effects have a causal interpretation 
+provided that all models are correctly specified 
+and the following assumptions hold:
 
 {phang2}
 ({bf:A1}) There are no unobserved treatment-outcome confounders.
@@ -273,46 +287,42 @@ assumptions hold:
 ({bf:A3}) There are no unobserved treatment-mediator confounders.
 {p_end}
 {phang2}
-({bf:A4}) There are no exposure-induced confounders of the mediator-outcome
+({bf:A4}) There are no post-treatment confounders of the mediator-outcome
 relationship.
 {p_end}
 
 {pstd}
-Alternatively, {cmd:cmed impute} can also construct imputation-based weighting 
-estimates of natural direct and indirect effects, provided that the treatment
-is binary. This approach also involves fitting Models 1 and 2, exactly as 
-above. However, instead of fitting Model 3, imputation-based weighting involves
-fitting a logit model for the treatment with the baseline confounders as 
-predictors. This model is used to construct a set of inverse probability
-weights, which are then used together with Model 2 to appropriately 
-average its imputed outcomes and compute the effects of interest.
+When more than one mediator is specified, 
+{cmd:cmed impute} estimates multivariate natural direct and indirect effects 
+by including all mediators, along with the baseline confounders, 
+as predictors in Model (2) above.
+Imputed outcomes are then obtained and used to estimate multivariate natural effects. 
+These estimated effects have a causal interpretation 
+provided that all models are correctly specified, 
+assumption {bf:A1} holds, and assumptions {bf:A2}-{bf:A4} hold 
+with respect to all mediators under consideration. 
 
 {pstd}
-When more than one mediator is specified, {cmd:cmed impute} estimates 
-multivariate natural direct and indirect effects by including all mediators 
-as predictors in Model 2 above, in addition to the treatment and baseline 
-confounders. Imputed outcomes are then obtained and used to estimate 
-multivariate natural effects. The estimated effects in this case have a 
-causal interpretation if all models are correctly specified, assumption 
-{bf:A1} holds, and assumptions {bf:A2}-{bf:A4} hold with respect to all the 
-mediators under consideration. If the mediators are specified in reverse causal 
-order, such that the first mediator listed is the final mediator in the causal 
-sequence, followed by the next-to-last mediator, and so on, then option 
-{helpb cmed_impute##pathspecific:pathspecific} can be used to estimate 
-path-specific effects as well. To have a causal interpretation, these estimates 
-additionally require that there are no unobserved or exposure-induced 
-confounders for any of the mediator-mediator relationships.
+When option {helpb cmed_impute##pathspecific:pathspecific} is specified, 
+{cmd:cmed impute} estimates path-specific effects of multiple mediators. 
+To have a causal interpretation, these estimates additionally require 
+that the mediators are specified in reverse causal order, 
+such that the first mediator listed is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on. 
+In addition, there must be no unobserved or post-treatment confounders 
+of any mediator–mediator relationship.
 
 {pstd}
-With a single mediator, option {helpb cmed_impute##mvalue:mvalue} can 
-be used to estimating controlled direct effects. These effects are based on
-imputed outcomes constructed using only Model 2. Estimates of controlled 
-direct effects have a causal interpretation provided that this model 
-is correctly specified and assumptions {bf:A1}-{bf:A2} hold.
+{cmd:cmed impute} does not support post-treatment confounders 
+or estimation of interventional effects.
 
 {pstd}
-{cmd:cmed impute} does not support post-treatment confounders or estimation
-of interventional effects.
+When option {opt mvalue()} is specified with a single mediator,
+{cmd:cmed impute} estimates controlled direct effects
+using imputed outcomes from Model (2).
+These effects have a causal interpretation 
+provided that this model is correctly specified 
+and assumptions {bf:A1}-{bf:A2} hold.
 
 {pstd}
 See {help cmed_impute##references:Wodtke and Zhou (2026)} for a detailed 

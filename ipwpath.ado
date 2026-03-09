@@ -1,7 +1,7 @@
 *!TITLE: IPWPATH - analysis of path-specific effects using inverse probability weighting
 *!AUTHOR: Geoffrey T. Wodtke, Department of Sociology, University of Chicago
 *!
-*! version 0.4 - added keepweights option
+*! version 0.4 - added keepweights option; modified variable labels
 *!
 
 program define ipwpath, eclass
@@ -115,7 +115,9 @@ program define ipwpath, eclass
 			qui rename sw2_r001 sw2_r001_`k'
 			qui rename sw3_r001 sw3_`k'_r001
 			
-			qui label var sw3_`k'_r001 "IPW for estimating E(Y(d,M1(d*)...M`k'(d*)))"
+            local dots = cond(`k'>2,"...",",")
+			qui label var sw3_`k'_r001 "IPW for estimating E(Y(d,M1(d*)`dots'M`k'(d*)))"
+            
 		}
 		
 		qui rename sw1_r001_`num_mvars' sw1_r001

@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.5.0  04jan2026}{...}
+{* *! version 0.5.1  09mar2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -192,47 +192,62 @@ default is {cmd:level(}{cmd:{ccl level})}
 
 {pstd}
 {cmd:cmed mr} estimates the natural direct and indirect effects
-of a binary treatment (exposure) on an outcome using multiply robust
-methods. When multiple mediators are specified, the command estimates
-multivariate natural effects and, optionally, path-specific effects
-through a set of causally ordered mediators. Standard errors and
-confidence intervals are obtained using the nonparametric {help bootstrap}.
+of a binary treatment (exposure) on an outcome using multiply robust methods. 
+When multiple mediators are specified, 
+the command estimates multivariate natural effects 
+and, optionally, path-specific effects 
+through a set of causally ordered mediators. 
+Standard errors and confidence intervals are obtained 
+using the nonparametric bootstrap; see {manlink R bootstrap}. 
 
 {pstd}
 In the simplest case with a single mediator,
-{cmd:cmed mr} constructs multiply robust estimates of the natural direct and
-indirect effects, as well as of the total effect, by fitting the following models:
+{cmd:cmed mr} 
+estimates the natural direct, indirect, and total effects
+of a binary treatment using multiply robust methods by fitting the following models:
 
 {phang2}
-(1) a logit model for the treatment with the baseline confounders as predictors
+(1) a logit model for the treatment 
+with the baseline confounders as predictors
 {p_end}
 {phang2}
-(2) another logit model for the treatment with the baseline confounders
-and the mediator as predictors
+(2) another logit model for the treatment 
+with the mediator and baseline confounders as predictors
 {p_end}
 {phang2}
-(3) a linear model for the outcome with the treatment, mediator, and
-baseline confounders as predictors
+(3) a linear model for the outcome 
+with the treatment, mediator, and baseline confounders as predictors
 {p_end}
 {phang2}
-(4) a linear model for a set of predicted values from the previous model,
-conditional on the treatment and baseline confounders
+(4) a linear model for a set of predicted values from Model (3)
+with the treatment and baseline confounders as predictors
 {p_end}
 
 {pstd}
-These models are used to construct all the nuisance terms in a multiply robust
-estimator for natural effects, which is then evaluated to produce the 
-estimates of interest. This estimator involves a combination of inverse 
-probability weighting and regression imputation. The estimated effects 
-have a causal interpretation under a set of modeling and identification 
-assumptions. The modeling assumptions require that at least one of the 
-following three conditions is met: (i) Models 1 and 2 are correctly 
-specified, (ii) Models 1 and 3 are correctly specified, or (iii) Models 3 
-and 4 are correctly specified. This estimator is sometimes described 
-as "triply robust" because it provides three distinct opportunities to 
-satisfy its modeling requirements. Beyond these modeling requirements, 
-the identification assumptions stipulate that the following conditions 
-hold:
+These models are used to construct the nuisance components 
+of a multiply robust estimator, 
+which is then evaluated to obtain the estimates of interest. 
+The estimator combines inverse probability weighting and regression imputation. 
+It is sometimes called "triply robust" 
+because it offers three distinct ways to satisfy its modeling assumptions.
+
+{pstd}
+The estimated effects have a causal interpretation 
+provided that at least one of the following three conditions is met: 
+
+{phang2}
+{bind:  }({it:i}) Models (1) and (2) are correctly specified
+{p_end}
+{phang2}
+{bind: }({it:ii}) {bf:or} Models (1) and (3) are correctly specified
+{p_end}
+{phang2}
+({it:iii}) {bf:or} Models (3) and (4) are correctly specified
+{p_end}
+
+{pstd}
+Beyond the modeling requirements ({it:i})-({it:iii}) above, 
+the following assumptions must hold:
 
 {phang2}
 ({bf:A1}) There are no unobserved treatment–outcome confounders.
@@ -244,62 +259,43 @@ hold:
 ({bf:A3}) There are no unobserved treatment–mediator confounders.
 {p_end}
 {phang2}
-({bf:A4}) There are no exposure-induced confounders of the mediator–outcome
+({bf:A4}) There are no post-treatment confounders of the mediator–outcome
 relationship.
 {p_end}
 
 {pstd}
-When more than one mediator is specified, {cmd:cmed mr} estimates
-multivariate natural direct and indirect effects by including all mediators
-as predictors in Models 2 and 3 above. The estimated effects in this case have
-a causal interpretation under the same modeling conditions outlined previously,
-provided that assumption {bf:A1} holds and that assumptions {bf:A2}–{bf:A4}
-hold with respect to all mediators under consideration. 
-If the mediators are specified in reverse causal order, such that 
-the first mediator supplied is the final mediator in the causal sequence,
-followed by the next-to-last mediator, and so on, then option 
-{helpb cmed_mr##pathspecific:pathspecific} can be used to estimate 
-path-specific effects as well. To have a causal interpretation, 
-these estimates additionally require that there are no unobserved or 
-exposure-induced confounders for any of the mediator–mediator
-relationships.
+When more than one mediator is specified, 
+{cmd:cmed mr} estimates multivariate natural direct and indirect effects 
+by including all mediators as predictors in Models (2) and (3) above. 
+These estimated effects have a causal interpretation 
+provided that the modelling conditions ({it:i})-({it:iii}) are met, 
+assumption {bf:A1} holds and assumptions {bf:A2}-{bf:A4} hold 
+with respect to all mediators under consideration. 
 
 {pstd}
-Alternatively, with a single binary mediator, option
-{helpb cmed_mr##rmpw:rmpw} can be used to implement a different multiply
-robust estimator. This estimator involves a combination of 
-ratio-of-mediator-probability weighting and regression imputation.
-In this case, estimates for the natural direct and indirect effects through
-this binary mediator are constructed by fitting the following models:
-
-{phang2}
-(1b) a logit model for the treatment with the baseline confounders as predictors
-{p_end}
-{phang2}
-(2b) a logit model for the mediator with the treatment and baseline confounders
-as predictors
-{p_end}
-{phang2}
-(3b) a linear model for the outcome with the treatment, mediator, and
-baseline confounders as predictors
-{p_end}
+When option {helpb cmed_mr##pathspecific:pathspecific} is specified, 
+{cmd:cmed mr} estimates path-specific effects of multiple mediators. 
+To have a causal interpretation, these estimates additionally require 
+that the mediators are specified in reverse causal order, 
+such that the first mediator listed is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on. 
+In addition, there must be no unobserved or post-treatment confounders 
+of any mediator–mediator relationship.
 
 {pstd}
-These models are used to construct all the nuisance terms in the multiply
-robust estimator, which is then evaluated to produce estimates of 
-natural direct and indirect effects. The estimated effects in this case 
-have a causal interpretation provided that assumptions {bf:A1}–{bf:A4} 
-hold and that at least two of the three models above are correctly 
-specified. In other words, this approach to multiply robust estimation 
-requires that either (i) Models 1b and 2b are correctly specified, (ii) 
-Models 2b and 3b are correctly specified, or (iii) Models 1b and 3b are 
-correctly specified. Thus, it is also sometimes described as 
-"triply robust," offering three opportunities to satisfy its modeling 
-requirements.
+For a single binary mediator, option {opt rmpw} 
+implements a different multiply robust estimator 
+that combines ratio-of-mediator-probability weighting and regression imputation 
+by fitting Models (1) and (3) above. Additionally, {cmd:cmed mr} fits
+a logit model for the (binary) mediator 
+with the treatment and baseline confounders as predictors. 
+The estimated effects have a causal interpretation 
+provided that at least two of the models are correctly specified 
+and assumptions {bf:A1}–{bf:A4} hold.
 
 {pstd}
-{cmd:cmed mr} does not support post-treatment confounders or estimation
-of interventional or controlled direct effects at this time.
+{cmd:cmed mr} does not support post-treatment confounders 
+or estimation of interventional or controlled direct effects at this time.
 
 {pstd}
 See {help cmed_mr##references:Wodtke and Zhou (2026)} for a detailed

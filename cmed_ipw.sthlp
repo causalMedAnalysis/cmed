@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.6.0  04jan2026}{...}
+{* *! version 0.7.0  09mar2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -216,8 +216,8 @@ default is {cmd:level(}{cmd:{ccl level})}
 {synopt:{opt detail}}print fitted models used to construct inverse probability weights 
 {p_end}
 {...}
-{synopt:{opt keepweights}}save the inverse probability weights used to construct
-the estimated effects
+{synopt:{opt keepweights}}save the inverse probability weights 
+used to estimate the effects as variables in the dataset
 {p_end}
 {synoptline}
 {pstd}
@@ -232,37 +232,40 @@ the estimated effects
 
 {pstd}
 {cmd:cmed ipw} estimates the natural direct and indirect effects 
-of a binary treatment (exposure) on an outcome using inverse probability
-weights constructed from logit models for the treatment. When multiple mediators 
-are specified, the command estimates multivariate natural effects using 
-weights that are also constructed from logit models for the treatment. 
-If a single, discrete post-treatment confounder is specified, the command 
-estimates interventional direct and indirect effects using weights constructed
-from a logit model for treatment and models for both the mediator and
-post-treatment confounder. Optionally, the command estimates path-specific 
-effects through a set of causally ordered mediators as well as controlled 
-direct effects with a single mediator. Standard errors and confidence intervals 
-are obtained using the nonparametric {help bootstrap}. 
+of a binary treatment (exposure) on an outcome using inverse probability weights (IPW) 
+constructed from logit models for the treatment. 
+When multiple mediators are specified, 
+the command estimates multivariate natural effects. 
+If a single, discrete post-treatment confounder is specified, 
+the command estimates interventional direct and indirect effects 
+using IPW constructed from a logit model for the treatment 
+and models for both the mediator and post-treatment confounder. 
+Optionally, the command estimates path-specific effects 
+through a set of causally ordered mediators 
+as well as controlled direct effects with a single mediator. 
+Standard errors and confidence intervals are obtained 
+using the nonparametric bootstrap; see {manlink R bootstrap}. 
 
 {pstd}
 In the simplest case with one mediator and no post-treatment confounders, 
-{cmd:cmed ipw} estimates the natural direct and indirect effects,
-along with the total effect, of a binary treatment by fitting two models:
+{cmd:cmed ipw} estimates the natural direct, indirect, and total effects
+of a binary treatment by fitting two models:
 
 {phang2}
-(1) a logit model for treatment with the baseline confounders as predictors
+(1) a logit model for the treatment 
+with baseline confounders as predictors
 {p_end}
 {phang2}
-(2) another logit model for treatment with the mediator and the baseline 
-confounders as predictors
+(2) another logit model for the treatment 
+with the mediator and baseline confounders as predictors
 {p_end}
 
 {pstd}
-The models are used to construct inverse probability weights, which 
-subsequently serve to estimate the natural direct and indirect effects of 
-interest. The estimated effects have a causal interpretation provided that 
-the logit models for treatment are correctly specified and the following 
-assumptions hold:
+These models are used to construct inverse probability weights, 
+which are then used to estimate the natural direct and indirect effects.
+The estimated effects have a causal interpretation 
+provided that the logit models for the treatment are correctly specified 
+and the following assumptions hold:
 
 {phang2}
 ({bf:A1}) There are no unobserved treatment-outcome confounders.
@@ -274,63 +277,64 @@ assumptions hold:
 ({bf:A3}) There are no unobserved treatment-mediator confounders.
 {p_end}
 {phang2}
-({bf:A4}) There are no exposure-induced confounders of the mediator-outcome
+({bf:A4}) There are no post-treatment confounders of the mediator-outcome
 relationship.
 {p_end}
 
 {pstd}
-When more than one mediator is specified, {cmd:cmed ipw} estimates 
-multivariate natural direct and indirect effects by including all mediators 
-as predictors in Model 2 above, in addition to the baseline confounders. 
+When more than one mediator is specified, 
+{cmd:cmed ipw} estimates multivariate natural direct and indirect effects 
+by including all mediators, along with the baseline confounders, 
+as predictors in Model (2) above.
 Inverse probability weights are then constructed from the treatment models 
-and used to estimate multivariate natural effects. The estimated effects 
-in this case have a causal interpretation if both treatment models are 
-correctly specified, assumption {bf:A1} holds, and assumptions 
-{bf:A2}-{bf:A4} hold with respect to all the mediators under consideration. 
-If the mediators are specified in reverse causal order, such that 
-the first mediator listed is the final mediator in the causal sequence,
-followed by the next-to-last mediator, and so on, then option 
-{helpb cmed_ipw##pathspecific:pathspecific} can be used to estimate 
-path-specific effects using inverse probability weighting. To have a causal 
-interpretation, these estimates additionally require that there are no 
-unobserved or exposure-induced confounders for any of the mediator-mediator 
-relationships.
+and used to estimate multivariate natural effects. 
+These estimated effects have a causal interpretation 
+provided that both treatment models are correctly specified, 
+assumption {bf:A1} holds, and assumptions {bf:A2}-{bf:A4} hold 
+with respect to all mediators under consideration. 
+
+{pstd}
+When option {helpb cmed_ipw##pathspecific:pathspecific} is specified, 
+{cmd:cmed ipw} estimates path-specific effects of multiple mediators. 
+To have a causal interpretation, these estimates additionally require 
+that the mediators are specified in reverse causal order, 
+such that the first mediator listed is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on. 
+In addition, there must be no unobserved or post-treatment confounders 
+of any mediator–mediator relationship.
 
 {pstd}
 When a single, discrete post-treatment confounder is specified, 
-{cmd:cmed ipw} uses inverse probability weighting to estimate interventional 
-direct and indirect effects that operate through a single, focal mediator. 
-To construct the weights in this case, {cmd:cmed ipw} fits three models:
+{cmd:cmed ipw} estimates interventional direct and indirect effects 
+operating through a single, focal mediator 
+by fitting the following three models:
 
 {phang2}
-(1b) a logit model for treatment conditional on the baseline 
-confounders, as above
+(1b) a logit model for the treatment 
+with baseline confounders as predictors
 {p_end}
 {phang2}
-(2b) a logit or ologit model for the post-treatment confounder with the 
-treatment and baseline confounders as predictors
+(2b) a logit or ordered logit model for the post-treatment confounder 
+with the treatment and baseline confounders as predictors
 {p_end}
 {phang2}
-(3b) a linear, logit, or poisson model for the mediator with the 
-treatment, baseline confounders, and post-treatment confounder as predictors
+(3b) a linear, logit, or poisson model for the mediator 
+with the treatment, baseline confounders, and post-treatment confounder 
+as predictors
 {p_end}
-
-{pstd}
-The estimated interventional effects have a causal interpretation if all these 
-models are correctly specified and assumptions {bf:A1}-{bf:A3} hold.
 
 {pstd}
-With a single mediator, option {helpb cmed_linear##mvalue:mvalue} can 
-be used to estimate controlled direct effects. The weights used to estimate
-these effects are constructed from Models 1b and 3b above. Analyses of
-controlled direct effects may include any number and type of post-treatment 
-confounders, all of which are included as predictors in the model for the 
-mediator. The analysis can also omit post-treatment confounders if none 
-require adjustment, in which case the mediator model would include only 
-treatment and the baseline confounders as predictors. The estimates of 
-controlled direct effects have a causal interpretation provided that the 
-models used to construct the weights are correctly specified and 
-assumptions {bf:A1}-{bf:A2} hold.
+The estimated interventional effects have a causal interpretation 
+provided that all models are correctly specified 
+and assumptions {bf:A1}-{bf:A3} hold.
+
+{pstd}
+When option {opt mvalue()} is specified with a single mediator,
+{cmd:cmed ipw} estimates controlled direct effects
+using inverse probability weights constructed from models 1b and 3b above.
+These effects have a causal interpretation 
+provided that the models used to construct the IPW are correctly specified 
+and assumptions {bf:A1}-{bf:A2} hold.
 
 {pstd}
 See {help cmed_ipw##references:Wodtke and Zhou (2026)} for a detailed 
@@ -467,10 +471,14 @@ By default, only the estimated causal effects are reported.
 
 {phang}
 {opt keepweights}
-saves the inverse probability weights used to construct the 
-effect estimates in a set of new variables, allowing users to 
-inspect their distribution and perform other diagnostics.
-By default, the weights are not saved.
+saves the inverse probability weights used to estimate the effects 
+as new variables in the dataset. 
+The variable names follow the pattern {bind:{cmd:sw}{it:#}{cmd:_}{it:*}{cmd:r001}}.
+The weights are computed from the original estimation sample 
+and do not correspond to the bootstrap replications. 
+This option is useful for inspecting the distribution of the weights 
+and performing diagnostic checks.
+
 
 {...}
 {marker examples}{...}

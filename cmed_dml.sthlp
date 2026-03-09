@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 0.3.0  04jan2026}{...}
+{* *! version 0.3.1  09mar2026}{...}
 {vieweralsosee "[CAUSAL] mediate" "help mediate"}{...}
 {vieweralsosee "" "--"}{...}
 {vieweralsosee "[CAUSAL] teffects" "help teffects"}{...}
@@ -151,69 +151,77 @@ default is 5.
 
 {pstd}
 {cmd:cmed dml} estimates the natural direct and indirect effects
-of a binary treatment (exposure) on an outcome 
-using de-biased machine learning with either random forests 
-or least absolute shrinkage and selection operator (LASSO) models. 
-The command is based on the same multiply robust 
-estimators employed by {helpb cmed mr}, but rather than predict the 
-nuisance terms in these estimators from parametric models, like linear and 
-logistic regressions, it predicts them using machine learning models instead.
-This can provide an added layer of protection against concerns about model 
-misspecification. When multiple mediators are specified, {cmd:cmed dml}
-estimates multivariate natural effects and, optionally, path-specific effects
-through a set of causally ordered mediators. Asymptotic standard errors and
-confidence intervals are derived from the efficient influence function for
-the targeted estimand.
+of a binary treatment (exposure) on an outcome using de-biased machine learning 
+with either random forests or least absolute shrinkage and selection operator (LASSO) models. 
+When multiple mediators are specified, 
+the command estimates multivariate natural effects and, optionally, path-specific effects
+through a set of causally ordered mediators. 
+Asymptotic standard errors and confidence intervals are obtained
+from the efficient influence function of the targeted estimand.
 
 {pstd}
-With one or more mediators, {cmd:cmed dml} constructs de-biased 
-machine learning estimates of natural direct and indirect effects, as well as
-the total effect, by training machine learning models to estimate the
+{cmd:cmed dml}
+is based on the same multiply robust estimators implemented in {helpb cmed mr},
+but instead of predicting the nuisance components from parametric models 
+such as linear or logistic regressions, it uses machine learning models 
+to provide additional protection against model misspecification.
+
+{pstd}
+In the simplest case with one mediator, 
+{cmd:cmed dml} estimates the natural direct, indirect, and total effects
+using de-biased machine learning by training models to estimate the
 following nuisance terms:
 
 {phang2}
-(1) the conditional probability of treatment given the baseline confounders
+(1) the conditional probability of the treatment 
+given the baseline confounders
 {p_end}
 {phang2}
-(2) the conditional probability of treatment given the baseline confounders
-and the mediator(s)
+(2) the conditional probability of the treatment 
+given the baseline confounders and the mediator
 {p_end}
 {phang2}
-(3) the conditional expected value of the outcome given the treatment,
-mediator(s), and baseline confounders
+(3) the conditional expected value of the outcome 
+given the treatment, mediator, and baseline confounders
 {p_end}
 {phang2}
-(4) an iterated expectation of the outcome under the reference level of
-treatment, conditional on the treatment and the baseline confounders
+(4) an iterated expectation of the outcome 
+under the reference level of the treatment, 
+conditional on the treatment and baseline confounders
 {p_end}
 
 {pstd}
-Estimates of these nuisance terms can be obtained from a series of random
-forests if {opt method(rforest)} is specified. Alternatively, they can be
-obtained from a set of LASSO models that automatically include all two-way
-interactions among the predictors when {opt method(lasso)} is specified.
-The command depends on the {helpb rforest} and {helpb lassopack} modules 
-for training these models.
+Estimates of these nuisance terms are obtained 
+using random forests, when {cmd:method(rforest)} is specified,
+or using LASSO models with automatic inclusion of all two-way interactions among predictors 
+when {cmd:method(lasso)} is specified.
 
 {pstd}
-To avoid over-fitting and ensure valid inference, the nuisance terms 
-are estimated in conjunction with a repeated cross-fitting procedure. 
-Repeated cross-fitting works by randomly splitting the data into several 
-folds, repeatedly training the machine learning models on all but one fold, 
-and then using the held-out fold to estimate the nuisance terms. After 
-iterating through every fold, all observations in the sample have estimates 
-for the required nuisance terms. These estimates are then plugged into a 
-multiply robust estimator for natural direct and indirect effects to obtain 
-the quantities of interest. This estimator involves a combination of inverse 
-probability weighting and regression imputation.
+To avoid over-fitting and ensure valid inference, 
+the nuisance terms are estimated using a repeated cross-fitting procedure. 
+This procedure randomly splits the data into several folds, 
+trains the machine learning models on all but one fold, 
+and then uses the held-out fold to estimate the nuisance terms. 
+After iterating through all folds, 
+every observation in the sample has estimates for the required nuisance terms. 
+These estimates are then plugged into a multiply robust estimator 
+for the natural direct and indirect effects. 
+The estimator combines inverse probability weighting 
+and regression imputation to obtain the quantities of interest.
 
 {pstd}
-The estimated effects have a causal interpretation under a set of modeling and
-identification assumptions. The modeling assumptions require that the machine
-learning models used to estimate the nuisance terms converge to these
-quantities at a rate faster than {it:n} (the sample size) to the one-fourth 
-power, a condition that both random forests and LASSO models can satisfy. 
-The identification assumptions stipulate that the following conditions hold:
+The estimated effects have a causal interpretation 
+provided that the machine learning models used to estimate the nuisance terms 
+converge to these quantities at a rate faster than {it:n}^(1/4), 
+where {it:n} is the sample size.
+While parametric models, such as linear or logistic regressions, 
+may fail under misspecification, 
+both random forests and LASSO models are flexible enough 
+that the condition can, in principle, be satisfied.
+
+{pstd}
+In addition to satisfying the convergence rate, 
+the following assumptions must hold:
 
 {phang2}
 ({bf:A1}) There are no unobserved treatment–outcome confounders.
@@ -229,52 +237,43 @@ The identification assumptions stipulate that the following conditions hold:
 {p_end}
 
 {pstd}
-When more than one mediator is specified, {cmd:cmed dml} estimates
-multivariate natural direct and indirect effects. The estimated effects in this
-case have a causal interpretation under the same modeling conditions outlined
-above, provided that assumption {bf:A1} holds and that assumptions
-{bf:A2}–{bf:A4} hold for all mediators under consideration. If the mediators 
-are specified in reverse causal order, such that the first mediator listed 
-is the final mediator in the causal sequence, followed by the next-to-last 
-mediator, and so on, then option {helpb cmed_dml##pathspecific:pathspecific} 
-can be used to estimate path-specific effects as well. To have a causal 
-interpretation, these estimates additionally require that there are no 
-unobserved or exposure-induced confounders for any of the mediator–mediator
-relationships.
+When more than one mediator is specified, 
+{cmd:cmed dml} estimates multivariate natural direct and indirect effects
+by including all mediators in the machine learning models 
+for estimating (2) and (3) above. 
+These estimated effects have a causal interpretation 
+provided that the machine learning models used to estimate the nuisance terms 
+converge to these quantities at a rate faster than {it:n}^(1/4), 
+assumption {bf:A1} holds, and assumptions {bf:A2}-{bf:A4} hold 
+with respect to all mediators under consideration. 
 
 {pstd}
-Alternatively, with a single binary mediator, option
-{helpb cmed_dml##rmpw:rmpw} can be used to implement a different 
-multiply robust estimator. This estimator involves a combination of 
-ratio-of-mediator-probability weighting and regression imputation. 
-In this case, estimates of the natural direct and indirect effects through 
-a binary mediator are constructed by training machine learning models to 
-estimate the following nuisance terms:
-
-{phang2}
-(1b) the conditional probability of treatment given the baseline confounders
-{p_end}
-{phang2}
-(2b) the conditional probability of the mediator given the baseline confounders
-and treatment
-{p_end}
-{phang2}
-(3b) the conditional expected value of the outcome given the treatment,
-mediator, and baseline confounders
-{p_end}
+When option {helpb cmed_dml##pathspecific:pathspecific} is specified, 
+{cmd:cmed dml} estimates path-specific effects of multiple mediators. 
+To have a causal interpretation, these estimates additionally require 
+that the mediators are specified in reverse causal order, 
+such that the first mediator listed is the final mediator in the causal sequence,
+followed by the next-to-last mediator, and so on. 
+In addition, there must be no unobserved or post-treatment confounders 
+of any mediator–mediator relationship.
 
 {pstd}
-As before, estimates of these nuisance terms are obtained via cross-fitting a
-series of random forests or LASSO models, depending on the specification of
-{opt method(method)}. These estimates are then plugged into the multiply
-robust estimator to obtain the effects of interest. The estimated effects in
-this case have a causal interpretation provided that assumptions
-{bf:A1}–{bf:A4} hold and that the machine learning models converge 
-at a rate faster than {it:n} to the one-fourth power.
+For a single binary mediator, option {opt rmpw} 
+implements a different multiply robust estimator 
+that combines ratio-of-mediator-probability weighting and regression imputation 
+by training machine learning models to estimate the nuisance terms 
+described in (1) and (3) above. 
+Additionally, {cmd:cmed dml} trains a machine learning model to estimate 
+the conditional probability of the mediator 
+given the treatment and baseline confounders.
+The estimated effects have a causal interpretation 
+provided that the machine learning models used to estimate the nuisance terms 
+converge to these quantities at a rate faster than {it:n}^(1/4) 
+and assumptions {bf:A1}–{bf:A4} hold.
 
 {pstd}
-{cmd:cmed dml} does not support post-treatment confounders or estimation
-of interventional or controlled direct effects at this time.
+{cmd:cmed dml} does not support post-treatment confounders 
+or estimation of interventional or controlled direct effects at this time.
 
 {pstd}
 See {help cmed_dml##references:Wodtke and Zhou (2026)} for a detailed

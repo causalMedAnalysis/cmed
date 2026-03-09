@@ -1,4 +1,4 @@
-*! version 0.11.0  02mar2026
+*! version 0.11.1  09mar2026
 program cmed
     
     version 16.1
@@ -683,7 +683,15 @@ program Build_cmdline_cmed_simulate
     }
     else {
         
-        Option_not_allowed "`mvalue'" "mvalue()"
+        capture noisily Option_not_allowed "`mvalue'" "mvalue()"
+        if ( _rc ) {
+            
+            display as err "no ${Cmed__l_id}s specified;" ///
+                " use {helpb cmed impute} to estimate controlled direct effects"
+            
+            exit 198
+            
+        }
         
         Confirm_model "m" ("","regress","logit","poisson","ologit") , default("regress")
         
@@ -1330,7 +1338,7 @@ program Define_globals
     global Cmed__d_minvar       1
     global Cmed__d_maxvar       1    
     
-    global Cmed__l_id           "post-treatment covariate"
+    global Cmed__l_id           "post-treatment confounder"
     global Cmed__l_minvar       0
     global Cmed__l_maxvar       .
     
